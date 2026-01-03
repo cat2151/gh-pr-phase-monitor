@@ -79,26 +79,25 @@ def determine_phase(pr: Dict[str, Any]) -> str:
         return "LLM working"
 
     # 最新のレビューを取得
-    if reviews:
-        latest_review = reviews[-1]
-        author_login = latest_review.get("author", {}).get("login", "")
+    latest_review = reviews[-1]
+    author_login = latest_review.get("author", {}).get("login", "")
 
-        # Phase 2/3: copilot-pull-request-reviewer のレビュー後
-        if author_login == "copilot-pull-request-reviewer":
-            # レビューの状態を確認
-            review_state = latest_review.get("state", "")
+    # Phase 2/3: copilot-pull-request-reviewer のレビュー後
+    if author_login == "copilot-pull-request-reviewer":
+        # レビューの状態を確認
+        review_state = latest_review.get("state", "")
 
-            # CHANGES_REQUESTEDの場合のみphase2 (copilot-swe-agentの対応待ち)
-            # それ以外(APPROVED, COMMENTED等)はphase3
-            # COMMENTEDで本文がある場合も、実際に変更要求がなければphase3と判定
-            if review_state == "CHANGES_REQUESTED":
-                return "phase2"
+        # CHANGES_REQUESTEDの場合のみphase2 (copilot-swe-agentの対応待ち)
+        # それ以外(APPROVED, COMMENTED, DISMISSED, PENDING等)はphase3
+        # 本文の有無に関わらず、CHANGES_REQUESTEDでなければphase3と判定
+        if review_state == "CHANGES_REQUESTED":
+            return "phase2"
 
-            return "phase3"
+        return "phase3"
 
-        # Phase 3: copilot-swe-agent の修正後
-        if author_login == "copilot-swe-agent":
-            return "phase3"
+    # Phase 3: copilot-swe-agent の修正後
+    if author_login == "copilot-swe-agent":
+        return "phase3"
 
     return "LLM working"
 

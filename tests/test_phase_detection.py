@@ -175,3 +175,43 @@ class TestDeterminePhase:
             ]
         }
         assert determine_phase(pr) == "phase2"
+
+    def test_phase3_copilot_reviewer_dismissed(self):
+        """Copilot reviewer with DISMISSED state should be phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "DISMISSED",
+                    "body": "Review dismissed"
+                }
+            ],
+            "latestReviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "DISMISSED"
+                }
+            ]
+        }
+        assert determine_phase(pr) == "phase3"
+
+    def test_phase3_copilot_reviewer_pending(self):
+        """Copilot reviewer with PENDING state should be phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "PENDING",
+                    "body": "Review pending"
+                }
+            ],
+            "latestReviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "PENDING"
+                }
+            ]
+        }
+        assert determine_phase(pr) == "phase3"
