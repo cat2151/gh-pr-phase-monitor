@@ -87,7 +87,7 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
             # Use parameterized query for pagination
             query_with_pagination = query.replace(
                 "repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER])",
-                f'repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER], after: "{end_cursor}")'
+                f'repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER], after: "{end_cursor}")',
             )
         else:
             query_with_pagination = query
@@ -96,16 +96,11 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
         cmd = ["gh", "api", "graphql", "-f", f"query={query_with_pagination}", "-F", f"login={current_user}"]
 
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
             try:
                 data = json.loads(result.stdout)
             except json.JSONDecodeError as e:
-                error_message = (
-                    f"Error parsing JSON response from gh CLI: {e}\n"
-                    f"Raw output from gh:\n{result.stdout}"
-                )
+                error_message = f"Error parsing JSON response from gh CLI: {e}\nRaw output from gh:\n{result.stdout}"
                 print(error_message)
                 raise RuntimeError(error_message) from e
 
@@ -117,11 +112,9 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
             for repo in nodes:
                 pr_count = repo.get("pullRequests", {}).get("totalCount", 0)
                 if pr_count > 0:
-                    repos_with_prs.append({
-                        "name": repo.get("name"),
-                        "owner": repo.get("owner", {}).get("login"),
-                        "openPRCount": pr_count
-                    })
+                    repos_with_prs.append(
+                        {"name": repo.get("name"), "owner": repo.get("owner", {}).get("login"), "openPRCount": pr_count}
+                    )
 
             has_next_page = page_info.get("hasNextPage", False)
             end_cursor = page_info.get("endCursor")
@@ -154,7 +147,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     all_prs = []
 
     for i in range(0, len(repos), batch_size):
-        batch = repos[i:i+batch_size]
+        batch = repos[i : i + batch_size]
 
         # Build query fragments for each repository
         repo_queries = []
@@ -234,7 +227,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         # Combine all repository queries
         full_query = f"""
         query {{
-          {' '.join(repo_queries)}
+          {" ".join(repo_queries)}
           rateLimit {{
             cost
             remaining
@@ -247,15 +240,12 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         cmd = ["gh", "api", "graphql", "-f", f"query={full_query}"]
 
         try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
             try:
                 data = json.loads(result.stdout)
             except json.JSONDecodeError as e:
                 raise RuntimeError(
-                    f"Failed to parse JSON from 'gh api graphql' output. "
-                    f"Raw output was:\n{result.stdout}"
+                    f"Failed to parse JSON from 'gh api graphql' output. Raw output was:\n{result.stdout}"
                 ) from e
 
             # Extract PR data from response
@@ -279,11 +269,9 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                 author = {"login": "[deleted]"}
                             else:
                                 author = {"login": author_data.get("login", "")}
-                            reviews.append({
-                                "author": author,
-                                "state": review.get("state", ""),
-                                "body": review.get("body", "")
-                            })
+                            reviews.append(
+                                {"author": author, "state": review.get("state", ""), "body": review.get("body", "")}
+                            )
 
                         # Transform latestReviews - handle null authors
                         latest_reviews = []
@@ -294,10 +282,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                 author = {"login": "[deleted]"}
                             else:
                                 author = {"login": author_data.get("login", "")}
-                            latest_reviews.append({
-                                "author": author,
-                                "state": review.get("state", "")
-                            })
+                            latest_reviews.append({"author": author, "state": review.get("state", "")})
 
                         # Transform reviewRequests
                         review_requests = []
@@ -330,10 +315,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                             "mergeable": pr.get("mergeable", ""),
                             "reviewDecision": pr.get("reviewDecision"),
                             "state": pr.get("state", ""),
-                            "repository": {
-                                "name": repo_name,
-                                "owner": owner
-                            }
+                            "repository": {"name": repo_name, "owner": owner},
                         }
                         all_prs.append(pr_with_repo)
 
@@ -393,9 +375,7 @@ def get_existing_comments(pr_url: str, repo_dir: Path = None) -> List[Dict[str, 
     cmd = ["gh", "pr", "view", pr_url, "--json", "comments"]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
         data = json.loads(result.stdout)
         return data.get("comments", [])
     except (subprocess.CalledProcessError, json.JSONDecodeError):

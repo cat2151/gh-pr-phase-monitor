@@ -74,9 +74,7 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
     try:
-        subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-        )
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
         return True
     except subprocess.CalledProcessError as e:
         print(f"    Error posting comment: {e}")
@@ -119,9 +117,7 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path = None, custom_text: 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
     try:
-        subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-        )
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
         return True
     except subprocess.CalledProcessError as e:
         print(f"    Error posting comment: {e}")

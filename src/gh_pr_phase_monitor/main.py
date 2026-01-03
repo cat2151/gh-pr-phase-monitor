@@ -116,10 +116,7 @@ def main():
             consecutive_failures += 1
 
             if consecutive_failures >= 3:
-                print(
-                    "\nEncountered 3 consecutive unexpected errors; "
-                    "exiting to avoid an infinite error loop."
-                )
+                print("\nEncountered 3 consecutive unexpected errors; exiting to avoid an infinite error loop.")
                 sys.exit(1)
 
         print(f"\n{'=' * 50}")

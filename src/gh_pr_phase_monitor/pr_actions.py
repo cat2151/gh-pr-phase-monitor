@@ -25,9 +25,7 @@ def mark_pr_ready(pr_url: str, repo_dir: Path = None) -> bool:
     cmd = ["gh", "pr", "ready", pr_url]
 
     try:
-        subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-        )
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
         return True
     except subprocess.CalledProcessError as e:
         print(f"    Error marking PR as ready: {e}")
