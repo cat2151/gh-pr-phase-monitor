@@ -1,0 +1,29 @@
+name: Notify Copilot Completion
+
+on:
+  pull_request:
+    types: [synchronize] # PRへの新しいコミット（Push）を検知
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  notify-user:
+    runs-on: ubuntu-latest
+    # 条件:
+    # 1. PRがDraftではない (Ready状態である)
+    # 2. PushしたユーザーがBotである
+    # 3. そのBot名に 'copilot' が含まれる
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.sender.type == 'Bot' &&
+      contains(github.event.sender.login, 'copilot')
+    steps:
+      - name: Notify PR Author
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          gh pr comment "$PR_URL" --body "@$PR_AUTHOR 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
