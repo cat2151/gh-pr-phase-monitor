@@ -128,13 +128,13 @@ def get_current_user() -> str:
 
 def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
     """Get all repositories with open PR counts using GraphQL (Phase 1)
-    
+
     Returns:
         List of repositories with name and open PR count
         Example: [{"name": "repo1", "owner": "user", "openPRCount": 2}, ...]
     """
     current_user = get_current_user()
-    
+
     # GraphQL query to get all repositories with open PR counts
     query = """
     query($login: String!) {
@@ -157,13 +157,12 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
       }
     }
     """
-    
+
     repos_with_prs = []
     has_next_page = True
     end_cursor = None
-    
+
     while has_next_page:
-        variables = {"login": current_user}
         if end_cursor:
             # Add pagination support
             query_with_pagination = query.replace(
@@ -172,20 +171,20 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
             )
         else:
             query_with_pagination = query
-            
+
         # Execute GraphQL query using gh CLI
         cmd = ["gh", "api", "graphql", "-f", f"query={query_with_pagination}", "-F", f"login={current_user}"]
-        
+
         try:
             result = subprocess.run(
                 cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
             )
             data = json.loads(result.stdout)
-            
+
             repositories = data.get("data", {}).get("user", {}).get("repositories", {})
             nodes = repositories.get("nodes", [])
             page_info = repositories.get("pageInfo", {})
-            
+
             # Filter repositories with open PRs
             for repo in nodes:
                 pr_count = repo.get("pullRequests", {}).get("totalCount", 0)
@@ -195,46 +194,46 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
                         "owner": repo.get("owner", {}).get("login"),
                         "openPRCount": pr_count
                     })
-            
+
             has_next_page = page_info.get("hasNextPage", False)
             end_cursor = page_info.get("endCursor")
-            
+
         except subprocess.CalledProcessError as e:
             print(f"Error fetching repositories: {e}")
             if e.stderr:
                 print(f"stderr: {e.stderr}")
             break
-    
+
     return repos_with_prs
 
 
 def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Get PR details for multiple repositories in a single GraphQL query (Phase 2)
-    
+
     Args:
         repos: List of repository dicts with 'name' and 'owner' keys
-        
+
     Returns:
         List of PR data matching the format expected by determine_phase()
     """
     if not repos:
         return []
-    
+
     # Build GraphQL query with aliases for multiple repositories
     # Limit to 10 repos per query to avoid overly complex queries
     batch_size = 10
     all_prs = []
-    
+
     for i in range(0, len(repos), batch_size):
         batch = repos[i:i+batch_size]
-        
+
         # Build query fragments for each repository
         repo_queries = []
         for idx, repo in enumerate(batch):
             alias = f"repo{idx}"
             repo_name = repo["name"]
             owner = repo["owner"]
-            
+
             repo_query = f"""
             {alias}: repository(owner: "{owner}", name: "{repo_name}") {{
               name
@@ -295,7 +294,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             }}
             """
             repo_queries.append(repo_query)
-        
+
         # Combine all repository queries
         full_query = f"""
         query {{
@@ -307,26 +306,26 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
           }}
         }}
         """
-        
+
         # Execute GraphQL query
         cmd = ["gh", "api", "graphql", "-f", f"query={full_query}"]
-        
+
         try:
             result = subprocess.run(
                 cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
             )
             data = json.loads(result.stdout)
-            
+
             # Extract PR data from response
             for idx, repo in enumerate(batch):
                 alias = f"repo{idx}"
                 repo_data = data.get("data", {}).get(alias, {})
-                
+
                 if repo_data:
                     prs = repo_data.get("pullRequests", {}).get("nodes", [])
                     repo_name = repo_data.get("name", repo["name"])
                     owner = repo_data.get("owner", {}).get("login", repo["owner"])
-                    
+
                     # Transform GraphQL data to match expected format
                     for pr in prs:
                         # Transform reviews
@@ -337,7 +336,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                 "state": review.get("state", ""),
                                 "body": review.get("body", "")
                             })
-                        
+
                         # Transform latestReviews
                         latest_reviews = []
                         for review in pr.get("latestReviews", {}).get("nodes", []):
@@ -345,7 +344,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                 "author": {"login": review.get("author", {}).get("login", "")},
                                 "state": review.get("state", "")
                             })
-                        
+
                         # Transform reviewRequests
                         review_requests = []
                         for req in pr.get("reviewRequests", {}).get("nodes", []):
@@ -353,7 +352,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                             login = reviewer.get("login") or reviewer.get("name", "")
                             if login:
                                 review_requests.append({"login": login})
-                        
+
                         # Add repository info to PR
                         pr_with_repo = {
                             "title": pr.get("title", ""),
@@ -375,23 +374,23 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                             }
                         }
                         all_prs.append(pr_with_repo)
-            
+
             # Print rate limit info
             rate_limit = data.get("data", {}).get("rateLimit", {})
             if rate_limit:
                 print(f"  GraphQL API - Cost: {rate_limit.get('cost')}, Remaining: {rate_limit.get('remaining')}")
-                
+
         except subprocess.CalledProcessError as e:
             print(f"Error fetching PR details: {e}")
             if e.stderr:
                 print(f"stderr: {e.stderr}")
-    
+
     return all_prs
 
 
 def get_pr_data(repo_dir: Path) -> List[Dict[str, Any]]:
     """Get PR data from GitHub CLI (Legacy function - kept for compatibility)
-    
+
     This function is no longer used in the main flow but kept for potential
     backwards compatibility or testing purposes.
     """
@@ -663,7 +662,7 @@ def open_browser(url: str) -> None:
 
 def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
     """Process a single PR
-    
+
     Args:
         pr: PR data dictionary (with repository info)
         config: Configuration dictionary (optional)
@@ -674,17 +673,17 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
     title = pr.get("title", "Unknown")
     url = pr.get("url", "")
     phase = determine_phase(pr)
-    
+
     # Phase表示をカラフルに
     phase_display = colorize_phase(phase)
     print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
     print(f"    URL: {url}")
-    
+
     # Phase 1, 2, 3 の場合はブラウザで開く
     if phase in ["phase1", "phase2", "phase3"]:
         print("    Opening browser...")
         open_browser(url)
-        
+
         # Mark PR as ready for review when in phase 1
         if phase == "phase1":
             print("    Marking PR as ready for review...")
@@ -692,7 +691,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
                 print("    PR marked as ready successfully")
             else:
                 print("    Failed to mark PR as ready")
-        
+
         # Post comment when in phase 2
         if phase == "phase2":
             print("    Posting comment for phase2...")
@@ -700,7 +699,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
                 print("    Comment posted successfully")
             else:
                 print("    Failed to post comment")
-        
+
         # Post comment when in phase 3
         if phase == "phase3":
             print("    Posting comment for phase3...")
@@ -841,18 +840,18 @@ def main():
             # Phase 1: Get all repositories with open PRs (lightweight query)
             print("\nPhase 1: Fetching repositories with open PRs...")
             repos_with_prs = get_repositories_with_open_prs()
-            
+
             if not repos_with_prs:
                 print("  No repositories with open PRs found")
             else:
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
                     print(f"    - {repo['owner']}/{repo['name']}: {repo['openPRCount']} open PR(s)")
-                
+
                 # Phase 2: Get PR details for repositories with open PRs (detailed query)
                 print(f"\nPhase 2: Fetching PR details for {len(repos_with_prs)} repositories...")
                 all_prs = get_pr_details_batch(repos_with_prs)
-                
+
                 if not all_prs:
                     print("  No PRs found")
                 else:
@@ -860,10 +859,10 @@ def main():
                     print(f"\n{'=' * 50}")
                     print("Processing PRs:")
                     print(f"{'=' * 50}")
-                    
+
                     for pr in all_prs:
                         process_pr(pr, config)
-                        
+
         except RuntimeError as e:
             print(f"\nError: {e}")
             print("Please ensure you are authenticated with gh CLI")
