@@ -99,17 +99,74 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     return "LLM working"
 
 
-def post_phase2_comment(pr_url: str, repo_dir: Path) -> bool:
-    """Post a comment to PR when phase2 is detected
+def get_existing_comments(pr_url: str, repo_dir: Path) -> List[Dict[str, Any]]:
+    """Get existing comments on a PR
 
     Args:
         pr_url: URL of the PR
         repo_dir: Repository directory
 
     Returns:
+        List of comment dictionaries
+    """
+    cmd = ["gh", "pr", "view", pr_url, "--json", "comments"]
+
+    try:
+        result = subprocess.run(
+            cmd, cwd=repo_dir, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
+        )
+        data = json.loads(result.stdout)
+        return data.get("comments", [])
+    except (subprocess.CalledProcessError, json.JSONDecodeError):
+        return []
+
+
+def has_copilot_apply_comment(comments: List[Dict[str, Any]]) -> bool:
+    """Check if a '@copilot apply changes' comment already exists
+
+    Args:
+        comments: List of comment dictionaries
+
+    Returns:
+        True if comment exists, False otherwise
+    """
+    for comment in comments:
+        body = comment.get("body", "")
+        if "@copilot apply changes" in body:
+            return True
+    return False
+
+
+def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
+    """Post a comment to PR when phase2 is detected
+
+    Args:
+        pr: PR data dictionary containing url and reviews
+        repo_dir: Repository directory
+
+    Returns:
         True if comment was posted successfully, False otherwise
     """
-    comment_body = "@copilot apply changes based on the review comments"
+    pr_url = pr.get("url", "")
+    if not pr_url:
+        return False
+
+    # Check if we already posted a comment
+    existing_comments = get_existing_comments(pr_url, repo_dir)
+    if has_copilot_apply_comment(existing_comments):
+        print("    Comment already exists, skipping")
+        return True
+
+    # Get the latest review to include its URL in the comment
+    reviews = pr.get("reviews", [])
+    if reviews:
+        reviews[-1]
+        # Try to construct review URL from PR URL and review info
+        # Reviews don't have direct URLs in the JSON, but we can link to the PR
+        comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
+    else:
+        comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
+
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
     try:
@@ -119,7 +176,8 @@ def post_phase2_comment(pr_url: str, repo_dir: Path) -> bool:
         return True
     except subprocess.CalledProcessError as e:
         print(f"    Error posting comment: {e}")
-        print(f"    stderr: {e.stderr}")
+        stderr = getattr(e, "stderr", "No stderr available")
+        print(f"    stderr: {stderr}")
         return False
 
 
@@ -157,7 +215,7 @@ def process_repository(repo_dir: Path) -> None:
                 # Post comment when in phase 2
                 if phase == "phase2":
                     print("    Posting comment for phase2...")
-                    if post_phase2_comment(url, repo_dir):
+                    if post_phase2_comment(pr, repo_dir):
                         print("    Comment posted successfully")
                     else:
                         print("    Failed to post comment")
