@@ -111,9 +111,7 @@ def get_current_user() -> str:
     cmd = ["gh", "api", "user", "--jq", ".login"]
 
     try:
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
-        )
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
         _current_user_cache = result.stdout.strip()
         return _current_user_cache
     except subprocess.CalledProcessError as e:
@@ -330,6 +328,30 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path, custom_text: str) ->
         return False
 
 
+def mark_pr_ready(pr_url: str, repo_dir: Path) -> bool:
+    """Mark a draft PR as ready for review using gh command
+
+    Args:
+        pr_url: URL of the PR
+        repo_dir: Repository directory
+
+    Returns:
+        True if PR was successfully marked as ready, False otherwise
+    """
+    cmd = ["gh", "pr", "ready", pr_url]
+
+    try:
+        subprocess.run(
+            cmd, cwd=repo_dir, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"    Error marking PR as ready: {e}")
+        stderr = getattr(e, "stderr", "No stderr available")
+        print(f"    stderr: {stderr}")
+        return False
+
+
 def open_browser(url: str) -> None:
     """Open URL in browser"""
     webbrowser.open(url)
@@ -365,6 +387,14 @@ def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
             if phase in ["phase1", "phase2", "phase3"]:
                 print("    Opening browser...")
                 open_browser(url)
+
+                # Mark PR as ready for review when in phase 1
+                if phase == "phase1":
+                    print("    Marking PR as ready for review...")
+                    if mark_pr_ready(url, repo_dir):
+                        print("    PR marked as ready successfully")
+                    else:
+                        print("    Failed to mark PR as ready")
 
                 # Post comment when in phase 2
                 if phase == "phase2":
@@ -417,7 +447,9 @@ def main():
     if "phase3_comment_message" not in config:
         print("Error: 'phase3_comment_message' is required in config file")
         print("\nExpected format:")
-        print('phase3_comment_message = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."')
+        print(
+            'phase3_comment_message = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."'
+        )
         sys.exit(1)
 
     # Get interval setting (default to 1 minute if not specified)

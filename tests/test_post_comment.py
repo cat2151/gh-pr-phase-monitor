@@ -14,6 +14,7 @@ from gh_pr_phase_monitor import (
     get_existing_comments,
     has_copilot_apply_comment,
     has_phase3_review_comment,
+    mark_pr_ready,
     post_phase2_comment,
     post_phase3_comment,
 )
@@ -80,6 +81,7 @@ class TestGetCurrentUser:
         """Test successful retrieval of current user"""
         # Reset cache before test
         import gh_pr_phase_monitor
+
         gh_pr_phase_monitor._current_user_cache = None
 
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n")
@@ -96,6 +98,7 @@ class TestGetCurrentUser:
         """Test handling of failure to retrieve current user"""
         # Reset cache before test
         import gh_pr_phase_monitor
+
         gh_pr_phase_monitor._current_user_cache = None
 
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
@@ -108,6 +111,7 @@ class TestGetCurrentUser:
         """Test that get_current_user uses cached value on subsequent calls"""
         # Reset cache before test
         import gh_pr_phase_monitor
+
         gh_pr_phase_monitor._current_user_cache = None
 
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n")
@@ -127,6 +131,7 @@ class TestGetCurrentUser:
         """Test that authentication failures are not cached, allowing retries"""
         # Reset cache before test
         import gh_pr_phase_monitor
+
         gh_pr_phase_monitor._current_user_cache = None
 
         # First call fails
@@ -253,7 +258,9 @@ class TestHasPhase3ReviewComment:
         """Test detection when Japanese review comment exists"""
         comments = [
             {"body": "Some other comment"},
-            {"body": "@user 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."},
+            {
+                "body": "@user 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+            },
             {"body": "Another comment"},
         ]
 
@@ -310,7 +317,10 @@ class TestPostPhase3Comment:
         assert cmd[3] == "https://github.com/user/repo/pull/123"
         assert cmd[4] == "--body"
         # Should be "@currentuser " + custom_text
-        assert cmd[5] == "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+        assert (
+            cmd[5]
+            == "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+        )
 
     @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
@@ -357,7 +367,9 @@ class TestPostPhase3Comment:
     def test_post_comment_skips_if_exists(self, mock_run, mock_get_comments, mock_get_user):
         """Test that comment posting is skipped if comment already exists"""
         mock_get_comments.return_value = [
-            {"body": "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."}
+            {
+                "body": "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+            }
         ]
         mock_get_user.return_value = "currentuser"
 
@@ -442,4 +454,64 @@ class TestPostPhase3Comment:
         assert result is False
 
 
+class TestMarkPrReady:
+    """Test the mark_pr_ready function"""
 
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_mark_pr_ready_success(self, mock_run):
+        """Test successful marking of PR as ready for review"""
+        mock_run.return_value = MagicMock(returncode=0)
+
+        pr_url = "https://github.com/user/repo/pull/123"
+        repo_dir = Path("/tmp/test-repo")
+
+        result = mark_pr_ready(pr_url, repo_dir)
+
+        assert result is True
+        assert mock_run.call_count == 1
+
+        # Verify command arguments
+        call_args = mock_run.call_args
+        cmd = call_args[0][0]
+        assert cmd == ["gh", "pr", "ready", "https://github.com/user/repo/pull/123"]
+
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_mark_pr_ready_failure(self, mock_run):
+        """Test failed marking of PR as ready"""
+        error = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "ready"])
+        error.stderr = "Error: PR not found or not a draft"
+        mock_run.side_effect = error
+
+        pr_url = "https://github.com/user/repo/pull/999"
+        repo_dir = Path("/tmp/test-repo")
+
+        result = mark_pr_ready(pr_url, repo_dir)
+
+        assert result is False
+
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_mark_pr_ready_with_correct_cwd(self, mock_run):
+        """Test that PR ready marking uses correct working directory"""
+        mock_run.return_value = MagicMock(returncode=0)
+
+        pr_url = "https://github.com/user/repo/pull/123"
+        repo_dir = Path("/custom/repo/path")
+
+        mark_pr_ready(pr_url, repo_dir)
+
+        call_kwargs = mock_run.call_args[1]
+        assert call_kwargs["cwd"] == repo_dir
+
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_mark_pr_ready_handles_missing_stderr(self, mock_run):
+        """Test that missing stderr is handled gracefully"""
+        error = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "ready"])
+        # Don't set stderr attribute
+        mock_run.side_effect = error
+
+        pr_url = "https://github.com/user/repo/pull/999"
+        repo_dir = Path("/tmp/test-repo")
+
+        result = mark_pr_ready(pr_url, repo_dir)
+
+        assert result is False
