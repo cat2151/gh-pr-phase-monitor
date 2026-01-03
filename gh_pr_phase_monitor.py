@@ -137,6 +137,22 @@ def has_copilot_apply_comment(comments: List[Dict[str, Any]]) -> bool:
     return False
 
 
+def has_phase3_review_comment(comments: List[Dict[str, Any]]) -> bool:
+    """Check if a phase3 review request comment already exists
+
+    Args:
+        comments: List of comment dictionaries
+
+    Returns:
+        True if comment exists, False otherwise
+    """
+    for comment in comments:
+        body = comment.get("body", "")
+        if "🎁レビューお願いします🎁" in body or "Please review the updates" in body:
+            return True
+    return False
+
+
 def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
     """Post a comment to PR when phase2 is detected
 
@@ -166,6 +182,47 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
         comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
     else:
         comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
+
+    cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
+
+    try:
+        subprocess.run(
+            cmd, cwd=repo_dir, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"    Error posting comment: {e}")
+        stderr = getattr(e, "stderr", "No stderr available")
+        print(f"    stderr: {stderr}")
+        return False
+
+
+def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
+    """Post a comment to PR when phase3 is detected
+
+    Args:
+        pr: PR data dictionary containing url and author
+        repo_dir: Repository directory
+
+    Returns:
+        True if comment was posted successfully, False otherwise
+    """
+    pr_url = pr.get("url", "")
+    if not pr_url:
+        return False
+
+    # Check if we already posted a comment
+    existing_comments = get_existing_comments(pr_url, repo_dir)
+    if has_phase3_review_comment(existing_comments):
+        print("    Comment already exists, skipping")
+        return True
+
+    # Get the PR author
+    pr_author = pr.get("author", {}).get("login", "")
+    if pr_author:
+        comment_body = f"@{pr_author} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+    else:
+        comment_body = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
@@ -216,6 +273,14 @@ def process_repository(repo_dir: Path) -> None:
                 if phase == "phase2":
                     print("    Posting comment for phase2...")
                     if post_phase2_comment(pr, repo_dir):
+                        print("    Comment posted successfully")
+                    else:
+                        print("    Failed to post comment")
+
+                # Post comment when in phase 3
+                if phase == "phase3":
+                    print("    Posting comment for phase3...")
+                    if post_phase3_comment(pr, repo_dir):
                         print("    Comment posted successfully")
                     else:
                         print("    Failed to post comment")
