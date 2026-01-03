@@ -93,11 +93,11 @@ class TestGetCurrentUser:
         cmd = mock_run.call_args[0][0]
         assert cmd == ["gh", "api", "user", "--jq", ".login"]
 
-    @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
     def test_get_current_user_failure(self, mock_run):
         """Test handling of failure to retrieve current user"""
         # Reset cache before test
-        import gh_pr_phase_monitor
+        from src.gh_pr_phase_monitor import github_client
 
         github_client._current_user_cache = None
 
@@ -106,11 +106,11 @@ class TestGetCurrentUser:
         with pytest.raises(RuntimeError, match="Failed to retrieve current GitHub user"):
             get_current_user()
 
-    @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
     def test_get_current_user_uses_cache(self, mock_run):
         """Test that get_current_user uses cached value on subsequent calls"""
         # Reset cache before test
-        import gh_pr_phase_monitor
+        from src.gh_pr_phase_monitor import github_client
 
         github_client._current_user_cache = None
 
@@ -126,11 +126,11 @@ class TestGetCurrentUser:
         assert result2 == "testuser"
         assert mock_run.call_count == 1  # Still only called once
 
-    @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
     def test_get_current_user_does_not_cache_failures(self, mock_run):
         """Test that authentication failures are not cached, allowing retries"""
         # Reset cache before test
-        import gh_pr_phase_monitor
+        from src.gh_pr_phase_monitor import github_client
 
         github_client._current_user_cache = None
 
@@ -291,7 +291,7 @@ class TestHasPhase3ReviewComment:
 class TestPostPhase3Comment:
     """Test the post_phase3_comment function"""
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_success_with_user(self, mock_run, mock_get_comments, mock_get_user):
@@ -323,7 +323,7 @@ class TestPostPhase3Comment:
             == "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
         )
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_without_current_user_raises_error(self, mock_run, mock_get_comments, mock_get_user):
@@ -342,7 +342,7 @@ class TestPostPhase3Comment:
         # Should not have attempted to post comment
         mock_run.assert_not_called()
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_with_custom_text(self, mock_run, mock_get_comments, mock_get_user):
@@ -362,7 +362,7 @@ class TestPostPhase3Comment:
         cmd = call_args[0][0]
         assert cmd[5] == "@testuser Please review this PR!"
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_skips_if_exists(self, mock_run, mock_get_comments, mock_get_user):
@@ -383,7 +383,7 @@ class TestPostPhase3Comment:
         assert result is True
         mock_run.assert_not_called()
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_failure(self, mock_run, mock_get_comments, mock_get_user):
@@ -402,7 +402,7 @@ class TestPostPhase3Comment:
 
         assert result is False
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_with_correct_cwd(self, mock_run, mock_get_comments, mock_get_user):
@@ -421,7 +421,7 @@ class TestPostPhase3Comment:
         call_kwargs = mock_run.call_args[1]
         assert "cwd" not in call_kwargs
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     def test_post_comment_no_url(self, mock_get_comments, mock_get_user):
         """Test handling of PR without URL"""
@@ -436,7 +436,7 @@ class TestPostPhase3Comment:
 
         assert result is False
 
-    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("src.gh_pr_phase_monitor.comment_manager.get_current_user")
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")
     @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
     def test_post_comment_handles_missing_stderr(self, mock_run, mock_get_comments, mock_get_user):
