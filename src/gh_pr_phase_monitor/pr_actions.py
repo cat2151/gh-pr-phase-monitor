@@ -62,39 +62,37 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
     print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
     print(f"    URL: {url}")
 
-    # Open browser for phase 1, 2, 3
-    if phase in ["phase1", "phase2", "phase3"]:
+    # Mark PR as ready for review when in phase 1
+    if phase == "phase1":
+        print("    Marking PR as ready for review...")
+        if mark_pr_ready(url, None):
+            print("    PR marked as ready successfully")
+        else:
+            print("    Failed to mark PR as ready")
+
+    # Post comment when in phase 2
+    if phase == "phase2":
+        print("    Posting comment for phase2...")
+        if post_phase2_comment(pr, None):
+            print("    Comment posted successfully")
+        else:
+            print("    Failed to post comment")
+
+    # Open browser and post comment when in phase 3
+    if phase == "phase3":
         print("    Opening browser...")
         open_browser(url)
 
-        # Mark PR as ready for review when in phase 1
-        if phase == "phase1":
-            print("    Marking PR as ready for review...")
-            if mark_pr_ready(url, None):
-                print("    PR marked as ready successfully")
-            else:
-                print("    Failed to mark PR as ready")
-
-        # Post comment when in phase 2
-        if phase == "phase2":
-            print("    Posting comment for phase2...")
-            if post_phase2_comment(pr, None):
+        print("    Posting comment for phase3...")
+        # phase3_comment_message is required and validated in main()
+        if config and "phase3_comment_message" in config:
+            phase3_text = config["phase3_comment_message"]
+            if post_phase3_comment(pr, None, phase3_text):
                 print("    Comment posted successfully")
             else:
                 print("    Failed to post comment")
-
-        # Post comment when in phase 3
-        if phase == "phase3":
-            print("    Posting comment for phase3...")
-            # phase3_comment_message is required and validated in main()
-            if config and "phase3_comment_message" in config:
-                phase3_text = config["phase3_comment_message"]
-                if post_phase3_comment(pr, None, phase3_text):
-                    print("    Comment posted successfully")
-                else:
-                    print("    Failed to post comment")
-            else:
-                print("    Warning: phase3_comment_message not configured, skipping comment")
+        else:
+            print("    Warning: phase3_comment_message not configured, skipping comment")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
