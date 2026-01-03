@@ -8,7 +8,13 @@ import time
 import traceback
 
 from .config import load_config, parse_interval
-from .github_client import get_pr_details_batch, get_repositories_with_open_prs
+from .github_client import (
+    get_issues_from_repositories,
+    get_pr_details_batch,
+    get_repositories_with_no_prs_and_open_issues,
+    get_repositories_with_open_prs,
+)
+from .phase_detector import determine_phase
 from .pr_actions import process_pr
 
 
@@ -98,8 +104,50 @@ def main():
                     print("Processing PRs:")
                     print(f"{'=' * 50}")
 
+                    # Track phases to detect if all PRs are in "LLM working"
+                    pr_phases = []
                     for pr in all_prs:
+                        phase = determine_phase(pr)
+                        pr_phases.append(phase)
                         process_pr(pr, config)
+
+                    # Check if all PRs are in "LLM working" phase
+                    if pr_phases and all(phase == "LLM working" for phase in pr_phases):
+                        print(f"\n{'=' * 50}")
+                        print("All PRs are in 'LLM working' phase")
+                        print("Checking for repositories with no open PRs but with open issues...")
+                        print(f"{'=' * 50}")
+
+                        try:
+                            repos_with_issues = get_repositories_with_no_prs_and_open_issues()
+
+                            if not repos_with_issues:
+                                print("  No repositories found with open issues and no open PRs")
+                            else:
+                                print(f"  Found {len(repos_with_issues)} repositories with open issues (no open PRs):")
+                                for repo in repos_with_issues:
+                                    print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
+
+                                print(f"\n{'=' * 50}")
+                                print("Fetching top 10 issues from these repositories...")
+                                print(f"{'=' * 50}")
+
+                                top_issues = get_issues_from_repositories(repos_with_issues, limit=10)
+
+                                if not top_issues:
+                                    print("  No issues found")
+                                else:
+                                    print(f"\n  Top {len(top_issues)} issues (sorted by last update, descending):\n")
+                                    for idx, issue in enumerate(top_issues, 1):
+                                        repo_info = issue["repository"]
+                                        print(f"  {idx}. [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
+                                        print(f"     URL: {issue['url']}")
+                                        print(f"     Author: {issue['author']['login']}")
+                                        print(f"     Updated: {issue['updatedAt']}")
+                                        print()
+                        except Exception as e:
+                            print(f"  Error fetching issues: {e}")
+                            traceback.print_exc()
 
             # Reset consecutive-failure counter on a successful iteration
             consecutive_failures = 0
