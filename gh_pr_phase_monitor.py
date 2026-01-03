@@ -53,6 +53,12 @@ def parse_interval(interval_str: str) -> int:
     Raises:
         ValueError: If the interval string format is invalid
     """
+    # Type validation for common misconfiguration
+    if not isinstance(interval_str, str):
+        raise ValueError(
+            f"Interval must be a string (e.g., '1m', '30s'), got {type(interval_str).__name__}: {interval_str}"
+        )
+
     interval_str = interval_str.strip().lower()
 
     # Match pattern like "30s", "1m", "2h", "1d"
@@ -375,7 +381,7 @@ def main():
     print("=" * 50)
 
     # Set up signal handler for graceful interruption
-    def signal_handler(signum, frame):
+    def signal_handler(_signum, _frame):
         print("\n\nMonitoring interrupted by user (CTRL+C)")
         print("Exiting...")
         sys.exit(0)

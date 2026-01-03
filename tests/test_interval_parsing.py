@@ -61,8 +61,8 @@ class TestParseInterval:
 
     def test_invalid_unit(self):
         """Test that invalid unit raises ValueError"""
-        # This test won't trigger because regex only matches s/m/h/d
-        # But we keep it for documentation
+        # The regex only accepts units s/m/h/d; this test documents and verifies
+        # that unsupported units like "w" are rejected with ValueError.
         with pytest.raises(ValueError, match="Invalid interval format"):
             parse_interval("1w")
 
@@ -70,3 +70,15 @@ class TestParseInterval:
         """Test that zero value is allowed"""
         assert parse_interval("0s") == 0
         assert parse_interval("0m") == 0
+        assert parse_interval("0h") == 0
+        assert parse_interval("0d") == 0
+
+    def test_invalid_type_integer(self):
+        """Test that integer input raises ValueError with helpful message"""
+        with pytest.raises(ValueError, match="Interval must be a string"):
+            parse_interval(60)
+
+    def test_invalid_type_float(self):
+        """Test that float input raises ValueError with helpful message"""
+        with pytest.raises(ValueError, match="Interval must be a string"):
+            parse_interval(1.5)
