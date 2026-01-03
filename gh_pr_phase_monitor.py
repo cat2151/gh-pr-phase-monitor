@@ -154,7 +154,7 @@ def process_repository(repo_dir: Path) -> None:
                 print("    Opening browser...")
                 open_browser(url)
 
-                # Phase 2 の場合はコメントを投稿
+                # Post comment when in phase 2
                 if phase == "phase2":
                     print("    Posting comment for phase2...")
                     if post_phase2_comment(url, repo_dir):

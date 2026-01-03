@@ -38,9 +38,9 @@ class TestPostPhase2Comment:
     @patch("gh_pr_phase_monitor.subprocess.run")
     def test_post_comment_failure(self, mock_run):
         """Test failed comment posting"""
-        mock_run.side_effect = subprocess.CalledProcessError(
-            returncode=1, cmd=["gh", "pr", "comment"], stderr="Error: PR not found"
-        )
+        error = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "comment"])
+        error.stderr = "Error: PR not found"
+        mock_run.side_effect = error
 
         pr_url = "https://github.com/user/repo/pull/999"
         repo_dir = Path("/tmp/test-repo")
