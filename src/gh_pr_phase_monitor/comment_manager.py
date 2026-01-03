@@ -61,15 +61,9 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
         print("    Comment already exists, skipping")
         return True
 
-    # Get the latest review to include its URL in the comment
-    reviews = pr.get("reviews", [])
-    if reviews:
-        reviews[-1]
-        # Try to construct review URL from PR URL and review info
-        # Reviews don't have direct URLs in the JSON, but we can link to the PR
-        comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
-    else:
-        comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
+    # Construct comment body linking to the PR
+    # Reviews don't have direct URLs in the JSON, but we can link to the PR
+    comment_body = f"@copilot apply changes based on the comments in [this pull request]({pr_url})"
 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
