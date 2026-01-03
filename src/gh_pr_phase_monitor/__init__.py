@@ -19,7 +19,7 @@ from .github_client import (
     get_pr_details_batch,
     get_repositories_with_open_prs,
 )
-from .phase_detector import determine_phase, has_inline_review_comments
+from .phase_detector import determine_phase, has_comments_with_reactions, has_inline_review_comments
 from .pr_actions import mark_pr_ready, open_browser, process_pr, process_repository
 
 __all__ = [
@@ -37,6 +37,7 @@ __all__ = [
     "get_existing_comments",
     # Phase Detector
     "determine_phase",
+    "has_comments_with_reactions",
     "has_inline_review_comments",
     # Comment Manager
     "has_copilot_apply_comment",
