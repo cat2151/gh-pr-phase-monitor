@@ -280,15 +280,14 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
         return False
 
 
-def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path, comment_message: str = None) -> bool:
+def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path, custom_text: str) -> bool:
     """Post a comment to PR when phase3 is detected
 
     Args:
         pr: PR data dictionary containing url
         repo_dir: Repository directory
-        comment_message: Custom comment message template (optional).
-                        Use {user} placeholder for current user mention.
-                        If None, uses default message.
+        custom_text: Custom text to append after "@{user} " prefix.
+                     Required parameter from config.
 
     Returns:
         True if comment was posted successfully, False otherwise
@@ -303,21 +302,15 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path, comment_message: str
         print("    Comment already exists, skipping")
         return True
 
-    # Use default message if not provided
-    if comment_message is None:
-        comment_message = "@{user} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+    # Get the current authenticated user
+    current_user = get_current_user()
 
-    # Get the current authenticated user and substitute in message
-    if "{user}" in comment_message:
-        current_user = get_current_user()
-        if current_user:
-            comment_body = comment_message.replace("{user}", current_user)
-        else:
-            # Remove {user} or @{user} placeholder if user is unavailable
-            # Use regex to handle both forms and trailing whitespace
-            comment_body = re.sub(r"@?\{user\}\s*", "", comment_message)
+    # Build comment body with hardcoded "@{user} " prefix
+    if current_user:
+        comment_body = f"@{current_user} {custom_text}"
     else:
-        comment_body = comment_message
+        # If user unavailable, just use the custom text without mention
+        comment_body = custom_text
 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
@@ -380,10 +373,8 @@ def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
                 # Post comment when in phase 3
                 if phase == "phase3":
                     print("    Posting comment for phase3...")
-                    phase3_message = None
-                    if config:
-                        phase3_message = config.get("phase3_comment_message")
-                    if post_phase3_comment(pr, repo_dir, phase3_message):
+                    phase3_text = config.get("phase3_comment_message")
+                    if post_phase3_comment(pr, repo_dir, phase3_text):
                         print("    Comment posted successfully")
                     else:
                         print("    Failed to post comment")
@@ -415,6 +406,13 @@ def main():
 
     if not dirs:
         print("Error: No directories specified in config")
+        sys.exit(1)
+
+    # Validate required phase3_comment_message field
+    if "phase3_comment_message" not in config:
+        print("Error: 'phase3_comment_message' is required in config file")
+        print("\nExpected format:")
+        print('phase3_comment_message = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."')
         sys.exit(1)
 
     # Get interval setting (default to 1 minute if not specified)
