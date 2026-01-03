@@ -66,9 +66,13 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     is_draft = pr.get("isDraft", False)
     reviews = pr.get("reviews", [])
     latest_reviews = pr.get("latestReviews", [])
+    review_requests = pr.get("reviewRequests", [])
 
-    # Phase 1: Draft状態
+    # Phase 1: Draft状態 (ただし、reviewRequestsが空の場合はLLM working)
     if is_draft:
+        # reviewRequestsが空なら、LLM workingと判定
+        if not review_requests:
+            return "LLM working"
         return "phase1"
 
     # Phase 2 と Phase 3 の判定には reviews が必要

@@ -15,9 +15,14 @@ class TestDeterminePhase:
     """Test the determine_phase function"""
 
     def test_phase1_draft_pr(self):
-        """Draft PRs should be phase1"""
-        pr = {"isDraft": True, "reviews": [], "latestReviews": []}
+        """Draft PRs with reviewRequests should be phase1"""
+        pr = {"isDraft": True, "reviews": [], "latestReviews": [], "reviewRequests": [{"login": "user1"}]}
         assert determine_phase(pr) == "phase1"
+
+    def test_llm_working_draft_pr_no_review_requests(self):
+        """Draft PRs with no reviewRequests should be 'LLM working'"""
+        pr = {"isDraft": True, "reviews": [], "latestReviews": [], "reviewRequests": []}
+        assert determine_phase(pr) == "LLM working"
 
     def test_llm_working_no_reviews(self):
         """PRs with no reviews should be 'LLM working'"""
