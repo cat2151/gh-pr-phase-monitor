@@ -83,6 +83,14 @@ class TestHasCommentsWithReactions:
         ]
         assert has_comments_with_reactions(comments) is True
 
+    def test_backward_compatibility_with_integer(self):
+        """Integer comments (from legacy API) should return False"""
+        assert has_comments_with_reactions(5) is False
+
+    def test_backward_compatibility_with_none(self):
+        """None comments should return False"""
+        assert has_comments_with_reactions(None) is False
+
 
 class TestDeterminePhase:
     """Test the determine_phase function"""
@@ -265,7 +273,7 @@ class TestDeterminePhase:
                 }
             ],
             "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
-            "comments": [
+            "commentNodes": [
                 {
                     "body": "Please fix this issue",
                     "reactionGroups": [
@@ -289,7 +297,7 @@ class TestDeterminePhase:
                 }
             ],
             "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
-            "comments": [
+            "commentNodes": [
                 {"body": "Please fix this issue", "reactionGroups": []},
             ],
         }
@@ -308,7 +316,7 @@ class TestDeterminePhase:
                 }
             ],
             "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
-            "comments": [
+            "commentNodes": [
                 {
                     "body": "Some comment",
                     "reactionGroups": [
@@ -319,3 +327,20 @@ class TestDeterminePhase:
         }
 
         assert determine_phase(pr) == "LLM working"
+
+    def test_backward_compatibility_with_integer_comments(self):
+        """PR with integer comments (legacy API) should work correctly"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "Copilot reviewed 2 out of 2 changed files in this pull request and generated 1 comment.",
+                }
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
+            "comments": 5,  # Legacy API returns integer
+        }
+
+        assert determine_phase(pr) == "phase2"

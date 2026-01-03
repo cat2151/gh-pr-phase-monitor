@@ -9,18 +9,20 @@ from typing import Any, Dict, List
 def has_comments_with_reactions(comments: List[Dict[str, Any]]) -> bool:
     """Check if any comments have non-empty reactionGroups
 
-    When the LLM (coding agent) is working on addressing review comments,
+    When the LLM (coding agent) is working on addressing PR comments
+    (general pull request comments fetched via the `comments` field),
     those comments may have reactions (GitHub reactions like 👍, 👎, 😄, 🎉,
     😕, ❤️, 🚀, 👀, etc.) indicating the bot is processing them.
     This indicates the LLM is actively working.
 
     Args:
-        comments: List of comment dictionaries with reactionGroups
+        comments: List of comment dictionaries with reactionGroups, or None/integer for backward compatibility
 
     Returns:
         True if any comment has non-empty reactionGroups, False otherwise
     """
-    if not comments:
+    # Handle backward compatibility: comments might be an integer or None from legacy API
+    if not comments or not isinstance(comments, list):
         return False
 
     for comment in comments:
@@ -71,12 +73,13 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     reviews = pr.get("reviews", [])
     latest_reviews = pr.get("latestReviews", [])
     review_requests = pr.get("reviewRequests", [])
-    comments = pr.get("comments", [])
+    # Use commentNodes if available (new API), fall back to comments for legacy compatibility
+    comment_nodes = pr.get("commentNodes", pr.get("comments", []))
 
     # Check if any comments have reactions - this indicates LLM is working
-    # When the coding agent is responding to review comments, those comments
+    # When the coding agent is responding to PR comments, those comments
     # may have reactions indicating the bot is processing them
-    if has_comments_with_reactions(comments):
+    if has_comments_with_reactions(comment_nodes):
         return "LLM working"
 
     # Phase 1: Draft状態 (ただし、reviewRequestsが空の場合はLLM working)
