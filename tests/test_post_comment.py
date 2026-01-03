@@ -76,7 +76,7 @@ class TestHasCopilotApplyComment:
 class TestGetCurrentUser:
     """Test the get_current_user function"""
 
-    @patch("src.gh_pr_phase_monitor.comment_manager.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
     def test_get_current_user_success(self, mock_run):
         """Test successful retrieval of current user"""
         # Reset cache before test

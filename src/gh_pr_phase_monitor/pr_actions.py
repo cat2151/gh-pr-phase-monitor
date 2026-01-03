@@ -116,45 +116,11 @@ def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
             return
 
         for pr in pr_list:
-            title = pr.get("title", "Unknown")
-            url = pr.get("url", "")
-            phase = determine_phase(pr)
-
-            # Phase表示をカラフルに
-            phase_display = colorize_phase(phase)
-            print(f"  {phase_display} {title}")
-            print(f"    URL: {url}")
-
-            # Phase 1, 2, 3 の場合はブラウザで開く
-            if phase in ["phase1", "phase2", "phase3"]:
-                print("    Opening browser...")
-                open_browser(url)
-
-                # Mark PR as ready for review when in phase 1
-                if phase == "phase1":
-                    print("    Marking PR as ready for review...")
-                    if mark_pr_ready(url, repo_dir):
-                        print("    PR marked as ready successfully")
-                    else:
-                        print("    Failed to mark PR as ready")
-
-                # Post comment when in phase 2
-                if phase == "phase2":
-                    print("    Posting comment for phase2...")
-                    if post_phase2_comment(pr, repo_dir):
-                        print("    Comment posted successfully")
-                    else:
-                        print("    Failed to post comment")
-
-                # Post comment when in phase 3
-                if phase == "phase3":
-                    print("    Posting comment for phase3...")
-                    # phase3_comment_message is required and validated in main()
-                    phase3_text = config["phase3_comment_message"]
-                    if post_phase3_comment(pr, repo_dir, phase3_text):
-                        print("    Comment posted successfully")
-                    else:
-                        print("    Failed to post comment")
+            # Add repository info to PR for compatibility with process_pr
+            # Legacy get_pr_data doesn't include repository info
+            pr["repository"] = {"name": str(repo_dir.name), "owner": "Unknown"}
+            # Delegate per-PR processing to the shared helper to avoid duplication
+            process_pr(pr, config)
 
     except subprocess.CalledProcessError as e:
         print(f"  Error running gh command: {e}")
