@@ -85,18 +85,16 @@ def determine_phase(pr: Dict[str, Any]) -> str:
 
         # Phase 2/3: copilot-pull-request-reviewer のレビュー後
         if author_login == "copilot-pull-request-reviewer":
-            # レビューの状態と内容を確認
+            # レビューの状態を確認
             review_state = latest_review.get("state", "")
-            review_body = latest_review.get("body", "").strip()
 
-            # レビューが承認された、またはコメントがない場合はphase3
-            # (copilot-swe-agentが対応する必要がないため)
-            # Note: strip() handles None, empty string, and whitespace-only strings
-            if review_state == "APPROVED" or not review_body:
-                return "phase3"
+            # CHANGES_REQUESTEDの場合のみphase2 (copilot-swe-agentの対応待ち)
+            # それ以外(APPROVED, COMMENTED等)はphase3
+            # COMMENTEDで本文がある場合も、実際に変更要求がなければphase3と判定
+            if review_state == "CHANGES_REQUESTED":
+                return "phase2"
 
-            # それ以外はphase2 (copilot-swe-agentの対応待ち)
-            return "phase2"
+            return "phase3"
 
         # Phase 3: copilot-swe-agent の修正後
         if author_login == "copilot-swe-agent":

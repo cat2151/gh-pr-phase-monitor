@@ -31,15 +31,15 @@ class TestDeterminePhase:
         }
         assert determine_phase(pr) == "LLM working"
 
-    def test_phase2_copilot_reviewer_with_comments(self):
-        """Copilot reviewer with comments should be phase2"""
+    def test_phase3_copilot_reviewer_commented_with_summary(self):
+        """Copilot reviewer with COMMENTED state and summary body should be phase3"""
         pr = {
             "isDraft": False,
             "reviews": [
                 {
                     "author": {"login": "copilot-pull-request-reviewer"},
                     "state": "COMMENTED",
-                    "body": "Please fix these issues:\n- Issue 1\n- Issue 2"
+                    "body": "## Pull request overview\n\nThis PR adds comprehensive documentation."
                 }
             ],
             "latestReviews": [
@@ -49,7 +49,7 @@ class TestDeterminePhase:
                 }
             ]
         }
-        assert determine_phase(pr) == "phase2"
+        assert determine_phase(pr) == "phase3"
 
     def test_phase3_copilot_reviewer_approved(self):
         """Copilot reviewer with APPROVED state should be phase3"""
