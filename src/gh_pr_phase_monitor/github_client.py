@@ -61,26 +61,26 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
     # GraphQL query to get all repositories with open PR counts
     # Includes both user-owned repos and organization repos where user is a member
     query = """
-    query($login: String!) {
-      user(login: $login) {
-        repositories(first: REPOSITORIES_PER_PAGE, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {
-          nodes {
+    query($login: String!) {{
+      user(login: $login) {{
+        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {{
+          nodes {{
             name
-            owner {
+            owner {{
               login
-            }
-            pullRequests(states: OPEN) {
+            }}
+            pullRequests(states: OPEN) {{
               totalCount
-            }
-          }
-          pageInfo {
+            }}
+          }}
+          pageInfo {{
             hasNextPage
             endCursor
-          }
-        }
-      }
-    }
-    """.replace("REPOSITORIES_PER_PAGE", str(REPOSITORIES_PER_PAGE))
+          }}
+        }}
+      }}
+    }}
+    """.format(repositories_per_page=REPOSITORIES_PER_PAGE)
 
     repos_with_prs = []
     has_next_page = True
@@ -409,29 +409,29 @@ def get_all_repositories() -> List[Dict[str, Any]]:
 
     # GraphQL query to get all repositories with open PR and issue counts
     query = """
-    query($login: String!) {
-      user(login: $login) {
-        repositories(first: REPOSITORIES_PER_PAGE, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {
-          nodes {
+    query($login: String!) {{
+      user(login: $login) {{
+        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {{
+          nodes {{
             name
-            owner {
+            owner {{
               login
-            }
-            pullRequests(states: OPEN) {
+            }}
+            pullRequests(states: OPEN) {{
               totalCount
-            }
-            issues(states: OPEN) {
+            }}
+            issues(states: OPEN) {{
               totalCount
-            }
-          }
-          pageInfo {
+            }}
+          }}
+          pageInfo {{
             hasNextPage
             endCursor
-          }
-        }
-      }
-    }
-    """.replace("REPOSITORIES_PER_PAGE", str(REPOSITORIES_PER_PAGE))
+          }}
+        }}
+      }}
+    }}
+    """.format(repositories_per_page=REPOSITORIES_PER_PAGE)
 
     all_repos = []
     has_next_page = True

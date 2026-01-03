@@ -43,19 +43,23 @@ def open_browser(url: str) -> None:
     webbrowser.open(url)
 
 
-def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None) -> None:
+def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = None) -> None:
     """Process a single PR
 
     Args:
         pr: PR data dictionary (with repository info)
         config: Configuration dictionary (optional)
+        phase: Pre-computed phase (optional, will be computed if not provided)
     """
     repo_info = pr.get("repository", {})
     repo_name = repo_info.get("name", "Unknown")
     repo_owner = repo_info.get("owner", "Unknown")
     title = pr.get("title", "Unknown")
     url = pr.get("url", "")
-    phase = determine_phase(pr)
+
+    # Use pre-computed phase if provided, otherwise compute it
+    if phase is None:
+        phase = determine_phase(pr)
 
     # Display phase with colors
     phase_display = colorize_phase(phase)

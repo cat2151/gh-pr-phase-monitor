@@ -109,7 +109,7 @@ def main():
                     for pr in all_prs:
                         phase = determine_phase(pr)
                         pr_phases.append(phase)
-                        process_pr(pr, config)
+                        process_pr(pr, config, phase)
 
                     # Check if all PRs are in "LLM working" phase
                     if pr_phases and all(phase == PHASE_LLM_WORKING for phase in pr_phases):

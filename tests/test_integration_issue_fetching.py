@@ -14,7 +14,7 @@ from src.gh_pr_phase_monitor.github_client import (
     get_issues_from_repositories,
     get_repositories_with_no_prs_and_open_issues,
 )
-from src.gh_pr_phase_monitor.phase_detector import determine_phase
+from src.gh_pr_phase_monitor.phase_detector import PHASE_LLM_WORKING, determine_phase
 
 
 def test_integration_all_prs_llm_working():
@@ -41,8 +41,8 @@ def test_integration_all_prs_llm_working():
     }
 
     # Verify all PRs are in "LLM working" phase
-    assert determine_phase(pr1) == "LLM working"
-    assert determine_phase(pr2) == "LLM working"
+    assert determine_phase(pr1) == PHASE_LLM_WORKING
+    assert determine_phase(pr2) == PHASE_LLM_WORKING
 
     print("✓ All PRs are in 'LLM working' phase")
 
