@@ -226,9 +226,7 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
     if pr_author:
         comment_body = f"@{pr_author} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
     else:
-        comment_body = (
-            "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
-        )
+        comment_body = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
