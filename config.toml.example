@@ -19,6 +19,8 @@ interval = "1m"
 
 # Phase 3 comment message - posted when copilot finishes applying changes
 # Use {user} placeholder to mention the current authenticated GitHub user
-# If {user} is present but user cannot be determined, the comment is posted without mention
+# If the user cannot be determined:
+#   - any "@{user}" placeholder is removed so the comment is posted without a mention
+#   - any standalone "{user}" placeholder is also removed
 # Default: "@{user} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 phase3_comment_message = "@{user} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
