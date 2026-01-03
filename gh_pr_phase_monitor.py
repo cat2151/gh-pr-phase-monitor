@@ -97,7 +97,10 @@ def get_current_user() -> str:
     """Get the current authenticated GitHub user's login
 
     Returns:
-        The login name of the current authenticated user, or empty string if unavailable
+        The login name of the current authenticated user
+
+    Raises:
+        RuntimeError: If unable to retrieve the current user (authentication failure)
     """
     global _current_user_cache
 
@@ -113,14 +116,16 @@ def get_current_user() -> str:
         )
         _current_user_cache = result.stdout.strip()
         return _current_user_cache
-    except subprocess.CalledProcessError:
-        print(
-            "[gh-pr-phase-monitor] Warning: Failed to retrieve current GitHub user via "
-            "`gh api user`. You may not be mentioned in phase3 comments. "
-            "Check your GitHub CLI authentication (e.g., run `gh auth status`)."
+    except subprocess.CalledProcessError as e:
+        error_msg = (
+            "Failed to retrieve current GitHub user via `gh api user`. "
+            "GitHub CLI authentication is required for phase3 comments. "
+            "Please run `gh auth login` or `gh auth status` to check your authentication."
         )
-        # Don't cache authentication failures to allow retry on next call
-        return ""
+        print(f"\n[ERROR] {error_msg}")
+        if e.stderr:
+            print(f"Details: {e.stderr}")
+        raise RuntimeError(error_msg) from e
 
 
 def get_pr_data(repo_dir: Path) -> List[Dict[str, Any]]:
@@ -280,15 +285,20 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
         return False
 
 
-def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
+def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path, custom_text: str) -> bool:
     """Post a comment to PR when phase3 is detected
 
     Args:
         pr: PR data dictionary containing url
         repo_dir: Repository directory
+        custom_text: Custom text to append after "@{user} " prefix.
+                     Required parameter from config.
 
     Returns:
         True if comment was posted successfully, False otherwise
+
+    Raises:
+        RuntimeError: If unable to get current GitHub user (authentication failure)
     """
     pr_url = pr.get("url", "")
     if not pr_url:
@@ -300,14 +310,11 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
         print("    Comment already exists, skipping")
         return True
 
-    # Get the current authenticated user
+    # Get the current authenticated user (will raise RuntimeError if unavailable)
     current_user = get_current_user()
-    if current_user:
-        comment_body = f"@{current_user} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
-    else:
-        comment_body = (
-            "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
-        )
+
+    # Build comment body with hardcoded "@{user} " prefix
+    comment_body = f"@{current_user} {custom_text}"
 
     cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
 
@@ -328,8 +335,13 @@ def open_browser(url: str) -> None:
     webbrowser.open(url)
 
 
-def process_repository(repo_dir: Path) -> None:
-    """Process a single repository"""
+def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
+    """Process a single repository
+
+    Args:
+        repo_dir: Repository directory
+        config: Configuration dictionary (optional)
+    """
     print(f"\n=== Processing: {repo_dir} ===")
 
     try:
@@ -365,7 +377,9 @@ def process_repository(repo_dir: Path) -> None:
                 # Post comment when in phase 3
                 if phase == "phase3":
                     print("    Posting comment for phase3...")
-                    if post_phase3_comment(pr, repo_dir):
+                    # phase3_comment_message is required and validated in main()
+                    phase3_text = config["phase3_comment_message"]
+                    if post_phase3_comment(pr, repo_dir, phase3_text):
                         print("    Comment posted successfully")
                     else:
                         print("    Failed to post comment")
@@ -397,6 +411,13 @@ def main():
 
     if not dirs:
         print("Error: No directories specified in config")
+        sys.exit(1)
+
+    # Validate required phase3_comment_message field
+    if "phase3_comment_message" not in config:
+        print("Error: 'phase3_comment_message' is required in config file")
+        print("\nExpected format:")
+        print('phase3_comment_message = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."')
         sys.exit(1)
 
     # Get interval setting (default to 1 minute if not specified)
@@ -436,7 +457,7 @@ def main():
                 print(f"\nWarning: Directory does not exist: {repo_dir}")
                 continue
 
-            process_repository(repo_dir)
+            process_repository(repo_dir, config)
 
         print(f"\n{'=' * 50}")
         print(f"Waiting {interval_str} until next check...")

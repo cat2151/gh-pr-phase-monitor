@@ -16,3 +16,9 @@ dirs = [
 #   - "1h"  = 1 hour
 #   - "1d"  = 1 day
 interval = "1m"
+
+# Phase 3 comment message - posted when copilot finishes applying changes
+# This text will be prefixed with "@{user} " where {user} is the current GitHub user
+# GitHub CLI authentication is REQUIRED - run `gh auth login` if not authenticated
+# REQUIRED field - the text after "@{user} " prefix
+phase3_comment_message = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."

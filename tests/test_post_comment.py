@@ -7,6 +7,8 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from gh_pr_phase_monitor import (
     get_current_user,
     get_existing_comments,
@@ -98,9 +100,8 @@ class TestGetCurrentUser:
 
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
 
-        result = get_current_user()
-
-        assert result == ""
+        with pytest.raises(RuntimeError, match="Failed to retrieve current GitHub user"):
+            get_current_user()
 
     @patch("gh_pr_phase_monitor.subprocess.run")
     def test_get_current_user_uses_cache(self, mock_run):
@@ -130,8 +131,8 @@ class TestGetCurrentUser:
 
         # First call fails
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
-        result1 = get_current_user()
-        assert result1 == ""
+        with pytest.raises(RuntimeError):
+            get_current_user()
         assert mock_run.call_count == 1
 
         # Second call should retry (not use cached failure)
@@ -285,18 +286,17 @@ class TestPostPhase3Comment:
     @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_success(self, mock_run, mock_get_comments, mock_get_user):
-        """Test successful comment posting"""
+    def test_post_comment_success_with_user(self, mock_run, mock_get_comments, mock_get_user):
+        """Test successful comment posting with current user"""
         mock_get_comments.return_value = []
         mock_get_user.return_value = "currentuser"
         mock_run.return_value = MagicMock(returncode=0)
 
-        pr = {
-            "url": "https://github.com/user/repo/pull/123",
-        }
+        pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
-        result = post_phase3_comment(pr, repo_dir)
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is True
         assert mock_run.call_count == 1
@@ -309,32 +309,47 @@ class TestPostPhase3Comment:
         assert cmd[2] == "comment"
         assert cmd[3] == "https://github.com/user/repo/pull/123"
         assert cmd[4] == "--body"
-        assert "@currentuser" in cmd[5]
-        assert "🎁レビューお願いします🎁" in cmd[5]
-        assert "Please review the updates" in cmd[5]
+        # Should be "@currentuser " + custom_text
+        assert cmd[5] == "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
     @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_without_current_user(self, mock_run, mock_get_comments, mock_get_user):
-        """Test comment posting without current user"""
+    def test_post_comment_without_current_user_raises_error(self, mock_run, mock_get_comments, mock_get_user):
+        """Test comment posting fails when current user cannot be determined"""
         mock_get_comments.return_value = []
-        mock_get_user.return_value = ""
+        mock_get_user.side_effect = RuntimeError("Failed to retrieve current GitHub user")
         mock_run.return_value = MagicMock(returncode=0)
 
         pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
-        result = post_phase3_comment(pr, repo_dir)
+        with pytest.raises(RuntimeError, match="Failed to retrieve current GitHub user"):
+            post_phase3_comment(pr, repo_dir, custom_text)
+
+        # Should not have attempted to post comment
+        mock_run.assert_not_called()
+
+    @patch("gh_pr_phase_monitor.get_current_user")
+    @patch("gh_pr_phase_monitor.get_existing_comments")
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_post_comment_with_custom_text(self, mock_run, mock_get_comments, mock_get_user):
+        """Test comment posting with custom text"""
+        mock_get_comments.return_value = []
+        mock_get_user.return_value = "testuser"
+        mock_run.return_value = MagicMock(returncode=0)
+
+        pr = {"url": "https://github.com/user/repo/pull/123"}
+        repo_dir = Path("/tmp/test-repo")
+        custom_text = "Please review this PR!"
+
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is True
-        assert mock_run.call_count == 1
-
-        # Verify command arguments
         call_args = mock_run.call_args
         cmd = call_args[0][0]
-        assert cmd[5].startswith("🎁レビューお願いします🎁")
-        assert "@" not in cmd[5] or "@" == cmd[5][0]  # No @ or at start
+        assert cmd[5] == "@testuser Please review this PR!"
 
     @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
@@ -348,8 +363,9 @@ class TestPostPhase3Comment:
 
         pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
 
-        result = post_phase3_comment(pr, repo_dir)
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is True
         mock_run.assert_not_called()
@@ -367,8 +383,9 @@ class TestPostPhase3Comment:
 
         pr = {"url": "https://github.com/user/repo/pull/999"}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "Please review!"
 
-        result = post_phase3_comment(pr, repo_dir)
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is False
 
@@ -383,8 +400,9 @@ class TestPostPhase3Comment:
 
         pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/custom/repo/path")
+        custom_text = "Please review!"
 
-        post_phase3_comment(pr, repo_dir)
+        post_phase3_comment(pr, repo_dir, custom_text)
 
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["cwd"] == repo_dir
@@ -398,8 +416,9 @@ class TestPostPhase3Comment:
 
         pr = {}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "Please review!"
 
-        result = post_phase3_comment(pr, repo_dir)
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is False
 
@@ -416,8 +435,11 @@ class TestPostPhase3Comment:
 
         pr = {"url": "https://github.com/user/repo/pull/999"}
         repo_dir = Path("/tmp/test-repo")
+        custom_text = "Please review!"
 
-        result = post_phase3_comment(pr, repo_dir)
+        result = post_phase3_comment(pr, repo_dir, custom_text)
 
         assert result is False
+
+
 
