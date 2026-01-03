@@ -208,6 +208,14 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                   }}
                   comments(last: 10) {{
                     totalCount
+                    nodes {{
+                      reactionGroups {{
+                        content
+                        users {{
+                          totalCount
+                        }}
+                      }}
+                    }}
                   }}
                   commits(last: 1) {{
                     totalCount
@@ -300,6 +308,10 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                         else:
                             author = {"login": author_data.get("login", "")}
 
+                        # Transform comments to include reactionGroups
+                        comments_data = pr.get("comments", {})
+                        comment_nodes = comments_data.get("nodes", [])
+
                         # Add repository info to PR
                         pr_with_repo = {
                             "title": pr.get("title", ""),
@@ -309,7 +321,8 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                             "reviews": reviews,
                             "latestReviews": latest_reviews,
                             "reviewRequests": review_requests,
-                            "comments": pr.get("comments", {}).get("totalCount", 0),
+                            "comments": comment_nodes,
+                            "commentsCount": comments_data.get("totalCount", 0),
                             "commits": pr.get("commits", {}).get("totalCount", 0),
                             "autoMergeRequest": pr.get("autoMergeRequest"),
                             "mergeable": pr.get("mergeable", ""),
