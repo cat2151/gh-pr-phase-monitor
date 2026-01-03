@@ -47,18 +47,15 @@ def load_config(config_path: str = "config.toml") -> Dict[str, Any]:
 def get_pr_data(repo_dir: Path) -> List[Dict[str, Any]]:
     """Get PR data from GitHub CLI"""
     cmd = [
-        "gh", "pr", "list",
-        "--json", "author,autoMergeRequest,comments,commits,isDraft,latestReviews,mergeable,reviewDecision,reviewRequests,reviews,state,statusCheckRollup,title,url"
+        "gh",
+        "pr",
+        "list",
+        "--json",
+        "author,autoMergeRequest,comments,commits,isDraft,latestReviews,mergeable,reviewDecision,reviewRequests,reviews,state,statusCheckRollup,title,url",
     ]
 
     result = subprocess.run(
-        cmd,
-        cwd=repo_dir,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=True
+        cmd, cwd=repo_dir, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
     )
 
     return json.loads(result.stdout)
@@ -102,6 +99,30 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     return "LLM working"
 
 
+def post_phase2_comment(pr_url: str, repo_dir: Path) -> bool:
+    """Post a comment to PR when phase2 is detected
+
+    Args:
+        pr_url: URL of the PR
+        repo_dir: Repository directory
+
+    Returns:
+        True if comment was posted successfully, False otherwise
+    """
+    comment_body = "@copilot apply changes based on the review comments"
+    cmd = ["gh", "pr", "comment", pr_url, "--body", comment_body]
+
+    try:
+        subprocess.run(
+            cmd, cwd=repo_dir, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"    Error posting comment: {e}")
+        print(f"    stderr: {e.stderr}")
+        return False
+
+
 def open_browser(url: str) -> None:
     """Open URL in browser"""
     webbrowser.open(url)
@@ -132,6 +153,14 @@ def process_repository(repo_dir: Path) -> None:
             if phase in ["phase1", "phase2", "phase3"]:
                 print("    Opening browser...")
                 open_browser(url)
+
+                # Phase 2 の場合はコメントを投稿
+                if phase == "phase2":
+                    print("    Posting comment for phase2...")
+                    if post_phase2_comment(url, repo_dir):
+                        print("    Comment posted successfully")
+                    else:
+                        print("    Failed to post comment")
 
     except subprocess.CalledProcessError as e:
         print(f"  Error running gh command: {e}")

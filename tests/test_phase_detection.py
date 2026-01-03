@@ -7,6 +7,7 @@ Tests cover the following scenarios:
 - Phase 3: Copilot reviewer approved or no comments, copilot-swe-agent modifications
 - LLM working: No reviews or unknown reviewers
 """
+
 from gh_pr_phase_monitor import determine_phase
 
 
@@ -15,20 +16,12 @@ class TestDeterminePhase:
 
     def test_phase1_draft_pr(self):
         """Draft PRs should be phase1"""
-        pr = {
-            "isDraft": True,
-            "reviews": [],
-            "latestReviews": []
-        }
+        pr = {"isDraft": True, "reviews": [], "latestReviews": []}
         assert determine_phase(pr) == "phase1"
 
     def test_llm_working_no_reviews(self):
         """PRs with no reviews should be 'LLM working'"""
-        pr = {
-            "isDraft": False,
-            "reviews": [],
-            "latestReviews": []
-        }
+        pr = {"isDraft": False, "reviews": [], "latestReviews": []}
         assert determine_phase(pr) == "LLM working"
 
     def test_phase3_copilot_reviewer_commented_with_summary(self):
@@ -39,15 +32,10 @@ class TestDeterminePhase:
                 {
                     "author": {"login": "copilot-pull-request-reviewer"},
                     "state": "COMMENTED",
-                    "body": "## Pull request overview\n\nThis PR adds comprehensive documentation."
+                    "body": "## Pull request overview\n\nThis PR adds comprehensive documentation.",
                 }
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -56,18 +44,9 @@ class TestDeterminePhase:
         pr = {
             "isDraft": False,
             "reviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "APPROVED",
-                    "body": "Looks good!"
-                }
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "APPROVED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -75,19 +54,8 @@ class TestDeterminePhase:
         """Copilot reviewer with no review body should be phase3"""
         pr = {
             "isDraft": False,
-            "reviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED",
-                    "body": ""
-                }
-            ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED"
-                }
-            ]
+            "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED", "body": ""}],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -96,18 +64,9 @@ class TestDeterminePhase:
         pr = {
             "isDraft": False,
             "reviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED",
-                    "body": "   \n  \t  "
-                }
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED", "body": "   \n  \t  "}
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -119,20 +78,11 @@ class TestDeterminePhase:
                 {
                     "author": {"login": "copilot-pull-request-reviewer"},
                     "state": "COMMENTED",
-                    "body": "Please fix issues"
+                    "body": "Please fix issues",
                 },
-                {
-                    "author": {"login": "copilot-swe-agent"},
-                    "state": "COMMENTED",
-                    "body": "Fixed the issues"
-                }
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Fixed the issues"},
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-swe-agent"},
-                    "state": "COMMENTED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -140,19 +90,8 @@ class TestDeterminePhase:
         """Unknown reviewer should be 'LLM working'"""
         pr = {
             "isDraft": False,
-            "reviews": [
-                {
-                    "author": {"login": "some-other-bot"},
-                    "state": "COMMENTED",
-                    "body": "Some comment"
-                }
-            ],
-            "latestReviews": [
-                {
-                    "author": {"login": "some-other-bot"},
-                    "state": "COMMENTED"
-                }
-            ]
+            "reviews": [{"author": {"login": "some-other-bot"}, "state": "COMMENTED", "body": "Some comment"}],
+            "latestReviews": [{"author": {"login": "some-other-bot"}, "state": "COMMENTED"}],
         }
         assert determine_phase(pr) == "LLM working"
 
@@ -164,15 +103,10 @@ class TestDeterminePhase:
                 {
                     "author": {"login": "copilot-pull-request-reviewer"},
                     "state": "CHANGES_REQUESTED",
-                    "body": "Please address these issues"
+                    "body": "Please address these issues",
                 }
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "CHANGES_REQUESTED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "CHANGES_REQUESTED"}],
         }
         assert determine_phase(pr) == "phase2"
 
@@ -181,18 +115,9 @@ class TestDeterminePhase:
         pr = {
             "isDraft": False,
             "reviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "DISMISSED",
-                    "body": "Review dismissed"
-                }
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "DISMISSED", "body": "Review dismissed"}
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "DISMISSED"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "DISMISSED"}],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -201,17 +126,8 @@ class TestDeterminePhase:
         pr = {
             "isDraft": False,
             "reviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "PENDING",
-                    "body": "Review pending"
-                }
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "PENDING", "body": "Review pending"}
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "PENDING"
-                }
-            ]
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "PENDING"}],
         }
         assert determine_phase(pr) == "phase3"
