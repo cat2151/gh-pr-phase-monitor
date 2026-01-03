@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from gh_pr_phase_monitor import (
+    get_current_user,
     get_existing_comments,
     has_copilot_apply_comment,
     has_phase3_review_comment,
@@ -67,6 +68,31 @@ class TestHasCopilotApplyComment:
     def test_empty_comments(self):
         """Test with empty comment list"""
         assert has_copilot_apply_comment([]) is False
+
+
+class TestGetCurrentUser:
+    """Test the get_current_user function"""
+
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_get_current_user_success(self, mock_run):
+        """Test successful retrieval of current user"""
+        mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n")
+
+        result = get_current_user()
+
+        assert result == "testuser"
+        mock_run.assert_called_once()
+        cmd = mock_run.call_args[0][0]
+        assert cmd == ["gh", "api", "user", "--jq", ".login"]
+
+    @patch("gh_pr_phase_monitor.subprocess.run")
+    def test_get_current_user_failure(self, mock_run):
+        """Test handling of failure to retrieve current user"""
+        mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
+
+        result = get_current_user()
+
+        assert result == ""
 
 
 class TestPostPhase2Comment:
@@ -209,16 +235,17 @@ class TestHasPhase3ReviewComment:
 class TestPostPhase3Comment:
     """Test the post_phase3_comment function"""
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_success(self, mock_run, mock_get_comments):
+    def test_post_comment_success(self, mock_run, mock_get_comments, mock_get_user):
         """Test successful comment posting"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = "currentuser"
         mock_run.return_value = MagicMock(returncode=0)
 
         pr = {
             "url": "https://github.com/user/repo/pull/123",
-            "author": {"login": "testuser"},
         }
         repo_dir = Path("/tmp/test-repo")
 
@@ -235,15 +262,17 @@ class TestPostPhase3Comment:
         assert cmd[2] == "comment"
         assert cmd[3] == "https://github.com/user/repo/pull/123"
         assert cmd[4] == "--body"
-        assert "@testuser" in cmd[5]
+        assert "@currentuser" in cmd[5]
         assert "🎁レビューお願いします🎁" in cmd[5]
         assert "Please review the updates" in cmd[5]
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_without_author(self, mock_run, mock_get_comments):
-        """Test comment posting without PR author"""
+    def test_post_comment_without_current_user(self, mock_run, mock_get_comments, mock_get_user):
+        """Test comment posting without current user"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = ""
         mock_run.return_value = MagicMock(returncode=0)
 
         pr = {"url": "https://github.com/user/repo/pull/123"}
@@ -260,15 +289,17 @@ class TestPostPhase3Comment:
         assert cmd[5].startswith("🎁レビューお願いします🎁")
         assert "@" not in cmd[5] or "@" == cmd[5][0]  # No @ or at start
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_skips_if_exists(self, mock_run, mock_get_comments):
+    def test_post_comment_skips_if_exists(self, mock_run, mock_get_comments, mock_get_user):
         """Test that comment posting is skipped if comment already exists"""
         mock_get_comments.return_value = [
-            {"body": "@testuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."}
+            {"body": "@currentuser 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."}
         ]
+        mock_get_user.return_value = "currentuser"
 
-        pr = {"url": "https://github.com/user/repo/pull/123", "author": {"login": "testuser"}}
+        pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/tmp/test-repo")
 
         result = post_phase3_comment(pr, repo_dir)
@@ -276,30 +307,34 @@ class TestPostPhase3Comment:
         assert result is True
         mock_run.assert_not_called()
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_failure(self, mock_run, mock_get_comments):
+    def test_post_comment_failure(self, mock_run, mock_get_comments, mock_get_user):
         """Test failed comment posting"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = "currentuser"
         error = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "comment"])
         error.stderr = "Error: PR not found"
         mock_run.side_effect = error
 
-        pr = {"url": "https://github.com/user/repo/pull/999", "author": {"login": "testuser"}}
+        pr = {"url": "https://github.com/user/repo/pull/999"}
         repo_dir = Path("/tmp/test-repo")
 
         result = post_phase3_comment(pr, repo_dir)
 
         assert result is False
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_with_correct_cwd(self, mock_run, mock_get_comments):
+    def test_post_comment_with_correct_cwd(self, mock_run, mock_get_comments, mock_get_user):
         """Test that comment posting uses correct working directory"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = "currentuser"
         mock_run.return_value = MagicMock(returncode=0)
 
-        pr = {"url": "https://github.com/user/repo/pull/123", "author": {"login": "testuser"}}
+        pr = {"url": "https://github.com/user/repo/pull/123"}
         repo_dir = Path("/custom/repo/path")
 
         post_phase3_comment(pr, repo_dir)
@@ -307,28 +342,32 @@ class TestPostPhase3Comment:
         call_kwargs = mock_run.call_args[1]
         assert call_kwargs["cwd"] == repo_dir
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
-    def test_post_comment_no_url(self, mock_get_comments):
+    def test_post_comment_no_url(self, mock_get_comments, mock_get_user):
         """Test handling of PR without URL"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = "currentuser"
 
-        pr = {"author": {"login": "testuser"}}
+        pr = {}
         repo_dir = Path("/tmp/test-repo")
 
         result = post_phase3_comment(pr, repo_dir)
 
         assert result is False
 
+    @patch("gh_pr_phase_monitor.get_current_user")
     @patch("gh_pr_phase_monitor.get_existing_comments")
     @patch("gh_pr_phase_monitor.subprocess.run")
-    def test_post_comment_handles_missing_stderr(self, mock_run, mock_get_comments):
+    def test_post_comment_handles_missing_stderr(self, mock_run, mock_get_comments, mock_get_user):
         """Test that missing stderr is handled gracefully"""
         mock_get_comments.return_value = []
+        mock_get_user.return_value = "currentuser"
         error = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "comment"])
         # Don't set stderr attribute
         mock_run.side_effect = error
 
-        pr = {"url": "https://github.com/user/repo/pull/999", "author": {"login": "testuser"}}
+        pr = {"url": "https://github.com/user/repo/pull/999"}
         repo_dir = Path("/tmp/test-repo")
 
         result = post_phase3_comment(pr, repo_dir)

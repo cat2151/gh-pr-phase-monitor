@@ -90,6 +90,23 @@ def load_config(config_path: str = "config.toml") -> Dict[str, Any]:
         return tomli.load(f)
 
 
+def get_current_user() -> str:
+    """Get the current authenticated GitHub user's login
+
+    Returns:
+        The login name of the current authenticated user, or empty string if unavailable
+    """
+    cmd = ["gh", "api", "user", "--jq", ".login"]
+
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        return ""
+
+
 def get_pr_data(repo_dir: Path) -> List[Dict[str, Any]]:
     """Get PR data from GitHub CLI"""
     cmd = [
@@ -251,7 +268,7 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
     """Post a comment to PR when phase3 is detected
 
     Args:
-        pr: PR data dictionary containing url and optionally author
+        pr: PR data dictionary containing url
         repo_dir: Repository directory
 
     Returns:
@@ -267,10 +284,10 @@ def post_phase3_comment(pr: Dict[str, Any], repo_dir: Path) -> bool:
         print("    Comment already exists, skipping")
         return True
 
-    # Get the PR author
-    pr_author = pr.get("author", {}).get("login", "")
-    if pr_author:
-        comment_body = f"@{pr_author} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
+    # Get the current authenticated user
+    current_user = get_current_user()
+    if current_user:
+        comment_body = f"@{current_user} 🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
     else:
         comment_body = (
             "🎁レビューお願いします🎁 : Copilot has finished applying the changes. Please review the updates."
