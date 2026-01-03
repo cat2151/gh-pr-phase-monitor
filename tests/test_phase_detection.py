@@ -8,6 +8,8 @@ Tests cover the following scenarios:
 - LLM working: No reviews or unknown reviewers
 """
 
+from pathlib import Path
+
 from gh_pr_phase_monitor import determine_phase
 
 
@@ -139,8 +141,6 @@ class TestDeterminePhase:
 
     def test_phase2_copilot_reviewer_commented_with_review_comments(self, mocker):
         """Copilot reviewer with COMMENTED state and inline review comments should be phase2"""
-        from pathlib import Path
-
         # Mock the has_review_comments_from_author function to return True
         mock_has_review_comments = mocker.patch(
             "gh_pr_phase_monitor.has_review_comments_from_author", return_value=True
@@ -167,8 +167,6 @@ class TestDeterminePhase:
 
     def test_phase3_copilot_reviewer_commented_without_review_comments(self, mocker):
         """Copilot reviewer with COMMENTED state but no inline review comments should be phase3"""
-        from pathlib import Path
-
         # Mock the has_review_comments_from_author function to return False
         mock_has_review_comments = mocker.patch(
             "gh_pr_phase_monitor.has_review_comments_from_author", return_value=False

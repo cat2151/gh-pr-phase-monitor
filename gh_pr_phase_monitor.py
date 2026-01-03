@@ -228,6 +228,10 @@ def get_existing_comments(pr_url: str, repo_dir: Path) -> List[Dict[str, Any]]:
 def has_review_comments_from_author(pr_url: str, repo_dir: Path, author_login: str) -> bool:
     """Check if there are review comments (inline code comments) from a specific author
 
+    This function checks for inline code review comments (review threads) on specific lines
+    of code, NOT general PR discussion comments. These are the comments that appear directly
+    on the code diff and are typically used to request specific changes.
+
     Args:
         pr_url: URL of the PR
         repo_dir: Repository directory
@@ -261,9 +265,8 @@ def has_review_comments_from_author(pr_url: str, repo_dir: Path, author_login: s
         )
         comments = json.loads(result.stdout)
 
-        # Count comments from the specific author
-        count = sum(1 for comment in comments if comment.get("user", {}).get("login") == author_login)
-        return count > 0
+        # Check if any comments are from the specific author
+        return any(comment.get("user", {}).get("login") == author_login for comment in comments)
     except (subprocess.CalledProcessError, json.JSONDecodeError, ValueError):
         return False
 
