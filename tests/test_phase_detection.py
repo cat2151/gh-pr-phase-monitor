@@ -525,3 +525,50 @@ class TestDeterminePhase:
         # Should be phase2 because there are 7 unresolved review threads
         # even though the review body doesn't contain "generated N comments" text
         assert determine_phase(pr) == "phase2"
+
+    def test_phase3_copilot_swe_agent_with_old_unresolved_threads_but_new_reviewer_commented(self):
+        """
+        Real scenario from PR wavlpf#26: When copilot-swe-agent is latest reviewer,
+        but there are old unresolved threads from initial copilot-pull-request-reviewer review,
+        followed by a NEW copilot-pull-request-reviewer review with COMMENTED state (no CHANGES_REQUESTED).
+        This indicates the reviewer is satisfied, so it should be phase3.
+        """
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "Copilot reviewed 2 out of 2 changed files and generated 3 comments.",
+                },
+                {
+                    "author": {"login": "copilot-swe-agent"},
+                    "state": "COMMENTED",
+                    "body": "Working on addressing the review comments",
+                },
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "## Pull request overview\n\nLooks good now!",
+                },
+                {
+                    "author": {"login": "copilot-swe-agent"},
+                    "state": "COMMENTED",
+                    "body": "Made final changes",
+                },
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+            # Old threads from first review that are technically still unresolved
+            # but don't need attention because latest copilot-pull-request-reviewer review
+            # doesn't have CHANGES_REQUESTED
+            "reviewThreads": [
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+            ],
+        }
+
+        # Should be phase3 because the most recent copilot-pull-request-reviewer review (review #3)
+        # has state COMMENTED (not CHANGES_REQUESTED), indicating acceptance
+        assert determine_phase(pr) == "phase3"
