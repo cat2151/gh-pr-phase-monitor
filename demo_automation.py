@@ -6,17 +6,15 @@ This script demonstrates the browser automation functionality
 without requiring a full GitHub environment setup.
 """
 
-from src.gh_pr_phase_monitor.browser_automation import (
-    is_selenium_available,
-    assign_issue_to_copilot_automated
-)
+from src.gh_pr_phase_monitor.browser_automation import is_selenium_available
+
 
 def main():
     print("=" * 60)
     print("Browser Automation Demo for cat-github-watcher")
     print("=" * 60)
     print()
-    
+
     # Check if Selenium is available
     print("1. Checking if Selenium is available...")
     if is_selenium_available():
@@ -25,7 +23,7 @@ def main():
         print("   ✗ Selenium is NOT installed")
         print("   → Install with: pip install selenium webdriver-manager")
         return
-    
+
     print()
     print("2. Browser automation is ready!")
     print()

@@ -3,7 +3,6 @@ Tests for issue fetching functionality
 """
 
 import json
-import subprocess
 from unittest.mock import MagicMock, patch
 
 from src.gh_pr_phase_monitor.github_client import (
@@ -367,3 +366,95 @@ class TestAssignIssueToCopilot:
             "number": 123,
         }
         assert assign_issue_to_copilot(issue) is False
+
+    @patch("src.gh_pr_phase_monitor.issue_fetcher.assign_issue_to_copilot_automated")
+    @patch("src.gh_pr_phase_monitor.issue_fetcher.is_selenium_available")
+    def test_automated_mode_when_selenium_available(self, mock_selenium_available, mock_automated_func):
+        """Test automated mode when Selenium is available and config.automated=true"""
+        mock_selenium_available.return_value = True
+        mock_automated_func.return_value = True
+
+        issue = {
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "number": 123,
+            "url": "https://github.com/test-owner/test-repo/issues/123",
+        }
+        config = {
+            "assign_to_copilot": {
+                "automated": True,
+                "wait_seconds": 5,
+                "browser": "edge"
+            }
+        }
+
+        result = assign_issue_to_copilot(issue, config)
+
+        assert result is True
+        mock_selenium_available.assert_called_once()
+        mock_automated_func.assert_called_once_with(
+            "https://github.com/test-owner/test-repo/issues/123",
+            config
+        )
+
+    @patch("webbrowser.open")
+    @patch("src.gh_pr_phase_monitor.issue_fetcher.is_selenium_available")
+    def test_fallback_to_manual_when_selenium_unavailable(self, mock_selenium_available, mock_browser_open):
+        """Test fallback to manual mode when Selenium is unavailable despite config.automated=true"""
+        mock_selenium_available.return_value = False
+        mock_browser_open.return_value = True
+
+        issue = {
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "number": 123,
+            "url": "https://github.com/test-owner/test-repo/issues/123",
+        }
+        config = {
+            "assign_to_copilot": {
+                "automated": True,
+                "wait_seconds": 5,
+            }
+        }
+
+        result = assign_issue_to_copilot(issue, config)
+
+        assert result is True
+        mock_selenium_available.assert_called_once()
+        # Should fall back to manual mode (webbrowser.open)
+        mock_browser_open.assert_called_once_with("https://github.com/test-owner/test-repo/issues/123")
+
+    @patch("webbrowser.open")
+    def test_behavior_when_config_is_none(self, mock_browser_open):
+        """Test behavior when config parameter is None (uses manual mode)"""
+        mock_browser_open.return_value = True
+
+        issue = {
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "number": 123,
+            "url": "https://github.com/test-owner/test-repo/issues/123",
+        }
+
+        result = assign_issue_to_copilot(issue, None)
+
+        assert result is True
+        mock_browser_open.assert_called_once_with("https://github.com/test-owner/test-repo/issues/123")
+
+    @patch("webbrowser.open")
+    def test_manual_mode_when_automated_is_false(self, mock_browser_open):
+        """Test manual mode when config.automated=false"""
+        mock_browser_open.return_value = True
+
+        issue = {
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "number": 123,
+            "url": "https://github.com/test-owner/test-repo/issues/123",
+        }
+        config = {
+            "assign_to_copilot": {
+                "automated": False,
+            }
+        }
+
+        result = assign_issue_to_copilot(issue, config)
+
+        assert result is True
+        mock_browser_open.assert_called_once_with("https://github.com/test-owner/test-repo/issues/123")

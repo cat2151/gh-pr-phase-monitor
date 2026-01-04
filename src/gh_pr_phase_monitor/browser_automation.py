@@ -57,7 +57,17 @@ def assign_issue_to_copilot_automated(
         config = {}
 
     assign_config = config.get("assign_to_copilot", {})
-    wait_seconds = assign_config.get("wait_seconds", 10)
+
+    # Validate and get wait_seconds
+    try:
+        wait_seconds = int(assign_config.get("wait_seconds", 10))
+        if wait_seconds < 0:
+            print("  ⚠ wait_seconds must be positive, using default: 10")
+            wait_seconds = 10
+    except (ValueError, TypeError):
+        print("  ⚠ Invalid wait_seconds value in config, using default: 10")
+        wait_seconds = 10
+
     browser_type = assign_config.get("browser", "edge").lower()
     headless = assign_config.get("headless", False)
 
@@ -116,7 +126,7 @@ def assign_issue_to_copilot_automated(
                 pass  # Ignore errors when closing
 
 
-def _create_browser_driver(browser_type: str, headless: bool):
+def _create_browser_driver(browser_type: str, headless: bool) -> Optional["webdriver.Remote"]:
     """Create and configure a browser driver
 
     Args:
