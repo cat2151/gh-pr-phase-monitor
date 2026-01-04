@@ -14,7 +14,7 @@
 **The Python version development is complete and it is currently in operation.**
 
 Initially, implementation was attempted with GitHub Actions, but it was found to be unsuitable for the purpose of PR monitoring, so we transitioned to the Python version.
-The Python version monitors all repositories of an authenticated GitHub user and performs notifications and actions according to the PR's phase.
+The Python version monitors all user-owned repositories of an authenticated GitHub user and performs notifications and actions according to the PR's phase.
 
 ## Quick Links
 | Item | Link |
@@ -24,11 +24,11 @@ The Python version monitors all repositories of an authenticated GitHub user and
 ## Overview
 
 This is a Python tool that monitors the phases of PRs where GitHub Copilot performs automated implementation, executing notifications and actions at appropriate times.
-It efficiently monitors PRs across all repositories of an authenticated GitHub user, leveraging the GraphQL API.
+It efficiently monitors PRs across all user-owned repositories of an authenticated GitHub user, leveraging the GraphQL API.
 
 ## Features
 
-- **Automatic Monitoring of All Repositories**: Automatically monitors PRs across all repositories of an authenticated GitHub user
+- **Automatic Monitoring of All Repositories**: Automatically monitors PRs across all user-owned repositories of an authenticated GitHub user
 - **GraphQL API Utilization**: Achieves high-speed monitoring through efficient data retrieval
 - **Phase Detection**: Automatically determines the PR's status (phase1: Draft state, phase2: Addressing review comments, phase3: Awaiting review, LLM working: Coding agent in progress)
 - **Automatic Comment Posting**: Automatically posts appropriate comments based on the phase
@@ -119,7 +119,7 @@ python3 -m src.gh_pr_phase_monitor.main [config.toml]
 
 ### Operation Flow
 
-1.  **Start**: Upon launching, the tool begins monitoring all repositories of the authenticated GitHub user.
+1.  **Start**: Upon launching, the tool begins monitoring all user-owned repositories of the authenticated GitHub user.
 2.  **PR Detection**: Automatically detects repositories with open PRs.
 3.  **Phase Determination**: Determines the phase of each PR (phase1/2/3, LLM working).
 4.  **Action Execution**:
@@ -137,7 +137,7 @@ Monitoring can be stopped with `Ctrl+C`.
 
 - GitHub CLI (`gh`) must be installed and authenticated.
 - It relies on integration with GitHub Copilot (specifically `copilot-pull-request-reviewer` and `copilot-swe-agent`).
-- **All repositories** accessible by the authenticated user will be monitored.
+- **Only user-owned repositories** will be monitored. Organization repositories are NOT included to keep the tool simple and focused (YAGNI principle).
 - Be aware of API rate limits, as it uses the GraphQL API.
 - If using ntfy.sh notifications, configure a topic on [ntfy.sh](https://ntfy.sh/) in advance.
 

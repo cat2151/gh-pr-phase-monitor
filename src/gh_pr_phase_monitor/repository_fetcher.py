@@ -21,11 +21,11 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
     current_user = get_current_user()
 
     # GraphQL query to get all repositories with open PR counts
-    # Includes both user-owned repos and organization repos where user is a member
+    # Only includes user-owned repos (not organization repos)
     query = """
     query($login: String!) {{
       user(login: $login) {{
-        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {{
+        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER]) {{
           nodes {{
             name
             owner {{
@@ -52,8 +52,8 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
         # Build query with pagination
         if end_cursor:
             query_with_pagination = query.replace(
-                f"repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER])",
-                f'repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER], after: "{end_cursor}")',
+                f"repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER])",
+                f'repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER], after: "{end_cursor}")',
             )
         else:
             query_with_pagination = query
@@ -89,10 +89,11 @@ def get_all_repositories() -> List[Dict[str, Any]]:
     current_user = get_current_user()
 
     # GraphQL query to get all repositories with open PR and issue counts
+    # Only includes user-owned repos (not organization repos)
     query = """
     query($login: String!) {{
       user(login: $login) {{
-        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {{
+        repositories(first: {repositories_per_page}, ownerAffiliations: [OWNER]) {{
           nodes {{
             name
             owner {{
@@ -122,8 +123,8 @@ def get_all_repositories() -> List[Dict[str, Any]]:
         # Build query with pagination
         if end_cursor:
             query_with_pagination = query.replace(
-                f"repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER])",
-                f'repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER], after: "{end_cursor}")',
+                f"repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER])",
+                f'repositories(first: {REPOSITORIES_PER_PAGE}, ownerAffiliations: [OWNER], after: "{end_cursor}")',
             )
         else:
             query_with_pagination = query

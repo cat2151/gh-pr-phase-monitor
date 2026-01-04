@@ -9,9 +9,10 @@
 #   - "1d"  = 1 day
 interval = "1m" # default
 
-# Note: This tool now monitors ALL repositories under the current GitHub user account
+# Note: This tool monitors user-owned repositories under the current GitHub user account
 # It uses GraphQL API to efficiently fetch all repositories with open PRs
-# No need to specify repository directories anymore!
+# Organization repositories are NOT included (YAGNI principle - keeping it simple)
+# No need to specify repository directories!
 
 # ntfy.sh notification settings (optional)
 # Sends mobile notifications when phase3 is detected

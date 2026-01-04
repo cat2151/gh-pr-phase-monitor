@@ -810,11 +810,11 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
     current_user = get_current_user()
 
     # GraphQL query to get all repositories with open PR counts
-    # Includes both user-owned repos and organization repos where user is a member
+    # Only includes user-owned repos (not organization repos)
     query = """
     query($login: String!) {
       user(login: $login) {
-        repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER]) {
+        repositories(first: 100, ownerAffiliations: [OWNER]) {
           nodes {
             name
             owner {
@@ -842,8 +842,8 @@ def get_repositories_with_open_prs() -> List[Dict[str, Any]]:
         if end_cursor:
             # Use parameterized query for pagination
             query_with_pagination = query.replace(
-                "repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER])",
-                f'repositories(first: 100, ownerAffiliations: [OWNER, ORGANIZATION_MEMBER], after: "{end_cursor}")',
+                "repositories(first: 100, ownerAffiliations: [OWNER])",
+                f'repositories(first: 100, ownerAffiliations: [OWNER], after: "{end_cursor}")',
             )
         else:
             query_with_pagination = query
