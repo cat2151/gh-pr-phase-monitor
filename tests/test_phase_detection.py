@@ -61,6 +61,23 @@ class TestHasUnresolvedReviewThreads:
         ]
         assert has_unresolved_review_threads(threads) is True
 
+    def test_thread_without_comments_field(self):
+        """Thread without comments field should be handled gracefully"""
+        threads = [
+            {"isResolved": False, "isOutdated": False},  # No comments field
+        ]
+        # Should still return True based on isResolved status
+        assert has_unresolved_review_threads(threads) is True
+
+    def test_mixed_threads_with_and_without_comments_field(self):
+        """Mix of threads with and without comments field should work correctly"""
+        threads = [
+            {"isResolved": True, "isOutdated": False, "comments": {"totalCount": 1}},
+            {"isResolved": False, "isOutdated": False},  # No comments field
+        ]
+        # Should return True because there's an unresolved thread
+        assert has_unresolved_review_threads(threads) is True
+
 
 class TestHasCommentsWithReactions:
     """Test the has_comments_with_reactions function"""

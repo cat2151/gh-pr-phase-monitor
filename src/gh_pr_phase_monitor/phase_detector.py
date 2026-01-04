@@ -44,14 +44,14 @@ def has_comments_with_reactions(comments: Union[List[Dict[str, Any]], int, None]
     return False
 
 
-def has_unresolved_review_threads(review_threads: List[Dict[str, Any]]) -> bool:
+def has_unresolved_review_threads(review_threads: Union[List[Dict[str, Any]], None]) -> bool:
     """Check if there are any unresolved review threads (inline comments)
 
     Review threads contain inline code comments from reviews.
     If there are unresolved threads, the PR needs fixes (phase2).
 
     Args:
-        review_threads: List of review thread dictionaries with isResolved, isOutdated
+        review_threads: List of review thread dictionaries with isResolved, isOutdated, or None
 
     Returns:
         True if there are unresolved review threads, False otherwise

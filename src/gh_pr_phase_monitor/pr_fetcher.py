@@ -100,13 +100,12 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                       }}
                     }}
                   }}
-                  reviewThreads(first: 50) {{
+                  # Note: We fetch only the first 100 review threads; PRs with more than 100
+                  # threads will be truncated unless pagination is added.
+                  reviewThreads(first: 100) {{
                     nodes {{
                       isResolved
                       isOutdated
-                      comments(first: 1) {{
-                        totalCount
-                      }}
                     }}
                   }}
                   commits(last: 1) {{
