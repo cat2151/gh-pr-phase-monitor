@@ -635,7 +635,7 @@ class TestDeterminePhase:
                 {
                     "author": {"login": "copilot-swe-agent"},
                     "state": "COMMENTED",
-                    "body": "",
+                    "body": "",  # Real PR 61 has empty body
                 },
             ],
             "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
