@@ -19,6 +19,73 @@ from .phase_detector import PHASE_LLM_WORKING, determine_phase
 from .pr_actions import process_pr
 
 
+def display_issues_from_repos_without_prs():
+    """Display issues from repositories with no open PRs"""
+    print("Checking for repositories with no open PRs but with open issues...")
+
+    try:
+        repos_with_issues = get_repositories_with_no_prs_and_open_issues()
+
+        if not repos_with_issues:
+            print("  No repositories found with open issues and no open PRs")
+        else:
+            print(f"  Found {len(repos_with_issues)} repositories with open issues (no open PRs):")
+            for repo in repos_with_issues:
+                print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
+
+            # First, try to fetch and auto-assign "good first issue" issues
+            print(f"\n{'=' * 50}")
+            print("Checking for 'good first issue' issues to auto-assign to Copilot...")
+            print(f"{'=' * 50}")
+
+            good_first_issues = get_issues_from_repositories(
+                repos_with_issues, limit=1, labels=["good first issue"]
+            )
+
+            if good_first_issues:
+                issue = good_first_issues[0]
+                repo_info = issue["repository"]
+                print("\n  Found top 'good first issue' (sorted by last update, descending):")
+                print(f"  [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
+                print(f"     URL: {issue['url']}")
+                print(f"     Author: {issue['author']['login']}")
+                print(f"     Updated: {issue['updatedAt']}")
+                # Safely join labels, ensuring they are all strings
+                labels = issue.get('labels', [])
+                label_str = ', '.join(str(label) for label in labels)
+                print(f"     Labels: {label_str}")
+                print("\n  Attempting to assign to Copilot...")
+
+                # Assign the issue to Copilot and check the result
+                success = assign_issue_to_copilot(issue)
+                if not success:
+                    print("  Assignment failed - will retry on next iteration")
+            else:
+                print("  No 'good first issue' issues found in repositories without open PRs")
+
+            # Then, show top 10 issues from these repositories
+            print(f"\n{'=' * 50}")
+            print("Fetching top 10 issues from these repositories...")
+            print(f"{'=' * 50}")
+
+            top_issues = get_issues_from_repositories(repos_with_issues, limit=10)
+
+            if not top_issues:
+                print("  No issues found")
+            else:
+                print(f"\n  Top {len(top_issues)} issues (sorted by last update, descending):\n")
+                for idx, issue in enumerate(top_issues, 1):
+                    repo_info = issue["repository"]
+                    print(f"  {idx}. [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
+                    print(f"     URL: {issue['url']}")
+                    print(f"     Author: {issue['author']['login']}")
+                    print(f"     Updated: {issue['updatedAt']}")
+                    print()
+    except Exception as e:
+        print(f"  Error fetching issues: {e}")
+        traceback.print_exc()
+
+
 def main():
     """Main execution function"""
     config_path = "config.toml"
@@ -76,6 +143,8 @@ def main():
 
             if not repos_with_prs:
                 print("  No repositories with open PRs found")
+                # Display issues when no repositories with open PRs are found
+                display_issues_from_repos_without_prs()
             else:
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
@@ -104,70 +173,9 @@ def main():
                     if pr_phases and all(phase == PHASE_LLM_WORKING for phase in pr_phases):
                         print(f"\n{'=' * 50}")
                         print("All PRs are in 'LLM working' phase")
-                        print("Checking for repositories with no open PRs but with open issues...")
                         print(f"{'=' * 50}")
-
-                        try:
-                            repos_with_issues = get_repositories_with_no_prs_and_open_issues()
-
-                            if not repos_with_issues:
-                                print("  No repositories found with open issues and no open PRs")
-                            else:
-                                print(f"  Found {len(repos_with_issues)} repositories with open issues (no open PRs):")
-                                for repo in repos_with_issues:
-                                    print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
-
-                                # First, try to fetch and auto-assign "good first issue" issues
-                                print(f"\n{'=' * 50}")
-                                print("Checking for 'good first issue' issues to auto-assign to Copilot...")
-                                print(f"{'=' * 50}")
-
-                                good_first_issues = get_issues_from_repositories(
-                                    repos_with_issues, limit=1, labels=["good first issue"]
-                                )
-
-                                if good_first_issues:
-                                    issue = good_first_issues[0]
-                                    repo_info = issue["repository"]
-                                    print("\n  Found top 'good first issue' (sorted by last update, descending):")
-                                    print(f"  [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
-                                    print(f"     URL: {issue['url']}")
-                                    print(f"     Author: {issue['author']['login']}")
-                                    print(f"     Updated: {issue['updatedAt']}")
-                                    # Safely join labels, ensuring they are all strings
-                                    labels = issue.get('labels', [])
-                                    label_str = ', '.join(str(label) for label in labels)
-                                    print(f"     Labels: {label_str}")
-                                    print("\n  Attempting to assign to Copilot...")
-
-                                    # Assign the issue to Copilot and check the result
-                                    success = assign_issue_to_copilot(issue)
-                                    if not success:
-                                        print("  Assignment failed - will retry on next iteration")
-                                else:
-                                    print("  No 'good first issue' issues found in repositories without open PRs")
-
-                                # Then, show top 10 issues from these repositories
-                                print(f"\n{'=' * 50}")
-                                print("Fetching top 10 issues from these repositories...")
-                                print(f"{'=' * 50}")
-
-                                top_issues = get_issues_from_repositories(repos_with_issues, limit=10)
-
-                                if not top_issues:
-                                    print("  No issues found")
-                                else:
-                                    print(f"\n  Top {len(top_issues)} issues (sorted by last update, descending):\n")
-                                    for idx, issue in enumerate(top_issues, 1):
-                                        repo_info = issue["repository"]
-                                        print(f"  {idx}. [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
-                                        print(f"     URL: {issue['url']}")
-                                        print(f"     Author: {issue['author']['login']}")
-                                        print(f"     Updated: {issue['updatedAt']}")
-                                        print()
-                        except Exception as e:
-                            print(f"  Error fetching issues: {e}")
-                            traceback.print_exc()
+                        # Display issues when all PRs are in "LLM working" phase
+                        display_issues_from_repos_without_prs()
 
             # Reset consecutive-failure counter on a successful iteration
             consecutive_failures = 0
