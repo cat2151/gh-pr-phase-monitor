@@ -90,7 +90,7 @@ The tool detects the following four phases:
    cp config.toml.example config.toml
    ```
 
-3. Edit `config.toml` to set the monitoring interval and ntfy.sh notifications (optional):
+3. Edit `config.toml` to set the monitoring interval, ntfy.sh notifications, and Copilot auto-assignment (optional):
    ```toml
    # Check interval ("30s", "1m", "5m", "1h", "1d", etc.)
    interval = "1m"
@@ -102,6 +102,11 @@ The tool detects the following four phases:
    topic = "<Write your ntfy.sh topic name here>"  # Anyone can read/write, so use an unguessable string
    message = "PR is ready for review: {url}"  # Message template
    priority = 4  # Notification priority (1=lowest, 3=default, 4=high, 5=highest)
+   
+   # Auto-assign "good first issue" issues to Copilot (optional)
+   # When enabled, opens the issue in a browser and prompts to click "Assign to Copilot" button
+   [assign_to_copilot]
+   enabled = false  # Set to true to enable auto-assignment feature
    ```
 
 ### Execution

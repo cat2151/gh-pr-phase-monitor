@@ -90,7 +90,7 @@ cat-github-watcher/
    cp config.toml.example config.toml
    ```
 
-3. `config.toml` を編集して、監視間隔やntfy.sh通知を設定（オプション）：
+3. `config.toml` を編集して、監視間隔やntfy.sh通知、Copilot自動割り当てを設定（オプション）：
    ```toml
    # チェック間隔（"30s", "1m", "5m", "1h", "1d"など）
    interval = "1m"
@@ -102,6 +102,11 @@ cat-github-watcher/
    topic = "<ここにntfy.shのトピック名を書く>"  # 誰でも読み書きできるので、推測されない文字列にしてください
    message = "PR is ready for review: {url}"  # メッセージテンプレート
    priority = 4  # 通知の優先度（1=最低、3=デフォルト、4=高、5=最高）
+   
+   # "good first issue"のissueをCopilotに自動割り当て（オプション）
+   # 有効にすると、issueをブラウザで開き、"Assign to Copilot"ボタンを押すよう促します
+   [assign_to_copilot]
+   enabled = false  # trueにすると自動割り当て機能を有効化
    ```
 
 ### 実行

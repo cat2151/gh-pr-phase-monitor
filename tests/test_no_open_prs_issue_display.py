@@ -64,8 +64,11 @@ def test_display_issues_when_no_repos_with_prs():
 
                 mock_assign.return_value = True
 
-                # Call the function
-                display_issues_from_repos_without_prs()
+                # Create config with assign_to_copilot enabled
+                config = {"assign_to_copilot": {"enabled": True}}
+
+                # Call the function with config
+                display_issues_from_repos_without_prs(config)
 
                 # Verify that the function fetched repos without PRs
                 mock_get_repos.assert_called_once()
@@ -95,8 +98,8 @@ def test_display_issues_when_no_repos_with_issues():
         # Mock response: no repos with issues
         mock_get_repos.return_value = []
 
-        # Call the function - should not raise an error
-        display_issues_from_repos_without_prs()
+        # Call the function with empty config - should not raise an error
+        display_issues_from_repos_without_prs({})
 
         # Verify that the function fetched repos without PRs
         mock_get_repos.assert_called_once()
@@ -110,11 +113,59 @@ def test_display_issues_handles_exceptions():
         # Mock an exception
         mock_get_repos.side_effect = Exception("API Error")
 
-        # Call the function - should not raise an error
-        display_issues_from_repos_without_prs()
+        # Call the function with empty config - should not raise an error
+        display_issues_from_repos_without_prs({})
 
         # Verify that the function attempted to fetch repos
         mock_get_repos.assert_called_once()
+
+
+def test_display_issues_with_assign_disabled():
+    """
+    Test that display_issues_from_repos_without_prs does NOT attempt assignment
+    when the feature is disabled
+    """
+    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+                # Mock response: repos with no PRs but with issues
+                mock_get_repos.return_value = [
+                    {
+                        "name": "test-repo",
+                        "owner": "testuser",
+                        "openIssueCount": 2,
+                    }
+                ]
+
+                # Mock good first issue response - but it should never be called
+                mock_get_issues.side_effect = [
+                    # Only the second call (top 10 issues) should be made
+                    [
+                        {
+                            "title": "Issue 1",
+                            "url": "https://github.com/testuser/test-repo/issues/1",
+                            "number": 1,
+                            "updatedAt": "2024-01-01T00:00:00Z",
+                            "author": {"login": "contributor1"},
+                            "repository": {"owner": "testuser", "name": "test-repo"},
+                        },
+                    ],
+                ]
+
+                # Create config with assign_to_copilot disabled (or missing)
+                config = {"assign_to_copilot": {"enabled": False}}
+
+                # Call the function with config
+                display_issues_from_repos_without_prs(config)
+
+                # Verify that the function fetched repos without PRs
+                mock_get_repos.assert_called_once()
+
+                # Verify that only one issue fetch was made (top 10, not good first issue)
+                assert mock_get_issues.call_count == 1
+
+                # Verify assignment was NOT attempted
+                mock_assign.assert_not_called()
 
 
 if __name__ == "__main__":
@@ -126,5 +177,8 @@ if __name__ == "__main__":
 
     test_display_issues_handles_exceptions()
     print("✓ Test 3 passed: display_issues_handles_exceptions")
+
+    test_display_issues_with_assign_disabled()
+    print("✓ Test 4 passed: display_issues_with_assign_disabled")
 
     print("\n✅ All tests passed!")

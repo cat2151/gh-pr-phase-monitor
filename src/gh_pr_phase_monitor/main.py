@@ -6,6 +6,7 @@ import signal
 import sys
 import time
 import traceback
+from typing import Any, Dict, Optional
 
 from .config import load_config, parse_interval
 from .github_client import (
@@ -19,8 +20,12 @@ from .phase_detector import PHASE_LLM_WORKING, determine_phase
 from .pr_actions import process_pr
 
 
-def display_issues_from_repos_without_prs():
-    """Display issues from repositories with no open PRs"""
+def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None):
+    """Display issues from repositories with no open PRs
+    
+    Args:
+        config: Configuration dictionary (optional)
+    """
     print("Checking for repositories with no open PRs but with open issues...")
 
     try:
@@ -33,35 +38,48 @@ def display_issues_from_repos_without_prs():
             for repo in repos_with_issues:
                 print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
 
-            # First, try to fetch and auto-assign "good first issue" issues
-            print(f"\n{'=' * 50}")
-            print("Checking for 'good first issue' issues to auto-assign to Copilot...")
-            print(f"{'=' * 50}")
+            # Check if auto-assign feature is enabled in config
+            assign_enabled = False
+            if config:
+                assign_config = config.get("assign_to_copilot", {})
+                assign_enabled = assign_config.get("enabled", False)
 
-            good_first_issues = get_issues_from_repositories(
-                repos_with_issues, limit=1, labels=["good first issue"]
-            )
+            # Only try to auto-assign if the feature is enabled
+            if assign_enabled:
+                # First, try to fetch and auto-assign "good first issue" issues
+                print(f"\n{'=' * 50}")
+                print("Checking for 'good first issue' issues to auto-assign to Copilot...")
+                print(f"{'=' * 50}")
 
-            if good_first_issues:
-                issue = good_first_issues[0]
-                repo_info = issue["repository"]
-                print("\n  Found top 'good first issue' (sorted by last update, descending):")
-                print(f"  [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
-                print(f"     URL: {issue['url']}")
-                print(f"     Author: {issue['author']['login']}")
-                print(f"     Updated: {issue['updatedAt']}")
-                # Safely join labels, ensuring they are all strings
-                labels = issue.get('labels', [])
-                label_str = ', '.join(str(label) for label in labels)
-                print(f"     Labels: {label_str}")
-                print("\n  Attempting to assign to Copilot...")
+                good_first_issues = get_issues_from_repositories(
+                    repos_with_issues, limit=1, labels=["good first issue"]
+                )
 
-                # Assign the issue to Copilot and check the result
-                success = assign_issue_to_copilot(issue)
-                if not success:
-                    print("  Assignment failed - will retry on next iteration")
+                if good_first_issues:
+                    issue = good_first_issues[0]
+                    repo_info = issue["repository"]
+                    print("\n  Found top 'good first issue' (sorted by last update, descending):")
+                    print(f"  [{repo_info['owner']}/{repo_info['name']}] #{issue['number']}: {issue['title']}")
+                    print(f"     URL: {issue['url']}")
+                    print(f"     Author: {issue['author']['login']}")
+                    print(f"     Updated: {issue['updatedAt']}")
+                    # Safely join labels, ensuring they are all strings
+                    labels = issue.get('labels', [])
+                    label_str = ', '.join(str(label) for label in labels)
+                    print(f"     Labels: {label_str}")
+                    print("\n  Attempting to assign to Copilot...")
+
+                    # Assign the issue to Copilot and check the result
+                    success = assign_issue_to_copilot(issue)
+                    if not success:
+                        print("  Assignment failed - will retry on next iteration")
+                else:
+                    print("  No 'good first issue' issues found in repositories without open PRs")
             else:
-                print("  No 'good first issue' issues found in repositories without open PRs")
+                print(f"\n{'=' * 50}")
+                print("Auto-assign to Copilot feature is disabled")
+                print("To enable, set 'assign_to_copilot.enabled = true' in config.toml")
+                print(f"{'=' * 50}")
 
             # Then, show top 10 issues from these repositories
             print(f"\n{'=' * 50}")
@@ -144,7 +162,7 @@ def main():
             if not repos_with_prs:
                 print("  No repositories with open PRs found")
                 # Display issues when no repositories with open PRs are found
-                display_issues_from_repos_without_prs()
+                display_issues_from_repos_without_prs(config)
             else:
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
@@ -175,7 +193,7 @@ def main():
                         print("All PRs are in 'LLM working' phase")
                         print(f"{'=' * 50}")
                         # Display issues when all PRs are in "LLM working" phase
-                        display_issues_from_repos_without_prs()
+                        display_issues_from_repos_without_prs(config)
 
             # Reset consecutive-failure counter on a successful iteration
             consecutive_failures = 0
