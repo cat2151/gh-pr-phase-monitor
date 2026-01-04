@@ -239,6 +239,47 @@ class TestSendNtfyNotification:
         result = send_ntfy_notification("test-topic", "Test message", title="Test\tTitle")
         assert result is True
 
+    @patch("urllib.request.urlopen")
+    def test_notification_with_actions(self, mock_urlopen):
+        """Test notification with action buttons"""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        result = send_ntfy_notification(
+            "test-topic",
+            "Test message",
+            actions="view,Open URL,https://example.com"
+        )
+        assert result is True
+
+        # Verify the request was made with Actions header
+        call_args = mock_urlopen.call_args
+        request = call_args[0][0]
+        assert "Actions" in request.headers
+        assert request.headers["Actions"] == "view,Open URL,https://example.com"
+
+    @patch("urllib.request.urlopen")
+    def test_actions_with_newline_characters(self, mock_urlopen):
+        """Test that actions with newlines are sanitized"""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        # Test newline in actions
+        result = send_ntfy_notification(
+            "test-topic",
+            "Test message",
+            actions="view,Open\nURL,https://example.com"
+        )
+        assert result is True
+
+        # Verify the request was made with sanitized actions
+        call_args = mock_urlopen.call_args
+        request = call_args[0][0]
+        assert "\n" not in request.headers.get("Actions", "")
+        assert "\r" not in request.headers.get("Actions", "")
+
 
 class TestSendPhase3Notification:
     """Test the send_phase3_notification function"""
@@ -336,3 +377,26 @@ class TestSendPhase3Notification:
         # Verify default priority 4 was used
         call_args = mock_send.call_args
         assert call_args[1]["priority"] == 4
+
+    @patch("src.gh_pr_phase_monitor.notifier.send_ntfy_notification")
+    def test_action_button_is_included(self, mock_send):
+        """Test that action button is included in phase3 notification"""
+        mock_send.return_value = True
+        config = {
+            "ntfy": {
+                "enabled": True,
+                "topic": "test-topic",
+                "message": "PR ready: {url}",
+            }
+        }
+        pr_url = "https://github.com/owner/repo/pull/1"
+        result = send_phase3_notification(config, pr_url, "Test PR")
+        assert result is True
+        # Verify actions parameter was passed with correct format
+        call_args = mock_send.call_args
+        assert "actions" in call_args[1]
+        actions = call_args[1]["actions"]
+        assert actions == f"view,Open PR,{pr_url}"
+        assert "view" in actions
+        assert "Open PR" in actions
+        assert pr_url in actions

@@ -95,6 +95,7 @@ The tool detects the following four phases:
     interval = "1m"
     
     # ntfy.sh notification settings (optional)
+    # Notifications include a clickable action button to open the PR
     [ntfy]
     enabled = false  # Set to true to enable notifications
     topic = "gh-pr-phase-monitor"  # ntfy.sh topic name

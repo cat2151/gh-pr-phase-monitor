@@ -15,6 +15,7 @@ interval = "1m" # default
 
 # ntfy.sh notification settings (optional)
 # Sends mobile notifications when phase3 is detected
+# Notifications include a clickable action button to open the PR
 [ntfy]
 enabled = false  # Set to true to enable notifications
 topic = "gh-pr-phase-monitor"  # Your ntfy.sh topic name

@@ -35,6 +35,7 @@ You can also call :func:`send_ntfy_notification` directly::
         message="Build finished",
         title="CI status",
         priority=3,
+        actions="view,Open Details,https://example.com/details"
     )
 
 Requirements
@@ -44,6 +45,13 @@ Requirements
 * Topics must satisfy :func:`is_valid_topic` (alphanumeric, underscore,
   hyphen, dot; 1-100 chars; no leading/trailing/consecutive dots)
 
+Features
+--------
+
+* **Action buttons**: Notifications include clickable action buttons that open
+  the PR URL in a browser. This uses ntfy's actions feature with the format
+  "action_type,label,url" (e.g., "view,Open PR,https://github.com/...")
+
 Limitations
 -----------
 
@@ -52,6 +60,7 @@ Limitations
 * Network errors return False and print error messages; no exceptions raised
 * 10 second timeout on HTTP requests
 * Notifications track per (URL, phase) to prevent duplicates
+* Action buttons are supported by ntfy mobile app and some clients
 """
 
 import re
@@ -89,7 +98,8 @@ def is_valid_topic(topic: str) -> bool:
 
 
 def send_ntfy_notification(
-    topic: str, message: str, title: Optional[str] = None, priority: Optional[int] = None
+    topic: str, message: str, title: Optional[str] = None, priority: Optional[int] = None,
+    actions: Optional[str] = None
 ) -> bool:
     """Send a notification via ntfy.sh
 
@@ -98,6 +108,7 @@ def send_ntfy_notification(
         message: The notification message
         title: Optional title for the notification
         priority: Optional priority (1=min, 3=default, 5=max)
+        actions: Optional actions header for clickable buttons (e.g., "view,Open PR,https://github.com/...")
 
     Returns:
         True if notification was sent successfully, False otherwise
@@ -120,6 +131,10 @@ def send_ntfy_notification(
         headers["Title"] = sanitized_title
     if priority is not None:
         headers["Priority"] = str(priority)
+    if actions:
+        # Sanitize actions to prevent header injection via newline/control characters
+        sanitized_actions = re.sub(r"[\r\n]+", " ", actions)
+        headers["Actions"] = sanitized_actions
 
     try:
         # Create request with message as body
@@ -176,5 +191,9 @@ def send_phase3_notification(config: Dict[str, Any], pr_url: str, pr_title: str)
     # Format message with PR URL
     message = format_notification_message(message_template, pr_url)
 
-    # Send notification with PR title as the notification title
-    return send_ntfy_notification(topic, message, title=pr_title, priority=priority)
+    # Create action button for opening PR
+    # Format: action_type,label,url
+    actions = f"view,Open PR,{pr_url}"
+
+    # Send notification with PR title as the notification title and action button
+    return send_ntfy_notification(topic, message, title=pr_title, priority=priority, actions=actions)

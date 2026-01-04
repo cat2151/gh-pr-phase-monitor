@@ -95,6 +95,7 @@ gh-pr-phase-monitor/
    interval = "1m"
    
    # ntfy.sh通知設定（オプション）
+   # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
    [ntfy]
    enabled = false  # trueにすると通知を有効化
    topic = "gh-pr-phase-monitor"  # ntfy.shのトピック名
