@@ -14,7 +14,7 @@
 **Python版の開発が完了し、現在運用中です。**
 
 当初はGitHub Actionsで実装を試みましたが、PR監視という目的には適さないことが判明したため、Python版に移行しました。
-Python版は、認証済みGitHubユーザーの全リポジトリを監視し、PR のフェーズに応じた通知やアクションを実行します。
+Python版は、認証済みGitHubユーザーの全リポジトリを監視し、PRのフェーズに応じた通知やアクションを実行します。
 
 ## Quick Links
 | 項目 | リンク |
@@ -30,7 +30,7 @@ GitHub Copilotが自動実装を行うPRのフェーズを監視し、適切な�
 
 - **全リポジトリ自動監視**: 認証済みGitHubユーザーの全リポジトリのPRを自動監視
 - **GraphQL API活用**: 効率的なデータ取得で高速監視を実現
-- **フェーズ検知**: PR の状態（phase1: Draft状態、phase2: レビュー指摘対応中、phase3: レビュー待ち、LLM working: コーディングエージェント作業中）を自動判定
+- **フェーズ検知**: PRの状態（phase1: Draft状態、phase2: レビュー指摘対応中、phase3: レビュー待ち、LLM working: コーディングエージェント作業中）を自動判定
 - **自動コメント投稿**: フェーズに応じて適切なコメントを自動投稿
 - **Draft PR自動Ready化**: phase2でのレビュー指摘対応のため、Draft PRを自動的にReady状態に変更
 - **モバイル通知**: ntfy.shを利用してphase3（レビュー待ち）を検知したらモバイル端末に通知
@@ -50,9 +50,9 @@ gh-pr-phase-monitor/
 │       ├── colors.py         # ANSI カラーコードと色付け
 │       ├── config.py         # 設定の読み込みと解析
 │       ├── github_client.py  # GitHub API 連携
-│       ├── phase_detector.py # PR フェーズ判定ロジック
+│       ├── phase_detector.py # PRフェーズ判定ロジック
 │       ├── comment_manager.py # コメント投稿と確認
-│       ├── pr_actions.py     # PR アクション（Ready化、ブラウザ起動）
+│       ├── pr_actions.py     # PRアクション（Ready化、ブラウザ起動）
 │       └── main.py           # メイン実行ループ
 └── tests/                    # テストファイル
 ```
