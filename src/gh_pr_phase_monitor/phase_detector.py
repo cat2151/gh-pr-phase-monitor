@@ -185,20 +185,37 @@ def determine_phase(pr: Dict[str, Any]) -> str:
 
         # Check if there are unresolved review threads
         if has_unresolved_review_threads(review_threads):
-            # Determine if the latest reviewer review is a re-review (after swe-agent started)
-            # If reviewer reviewed AFTER swe-agent started working, and state is not CHANGES_REQUESTED,
-            # it means the reviewer is satisfied despite old threads
+            # When copilot-pull-request-reviewer uses COMMENTED (not CHANGES_REQUESTED),
+            # it indicates suggestions rather than required changes.
+            # However, if swe-agent just started (only initial response), still phase2.
+            # If swe-agent has done work (multiple reviews or re-review scenario), → phase3
+
+            # Check if there's been significant swe-agent activity
+            # (either multiple reviews or a re-review from reviewer)
+            swe_agent_review_count = sum(
+                1 for review in reviews if review.get("author", {}).get("login", "") == "copilot-swe-agent"
+            )
+
             is_re_review = (
                 latest_reviewer_index is not None
                 and first_swe_agent_index is not None
                 and latest_reviewer_index > first_swe_agent_index
             )
 
-            if is_re_review and latest_reviewer_state != "CHANGES_REQUESTED":
-                # Reviewer did a re-review and is satisfied (COMMENTED/APPROVED/etc), proceed to phase3
+            # Determine if swe-agent has completed work
+            swe_agent_completed = (
+                swe_agent_review_count > 1  # Multiple reviews indicate completion
+                or is_re_review  # Re-review after swe-agent indicates completion
+            )
+
+            if latest_reviewer_state == "COMMENTED" and swe_agent_completed:
+                # Reviewer used COMMENTED (suggestions only) and swe-agent completed work → phase3
                 pass
+            elif latest_reviewer_state == "CHANGES_REQUESTED":
+                # CHANGES_REQUESTED always means phase2
+                return PHASE_2
             else:
-                # Either no re-review, or initial review has unresolved threads
+                # Either swe-agent just started, or no clear completion signal → phase2
                 return PHASE_2
 
         # 未解決のレビューコメントがない場合、または最新のレビューアーが満足している場合はphase3
