@@ -1,4 +1,4 @@
-# Ruff configuration for gh-pr-phase-monitor
+# Ruff configuration for cat-github-watcher
 # Documentation: https://docs.astral.sh/ruff/
 
 # Line length

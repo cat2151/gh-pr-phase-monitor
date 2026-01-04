@@ -37,7 +37,7 @@ Last updated: 2026-01-04
 📄 _config.yml
 📄 config.toml.example
 📁 generated-docs/
-📄 gh-pr-phase-monitor.py
+📄 cat-github-watcher.py
 📄 pytest.ini
 📄 ruff.toml
 📁 src/
@@ -68,7 +68,7 @@ Last updated: 2026-01-04
 -   `_config.yml`: プロジェクトで利用される可能性のある設定ファイルの一つです。YAML形式でアプリケーションの設定を管理します。
 -   `config.toml.example`: アプリケーションの設定の例を示すTOML形式のファイルです。これをコピーして実際の環境に合わせて設定をカスタマイズすることが想定されます。
 -   `generated-docs/`: 自動生成されたドキュメントファイルを格納するためのディレクトリです。
--   `gh-pr-phase-monitor.py`: プロジェクトの主要な実行スクリプト、またはメインのエントリポイントとなるファイルです。全体の監視プロセスを開始します。
+-   `cat-github-watcher.py`: プロジェクトの主要な実行スクリプト、またはメインのエントリポイントとなるファイルです。全体の監視プロセスを開始します。
 -   `pytest.ini`: pytestテストフレームワークの設定ファイルです。テストの発見方法、実行オプションなどを定義します。
 -   `ruff.toml`: Ruffリンターの設定ファイルです。Pythonコードの静的解析ルールや自動フォーマットに関する設定を定義し、コード品質を向上させます。
 -   `src/__init__.py`: `src`ディレクトリがPythonパッケージであることを示す初期化ファイルです。

@@ -1,4 +1,4 @@
-# gh-pr-phase-monitor
+# cat-github-watcher
 
 **PR Monitoring Tool for Automated Implementation Phases by GitHub Copilot**
 
@@ -19,7 +19,7 @@ The Python version monitors all repositories of an authenticated GitHub user and
 ## Quick Links
 | Item | Link |
 |------|--------|
-| 📊 GitHub Repository | [cat2151/gh-pr-phase-monitor](https://github.com/cat2151/gh-pr-phase-monitor) |
+| 📊 GitHub Repository | [cat2151/cat-github-watcher](https://github.com/cat2151/cat-github-watcher) |
 
 ## Overview
 
@@ -43,8 +43,8 @@ This tool is a Python application modularized according to the Single Responsibi
 ### Directory Structure
 
 ```
-gh-pr-phase-monitor/
-├── gh-pr-phase-monitor.py    # Entry point
+cat-github-watcher/
+├── cat-github-watcher.py    # Entry point
 ├── src/
 │   └── gh_pr_phase_monitor/
 │       ├── colors.py         # ANSI color codes and coloring
@@ -80,8 +80,8 @@ The tool identifies the following four phases:
 
 1.  Clone this repository:
     ```bash
-    git clone https://github.com/cat2151/gh-pr-phase-monitor.git
-    cd gh-pr-phase-monitor
+    git clone https://github.com/cat2151/cat-github-watcher.git
+    cd cat-github-watcher
     ```
 
 2.  Create a configuration file (optional):
@@ -98,7 +98,7 @@ The tool identifies the following four phases:
     # Notifications include clickable action buttons to open the PR
     [ntfy]
     enabled = false  # Set to true to enable notifications
-    topic = "gh-pr-phase-monitor"  # ntfy.sh topic name
+    topic = "cat-github-watcher"  # ntfy.sh topic name
     message = "PR is ready for review: {url}"  # Message template
     priority = 4  # Notification priority (1=lowest, 3=default, 4=high, 5=highest)
     ```
@@ -108,7 +108,7 @@ The tool identifies the following four phases:
 Start the tool to begin monitoring:
 
 ```bash
-python3 gh-pr-phase-monitor.py [config.toml]
+python3 cat-github-watcher.py [config.toml]
 ```
 
 Alternatively, run directly as a Python module:

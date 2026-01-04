@@ -1,4 +1,4 @@
-# gh-pr-phase-monitor
+# cat-github-watcher
 
 **GitHub Copilotによる自動実装フェーズのPR監視ツール**
 
@@ -19,7 +19,7 @@ Python版は、認証済みGitHubユーザーの全リポジトリを監視し�
 ## Quick Links
 | 項目 | リンク |
 |------|--------|
-| 📊 GitHub Repository | [cat2151/gh-pr-phase-monitor](https://github.com/cat2151/gh-pr-phase-monitor) |
+| 📊 GitHub Repository | [cat2151/cat-github-watcher](https://github.com/cat2151/cat-github-watcher) |
 
 ## 概要
 
@@ -43,8 +43,8 @@ GitHub Copilotが自動実装を行うPRのフェーズを監視し、適切な�
 ### ディレクトリ構成
 
 ```
-gh-pr-phase-monitor/
-├── gh-pr-phase-monitor.py    # エントリーポイント
+cat-github-watcher/
+├── cat-github-watcher.py    # エントリーポイント
 ├── src/
 │   └── gh_pr_phase_monitor/
 │       ├── colors.py         # ANSI カラーコードと色付け
@@ -80,8 +80,8 @@ gh-pr-phase-monitor/
 
 1. このリポジトリをクローン：
    ```bash
-   git clone https://github.com/cat2151/gh-pr-phase-monitor.git
-   cd gh-pr-phase-monitor
+   git clone https://github.com/cat2151/cat-github-watcher.git
+   cd cat-github-watcher
    ```
 
 2. 設定ファイルを作成（オプション）：
@@ -98,7 +98,7 @@ gh-pr-phase-monitor/
    # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
    [ntfy]
    enabled = false  # trueにすると通知を有効化
-   topic = "gh-pr-phase-monitor"  # ntfy.shのトピック名
+   topic = "cat-github-watcher"  # ntfy.shのトピック名
    message = "PR is ready for review: {url}"  # メッセージテンプレート
    priority = 4  # 通知の優先度（1=最低、3=デフォルト、4=高、5=最高）
    ```
@@ -108,7 +108,7 @@ gh-pr-phase-monitor/
 ツールを起動して監視を開始：
 
 ```bash
-python3 gh-pr-phase-monitor.py [config.toml]
+python3 cat-github-watcher.py [config.toml]
 ```
 
 または、Pythonモジュールとして直接実行：
