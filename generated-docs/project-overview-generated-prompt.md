@@ -61,7 +61,7 @@ Last updated: 2026-01-04
 
 ## プロジェクト情報
 名前: 
-説明: # gh-pr-phase-monitor
+説明: # cat-github-watcher
 
 **GitHub Copilotによる自動実装フェーズのPR監視ツール**
 
@@ -82,7 +82,7 @@ GitHub Actionsでは、この目的を達成できないことが判明しまし
 ## Quick Links
 | 項目 | リンク |
 |------|--------|
-| 📊 GitHub Repository | [cat2151/gh-pr-phase-monitor](https://github.com/cat2151/gh-pr-phase-monitor) |
+| 📊 GitHub Repository | [cat2151/cat-github-watcher](https://github.com/cat2151/cat-github-watcher) |
 
 ## 概要
 
@@ -205,7 +205,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
 📄 _config.yml
 📄 config.toml.example
 📁 generated-docs/
-📄 gh-pr-phase-monitor.py
+📄 cat-github-watcher.py
 📄 pytest.ini
 📄 ruff.toml
 📁 src/

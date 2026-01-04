@@ -1,8 +1,8 @@
-title: "gh-pr-phase-monitor"
-description: "gh-pr-phase-monitor"
+title: "cat-github-watcher"
+description: "cat-github-watcher"
 theme: jekyll-theme-slate
 github:
   is_project_page: true
-  repository_url: https://github.com/cat2151/gh-pr-phase-monitor
+  repository_url: https://github.com/cat2151/cat-github-watcher
 plugins:
   - jekyll-sitemap

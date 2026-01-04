@@ -5,8 +5,8 @@ This document describes the refactored source code structure following the Singl
 ## Directory Structure
 
 ```
-gh-pr-phase-monitor/
-├── gh-pr-phase-monitor.py    # Entry point script
+cat-github-watcher/
+├── cat-github-watcher.py    # Entry point script
 ├── src/
 │   └── gh_pr_phase_monitor/
 │       ├── __init__.py       # Package initialization
@@ -26,7 +26,7 @@ gh-pr-phase-monitor/
 ## Module Responsibilities
 
 ### Entry Point
-- **gh-pr-phase-monitor.py**: Simple entry point that imports and calls the main function
+- **cat-github-watcher.py**: Simple entry point that imports and calls the main function
 
 ### Core Modules
 
@@ -78,7 +78,7 @@ gh-pr-phase-monitor/
 Run the tool using the entry point script:
 
 ```bash
-python3 gh-pr-phase-monitor.py [config.toml]
+python3 cat-github-watcher.py [config.toml]
 ```
 
 Or directly with Python module syntax:

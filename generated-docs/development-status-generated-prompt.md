@@ -207,7 +207,7 @@ Last updated: 2026-01-04
 - _config.yml
 - config.toml.example
 - generated-docs/project-overview-generated-prompt.md
-- gh-pr-phase-monitor.py
+- cat-github-watcher.py
 - pytest.ini
 - ruff.toml
 - src/__init__.py
