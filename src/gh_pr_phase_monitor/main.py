@@ -6,7 +6,7 @@ import signal
 import sys
 import time
 import traceback
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from .config import load_config, parse_interval
 from .github_client import (
@@ -20,7 +20,7 @@ from .phase_detector import PHASE_LLM_WORKING, determine_phase
 from .pr_actions import process_pr
 
 
-def display_issues_from_repos_without_prs(config: Dict[str, Any] = None):
+def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None):
     """Display issues from repositories with no open PRs
     
     Args:
