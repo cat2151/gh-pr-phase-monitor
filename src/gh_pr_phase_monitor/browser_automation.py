@@ -157,26 +157,30 @@ def _create_browser_driver(browser_type: str, headless: bool):
         return None
 
 
-def _click_button(driver, button_text: str, timeout: int = 10) -> bool:
+def _click_button(driver: "webdriver.Remote", button_text: str, timeout: int = 10) -> bool:
     """Find and click a button by its text
 
     Args:
         driver: Selenium WebDriver instance
-        button_text: Text content of the button to click
+        button_text: Text content of the button to click (should be safe, predefined text)
         timeout: Maximum time to wait for button (seconds)
 
     Returns:
         True if button was found and clicked, False otherwise
+
+    Note:
+        This function expects predefined button text like "Assign to Copilot"
+        and is not designed to handle arbitrary user input.
     """
     try:
         wait = WebDriverWait(driver, timeout)
 
         # Try multiple strategies to find the button
+        # Using double quotes for XPath to avoid issues with single quotes in text
         selectors = [
-            (By.XPATH, f"//button[contains(text(), '{button_text}')]"),
-            (By.XPATH, f"//button[@aria-label='{button_text}']"),
-            (By.XPATH, f"//a[contains(text(), '{button_text}')]"),
-            (By.CSS_SELECTOR, f"button[title='{button_text}']"),
+            (By.XPATH, f'//button[contains(text(), "{button_text}")]'),
+            (By.XPATH, f'//button[@aria-label="{button_text}"]'),
+            (By.XPATH, f'//a[contains(text(), "{button_text}")]'),
         ]
 
         for by, selector in selectors:
