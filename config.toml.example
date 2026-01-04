@@ -19,3 +19,4 @@ interval = "1m"
 enabled = false  # Set to true to enable notifications
 topic = "gh-pr-phase-monitor"  # Your ntfy.sh topic name
 message = "PR is ready for review: {url}"  # Message template, {url} will be replaced with PR URL
+priority = 4  # Optional: notification priority (1=min, 3=default, 4=high, 5=max)

@@ -1,5 +1,57 @@
 """
 Notification module for sending alerts via ntfy.sh
+
+This module provides utilities for sending pull request notifications via the
+public ntfy.sh HTTP API. It is primarily used by the GH PR phase monitor to
+send notifications when a pull request reaches a specific phase (e.g., ready
+for review).
+
+Typical usage
+-------------
+
+The high-level entry point is :func:`send_phase3_notification`, which expects
+a configuration mapping and PR metadata::
+
+    from gh_pr_phase_monitor import notifier
+
+    config = {
+        "ntfy": {
+            "enabled": True,
+            "topic": "my-topic",
+            "message": "PR ready: {url}",
+        }
+    }
+
+    result = notifier.send_phase3_notification(
+        config,
+        "https://github.com/org/repo/pull/123",
+        "Fix notification bug"
+    )
+
+You can also call :func:`send_ntfy_notification` directly::
+
+    notifier.send_ntfy_notification(
+        topic="my-topic",
+        message="Build finished",
+        title="CI status",
+        priority=3,
+    )
+
+Requirements
+------------
+
+* Internet connectivity to reach https://ntfy.sh
+* Topics must satisfy :func:`is_valid_topic` (alphanumeric, underscore,
+  hyphen, dot; 1-100 chars; no leading/trailing/consecutive dots)
+
+Limitations
+-----------
+
+* Uses public ntfy.sh service with HTTPS; no authentication configured
+* ntfy.sh may apply rate limiting or message size limits
+* Network errors return False and print error messages; no exceptions raised
+* 10 second timeout on HTTP requests
+* Notifications track per (URL, phase) to prevent duplicates
 """
 
 import re
@@ -11,7 +63,8 @@ def is_valid_topic(topic: str) -> bool:
     """Validate ntfy.sh topic name
 
     Topics should only contain alphanumeric characters, underscores, hyphens, and dots.
-    This prevents potential URL injection issues.
+    Topics must not start or end with a dot, and must not contain consecutive dots.
+    This prevents potential URL injection issues and invalid topic names.
 
     Args:
         topic: Topic name to validate
@@ -19,8 +72,15 @@ def is_valid_topic(topic: str) -> bool:
     Returns:
         True if valid, False otherwise
     """
-    # Allow alphanumeric, underscore, hyphen, and dot
-    return bool(re.match(r"^[a-zA-Z0-9_.-]+$", topic)) and len(topic) <= 100
+    # Check length constraints first
+    if not (1 <= len(topic) <= 100):
+        return False
+
+    # Allow alphanumeric, underscore, hyphen, and dot, but:
+    # - do not start with a dot
+    # - do not end with a dot
+    # - do not contain consecutive dots
+    return bool(re.match(r"^(?!\.)(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9_.-]+$", topic))
 
 
 def send_ntfy_notification(
@@ -50,7 +110,9 @@ def send_ntfy_notification(
     # Prepare headers
     headers = {}
     if title:
-        headers["Title"] = title
+        # Sanitize title to prevent header injection via newline/control characters
+        sanitized_title = re.sub(r"[\r\n]+", " ", title)
+        headers["Title"] = sanitized_title
     if priority is not None:
         headers["Priority"] = str(priority)
 
@@ -100,6 +162,7 @@ def send_phase3_notification(config: Dict[str, Any], pr_url: str, pr_title: str)
 
     topic = ntfy_config.get("topic")
     message_template = ntfy_config.get("message", "PR is ready for review: {url}")
+    priority = ntfy_config.get("priority", 4)  # Default to 4 (high), configurable
 
     if not topic:
         print("    Warning: ntfy.topic not configured")
@@ -109,4 +172,4 @@ def send_phase3_notification(config: Dict[str, Any], pr_url: str, pr_title: str)
     message = format_notification_message(message_template, pr_url)
 
     # Send notification with PR title as the notification title
-    return send_ntfy_notification(topic, message, title=pr_title, priority=4)
+    return send_ntfy_notification(topic, message, title=pr_title, priority=priority)

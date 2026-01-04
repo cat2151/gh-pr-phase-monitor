@@ -57,6 +57,19 @@ class TestIsValidTopic:
         """Test topic at maximum length"""
         assert is_valid_topic("a" * 100) is True
 
+    def test_invalid_topic_starting_with_dot(self):
+        """Test topic starting with dot"""
+        assert is_valid_topic(".topic") is False
+
+    def test_invalid_topic_ending_with_dot(self):
+        """Test topic ending with dot"""
+        assert is_valid_topic("topic.") is False
+
+    def test_invalid_topic_with_consecutive_dots(self):
+        """Test topic with consecutive dots"""
+        assert is_valid_topic("test..topic") is False
+        assert is_valid_topic("test...topic") is False
+
 
 class TestFormatNotificationMessage:
     """Test the format_notification_message function"""
@@ -148,6 +161,78 @@ class TestSendNtfyNotification:
         result = send_ntfy_notification("test/invalid", "Test message")
         assert result is False
 
+    @patch("urllib.request.urlopen")
+    def test_non_200_response_code(self, mock_urlopen):
+        """Test with non-200 response codes"""
+        # Test 201 Created
+        mock_response = MagicMock()
+        mock_response.status = 201
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+        result = send_ntfy_notification("test-topic", "Test message")
+        assert result is False
+
+        # Test 400 Bad Request
+        mock_response.status = 400
+        result = send_ntfy_notification("test-topic", "Test message")
+        assert result is False
+
+        # Test 404 Not Found
+        mock_response.status = 404
+        result = send_ntfy_notification("test-topic", "Test message")
+        assert result is False
+
+        # Test 500 Internal Server Error
+        mock_response.status = 500
+        result = send_ntfy_notification("test-topic", "Test message")
+        assert result is False
+
+    @patch("urllib.request.urlopen")
+    def test_title_with_newline_characters(self, mock_urlopen):
+        """Test that titles with newlines are sanitized"""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        # Test newline in title
+        result = send_ntfy_notification("test-topic", "Test message", title="Test\nTitle")
+        assert result is True
+
+        # Verify the request was made with sanitized title
+        call_args = mock_urlopen.call_args
+        request = call_args[0][0]
+        assert "\n" not in request.headers.get("Title", "")
+
+    @patch("urllib.request.urlopen")
+    def test_title_with_carriage_return(self, mock_urlopen):
+        """Test that titles with carriage returns are sanitized"""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        result = send_ntfy_notification("test-topic", "Test message", title="Test\r\nTitle")
+        assert result is True
+
+        # Verify the request was made with sanitized title
+        call_args = mock_urlopen.call_args
+        request = call_args[0][0]
+        assert "\r" not in request.headers.get("Title", "")
+        assert "\n" not in request.headers.get("Title", "")
+
+    @patch("urllib.request.urlopen")
+    def test_title_with_special_characters(self, mock_urlopen):
+        """Test titles with various special characters"""
+        mock_response = MagicMock()
+        mock_response.status = 200
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+
+        # Test with emojis and unicode
+        result = send_ntfy_notification("test-topic", "Test message", title="PR 🎉: Fix bug")
+        assert result is True
+
+        # Test with tabs
+        result = send_ntfy_notification("test-topic", "Test message", title="Test\tTitle")
+        assert result is True
+
 
 class TestSendPhase3Notification:
     """Test the send_phase3_notification function"""
@@ -206,3 +291,42 @@ class TestSendPhase3Notification:
         result = send_phase3_notification(config, "https://github.com/owner/repo/pull/1", "Test PR")
         assert result is False
         mock_send.assert_not_called()
+
+    @patch("src.gh_pr_phase_monitor.notifier.send_ntfy_notification")
+    def test_custom_priority(self, mock_send):
+        """Test notification with custom priority from config"""
+        mock_send.return_value = True
+        config = {
+            "ntfy": {
+                "enabled": True,
+                "topic": "test-topic",
+                "message": "PR ready: {url}",
+                "priority": 5,
+            }
+        }
+        result = send_phase3_notification(
+            config, "https://github.com/owner/repo/pull/1", "Test PR"
+        )
+        assert result is True
+        # Verify priority 5 was passed
+        call_args = mock_send.call_args
+        assert call_args[1]["priority"] == 5
+
+    @patch("src.gh_pr_phase_monitor.notifier.send_ntfy_notification")
+    def test_default_priority_when_not_specified(self, mock_send):
+        """Test that default priority is used when not in config"""
+        mock_send.return_value = True
+        config = {
+            "ntfy": {
+                "enabled": True,
+                "topic": "test-topic",
+                "message": "PR ready: {url}",
+            }
+        }
+        result = send_phase3_notification(
+            config, "https://github.com/owner/repo/pull/1", "Test PR"
+        )
+        assert result is True
+        # Verify default priority 4 was used
+        call_args = mock_send.call_args
+        assert call_args[1]["priority"] == 4

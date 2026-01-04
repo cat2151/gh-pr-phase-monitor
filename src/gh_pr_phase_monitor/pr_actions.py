@@ -103,6 +103,10 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
             print("    Browser already opened for this PR, skipping")
 
         # Send notification if configured and not already attempted
+        # Note: Notifications are tracked per (url, phase) tuple, meaning if a PR
+        # transitions from phase3 to another phase and back to phase3, a new
+        # notification will NOT be sent. This prevents duplicate notifications for
+        # the same phase of the same PR across monitoring iterations.
         notification_key = (url, phase)
         if notification_key not in _notifications_sent:
             # Mark as attempted regardless of outcome to avoid repeated checks
