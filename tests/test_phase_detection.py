@@ -165,7 +165,13 @@ class TestDeterminePhase:
 
     def test_phase1_draft_pr(self):
         """Draft PRs with reviewRequests should be phase1"""
-        pr = {"isDraft": True, "reviews": [], "latestReviews": [], "reviewRequests": [{"login": "user1"}], "comments": []}
+        pr = {
+            "isDraft": True,
+            "reviews": [],
+            "latestReviews": [],
+            "reviewRequests": [{"login": "user1"}],
+            "comments": [],
+        }
         assert determine_phase(pr) == "phase1"
 
     def test_llm_working_draft_pr_no_review_requests(self):
@@ -504,12 +510,7 @@ class TestDeterminePhase:
                     "body": "## Pull request overview\n\nこのPRは、デバッグ波形表示の視認性を向上させるため...",
                 }
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED"
-                }
-            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
             "commentNodes": [],
             "reviewThreads": [
                 {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},

@@ -166,14 +166,14 @@ def determine_phase(pr: Dict[str, Any]) -> str:
         latest_reviewer_index = None
         latest_reviewer_state = None
         first_swe_agent_index = None
-        
+
         for i, review in enumerate(reviews):
             reviewer_login = review.get("author", {}).get("login", "")
-            
+
             # Track the first copilot-swe-agent review
             if reviewer_login == "copilot-swe-agent" and first_swe_agent_index is None:
                 first_swe_agent_index = i
-            
+
             # Track the latest copilot-pull-request-reviewer review
             if reviewer_login == "copilot-pull-request-reviewer":
                 latest_reviewer_index = i
@@ -193,7 +193,7 @@ def determine_phase(pr: Dict[str, Any]) -> str:
                 and first_swe_agent_index is not None
                 and latest_reviewer_index > first_swe_agent_index
             )
-            
+
             if is_re_review and latest_reviewer_state != "CHANGES_REQUESTED":
                 # Reviewer did a re-review and is satisfied (COMMENTED/APPROVED/etc), proceed to phase3
                 pass
