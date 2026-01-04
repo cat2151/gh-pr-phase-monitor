@@ -165,7 +165,13 @@ class TestDeterminePhase:
 
     def test_phase1_draft_pr(self):
         """Draft PRs with reviewRequests should be phase1"""
-        pr = {"isDraft": True, "reviews": [], "latestReviews": [], "reviewRequests": [{"login": "user1"}], "comments": []}
+        pr = {
+            "isDraft": True,
+            "reviews": [],
+            "latestReviews": [],
+            "reviewRequests": [{"login": "user1"}],
+            "comments": [],
+        }
         assert determine_phase(pr) == "phase1"
 
     def test_llm_working_draft_pr_no_review_requests(self):
@@ -504,12 +510,7 @@ class TestDeterminePhase:
                     "body": "## Pull request overview\n\nこのPRは、デバッグ波形表示の視認性を向上させるため...",
                 }
             ],
-            "latestReviews": [
-                {
-                    "author": {"login": "copilot-pull-request-reviewer"},
-                    "state": "COMMENTED"
-                }
-            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "COMMENTED"}],
             "commentNodes": [],
             "reviewThreads": [
                 {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
@@ -525,3 +526,92 @@ class TestDeterminePhase:
         # Should be phase2 because there are 7 unresolved review threads
         # even though the review body doesn't contain "generated N comments" text
         assert determine_phase(pr) == "phase2"
+
+    def test_phase3_copilot_swe_agent_with_old_unresolved_threads_but_new_reviewer_commented(self):
+        """
+        Re-review scenario: When copilot-swe-agent is latest reviewer with old unresolved threads,
+        but a subsequent copilot-pull-request-reviewer review has COMMENTED state (no CHANGES_REQUESTED).
+        This indicates the reviewer is satisfied after re-reviewing, so it should be phase3.
+        """
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "Copilot reviewed 2 out of 2 changed files and generated 3 comments.",
+                },
+                {
+                    "author": {"login": "copilot-swe-agent"},
+                    "state": "COMMENTED",
+                    "body": "Working on addressing the review comments",
+                },
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "## Pull request overview\n\nLooks good now!",
+                },
+                {
+                    "author": {"login": "copilot-swe-agent"},
+                    "state": "COMMENTED",
+                    "body": "Made final changes",
+                },
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+            # Old threads from first review that are technically still unresolved
+            # but don't need attention because latest copilot-pull-request-reviewer review
+            # doesn't have CHANGES_REQUESTED
+            "reviewThreads": [
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},
+            ],
+        }
+
+        # Should be phase3 because the most recent copilot-pull-request-reviewer review (review #3)
+        # has state COMMENTED (not CHANGES_REQUESTED), indicating acceptance
+        assert determine_phase(pr) == "phase3"
+
+    def test_phase3_real_pr_26_pattern_multiple_swe_agent_reviews(self):
+        """
+        Real scenario from PR wavlpf#26: 1 copilot-pull-request-reviewer review with COMMENTED state
+        followed by multiple copilot-swe-agent reviews (6 in real case) with unresolved threads.
+        No re-review from reviewer, but multiple swe-agent reviews indicate completion.
+        Should be phase3 because reviewer used COMMENTED (suggestions only) and swe-agent completed work.
+        """
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "Copilot reviewed 4 out of 4 changed files and generated 7 comments.",
+                },
+                # 6 swe-agent reviews posted simultaneously (as in real PR #26)
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": ""},
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+            # Real PR #26 had 7 threads: 6 outdated, 1 not outdated (test coverage suggestion)
+            "reviewThreads": [
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+                {"isResolved": False, "isOutdated": False, "comments": {"totalCount": 1}},  # Test coverage suggestion
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+                {"isResolved": False, "isOutdated": True, "comments": {"totalCount": 2}},
+            ],
+        }
+
+        # Should be phase3 because:
+        # 1. Reviewer used COMMENTED (not CHANGES_REQUESTED) - suggestions only
+        # 2. Multiple swe-agent reviews (6) indicate completion
+        # 3. Only 1 non-outdated thread remains (test coverage suggestion - non-blocking)
+        assert determine_phase(pr) == "phase3"

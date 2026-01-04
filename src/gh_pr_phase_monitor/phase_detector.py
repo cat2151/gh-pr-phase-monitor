@@ -161,26 +161,58 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     # Phase 3: copilot-swe-agent の修正後
     # ただし、copilot-pull-request-reviewerの未解決レビューがある場合はphase2
     if author_login == "copilot-swe-agent":
-        # Check if there are unresolved review threads
-        if has_unresolved_review_threads(review_threads):
+        # Find the positions of copilot-pull-request-reviewer and copilot-swe-agent reviews
+        # to determine if there's a re-review from the reviewer after swe-agent started working
+        latest_reviewer_index = None
+        latest_reviewer_state = None
+        first_swe_agent_index = None
+        swe_agent_review_count = 0
+
+        for i, review in enumerate(reviews):
+            reviewer_login = review.get("author", {}).get("login", "")
+
+            # Track copilot-swe-agent reviews
+            if reviewer_login == "copilot-swe-agent":
+                swe_agent_review_count += 1
+                if first_swe_agent_index is None:
+                    first_swe_agent_index = i
+
+            # Track the latest copilot-pull-request-reviewer review
+            if reviewer_login == "copilot-pull-request-reviewer":
+                latest_reviewer_index = i
+                latest_reviewer_state = review.get("state", "")
+
+        # CHANGES_REQUESTEDの場合は常にphase2
+        if latest_reviewer_state == "CHANGES_REQUESTED":
             return PHASE_2
 
-        # Also check the most recent copilot-pull-request-reviewer review state
-        # copilot-pull-request-reviewerのレビューを探す（最新から逆順で）
-        for review in reversed(reviews):
-            reviewer_login = review.get("author", {}).get("login", "")
-            if reviewer_login == "copilot-pull-request-reviewer":
-                review_state = review.get("state", "")
+        # Check if there are unresolved review threads
+        if has_unresolved_review_threads(review_threads):
+            # When copilot-pull-request-reviewer uses COMMENTED (not CHANGES_REQUESTED),
+            # it indicates suggestions rather than required changes.
+            # However, if swe-agent just started (only initial response), still phase2.
+            # If swe-agent has done work (multiple reviews or re-review scenario), → phase3
 
-                # CHANGES_REQUESTEDの場合はphase2
-                if review_state == "CHANGES_REQUESTED":
-                    return PHASE_2
+            is_re_review = (
+                latest_reviewer_index is not None
+                and first_swe_agent_index is not None
+                and latest_reviewer_index > first_swe_agent_index
+            )
 
-                # 最新のcopilot-pull-request-reviewerレビューまで確認したら、
-                # それより古いレビューは無視する
-                break
+            # Determine if swe-agent has completed work
+            swe_agent_completed = (
+                swe_agent_review_count > 1  # Multiple reviews indicate completion
+                or is_re_review  # Re-review after swe-agent indicates completion
+            )
 
-        # 未解決のレビューコメントがない場合はphase3
+            if latest_reviewer_state == "COMMENTED" and swe_agent_completed:
+                # Reviewer used COMMENTED (suggestions only) and swe-agent completed work → phase3
+                return PHASE_3
+            else:
+                # Either swe-agent just started, or no clear completion signal → phase2
+                return PHASE_2
+
+        # 未解決のレビューコメントがない場合、または最新のレビューアーが満足している場合はphase3
         return PHASE_3
 
     return PHASE_LLM_WORKING
