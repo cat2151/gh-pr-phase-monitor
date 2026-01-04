@@ -397,6 +397,3 @@ class TestSendPhase3Notification:
         assert "actions" in call_args[1]
         actions = call_args[1]["actions"]
         assert actions == f"view,Open PR,{pr_url}"
-        assert "view" in actions
-        assert "Open PR" in actions
-        assert pr_url in actions
