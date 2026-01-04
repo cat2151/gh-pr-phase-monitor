@@ -21,9 +21,7 @@ from .pr_actions import process_pr
 
 def display_issues_from_repos_without_prs():
     """Display issues from repositories with no open PRs"""
-    print(f"\n{'=' * 50}")
     print("Checking for repositories with no open PRs but with open issues...")
-    print(f"{'=' * 50}")
 
     try:
         repos_with_issues = get_repositories_with_no_prs_and_open_issues()
