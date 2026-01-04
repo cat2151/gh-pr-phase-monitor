@@ -142,6 +142,10 @@ def determine_phase(pr: Dict[str, Any]) -> str:
                 if review_state == "COMMENTED" and has_inline_review_comments(review_body):
                     return PHASE_2
 
+                # 最新のcopilot-pull-request-reviewerレビューまで確認したら、
+                # それより古いレビューは無視する
+                break
+
         # 未解決のレビューコメントがない場合はphase3
         return PHASE_3
 

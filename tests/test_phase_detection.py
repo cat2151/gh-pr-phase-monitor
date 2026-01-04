@@ -382,3 +382,28 @@ class TestDeterminePhase:
 
         # Should be phase2 because there are unresolved CHANGES_REQUESTED from copilot-pull-request-reviewer
         assert determine_phase(pr) == "phase2"
+
+    def test_phase3_when_copilot_swe_agent_after_resolved_reviews(self):
+        """When copilot-pull-request-reviewer posts multiple reviews and most recent has no issues, should be phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "CHANGES_REQUESTED",
+                    "body": "Please address these issues",
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Addressing the issues"},
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "## Pull request overview\n\nLooks good now",  # No inline comments
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Made final improvements"},
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+        }
+
+        # Should be phase3 because the most recent review from copilot-pull-request-reviewer has no issues
+        assert determine_phase(pr) == "phase3"
