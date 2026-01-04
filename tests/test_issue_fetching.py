@@ -15,7 +15,7 @@ from src.gh_pr_phase_monitor.github_client import (
 class TestGetAllRepositories:
     """Tests for get_all_repositories function"""
 
-    @patch("src.gh_pr_phase_monitor.github_client.get_current_user")
+    @patch("src.gh_pr_phase_monitor.repository_fetcher.get_current_user")
     @patch("subprocess.run")
     def test_get_all_repositories_success(self, mock_run, mock_get_user):
         """Test successful retrieval of all repositories"""
@@ -60,7 +60,7 @@ class TestGetAllRepositories:
         assert repos[1]["openPRCount"] == 0
         assert repos[1]["openIssueCount"] == 3
 
-    @patch("src.gh_pr_phase_monitor.github_client.get_current_user")
+    @patch("src.gh_pr_phase_monitor.repository_fetcher.get_current_user")
     @patch("subprocess.run")
     def test_get_all_repositories_empty(self, mock_run, mock_get_user):
         """Test retrieval when no repositories exist"""
@@ -89,7 +89,7 @@ class TestGetAllRepositories:
 class TestGetRepositoriesWithNoPrsAndOpenIssues:
     """Tests for get_repositories_with_no_prs_and_open_issues function"""
 
-    @patch("src.gh_pr_phase_monitor.github_client.get_all_repositories")
+    @patch("src.gh_pr_phase_monitor.repository_fetcher.get_all_repositories")
     def test_filter_repos_with_no_prs_and_issues(self, mock_get_all):
         """Test filtering repositories with no PRs but with issues"""
         mock_get_all.return_value = [
@@ -106,7 +106,7 @@ class TestGetRepositoriesWithNoPrsAndOpenIssues:
         assert filtered[0]["openPRCount"] == 0
         assert filtered[0]["openIssueCount"] == 3
 
-    @patch("src.gh_pr_phase_monitor.github_client.get_all_repositories")
+    @patch("src.gh_pr_phase_monitor.repository_fetcher.get_all_repositories")
     def test_filter_repos_empty_result(self, mock_get_all):
         """Test filtering when no repositories match criteria"""
         mock_get_all.return_value = [

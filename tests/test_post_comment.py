@@ -23,7 +23,7 @@ from src.gh_pr_phase_monitor import (
 class TestGetExistingComments:
     """Test the get_existing_comments function"""
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.comment_fetcher.subprocess.run")
     def test_get_comments_success(self, mock_run):
         """Test successful retrieval of comments"""
         mock_run.return_value = MagicMock(returncode=0, stdout=json.dumps({"comments": [{"body": "Test comment"}]}))
@@ -36,7 +36,7 @@ class TestGetExistingComments:
         assert len(result) == 1
         assert result[0]["body"] == "Test comment"
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.comment_fetcher.subprocess.run")
     def test_get_comments_failure(self, mock_run):
         """Test handling of failure to retrieve comments"""
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "pr", "view"])
@@ -76,13 +76,13 @@ class TestHasCopilotApplyComment:
 class TestGetCurrentUser:
     """Test the get_current_user function"""
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_auth.subprocess.run")
     def test_get_current_user_success(self, mock_run):
         """Test successful retrieval of current user"""
         # Reset cache before test
-        from src.gh_pr_phase_monitor import github_client
+        from src.gh_pr_phase_monitor import github_auth
 
-        github_client._current_user_cache = None
+        github_auth._current_user_cache = None
 
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n")
 
@@ -93,26 +93,26 @@ class TestGetCurrentUser:
         cmd = mock_run.call_args[0][0]
         assert cmd == ["gh", "api", "user", "--jq", ".login"]
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_auth.subprocess.run")
     def test_get_current_user_failure(self, mock_run):
         """Test handling of failure to retrieve current user"""
         # Reset cache before test
-        from src.gh_pr_phase_monitor import github_client
+        from src.gh_pr_phase_monitor import github_auth
 
-        github_client._current_user_cache = None
+        github_auth._current_user_cache = None
 
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
 
         with pytest.raises(RuntimeError, match="Failed to retrieve current GitHub user"):
             get_current_user()
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_auth.subprocess.run")
     def test_get_current_user_uses_cache(self, mock_run):
         """Test that get_current_user uses cached value on subsequent calls"""
         # Reset cache before test
-        from src.gh_pr_phase_monitor import github_client
+        from src.gh_pr_phase_monitor import github_auth
 
-        github_client._current_user_cache = None
+        github_auth._current_user_cache = None
 
         mock_run.return_value = MagicMock(returncode=0, stdout="testuser\n")
 
@@ -126,13 +126,13 @@ class TestGetCurrentUser:
         assert result2 == "testuser"
         assert mock_run.call_count == 1  # Still only called once
 
-    @patch("src.gh_pr_phase_monitor.github_client.subprocess.run")
+    @patch("src.gh_pr_phase_monitor.github_auth.subprocess.run")
     def test_get_current_user_does_not_cache_failures(self, mock_run):
         """Test that authentication failures are not cached, allowing retries"""
         # Reset cache before test
-        from src.gh_pr_phase_monitor import github_client
+        from src.gh_pr_phase_monitor import github_auth
 
-        github_client._current_user_cache = None
+        github_auth._current_user_cache = None
 
         # First call fails
         mock_run.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["gh", "api", "user"])
