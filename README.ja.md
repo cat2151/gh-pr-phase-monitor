@@ -99,7 +99,7 @@ cat-github-watcher/
    # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
    [ntfy]
    enabled = false  # trueにすると通知を有効化
-   topic = "cat-github-watcher"  # ntfy.shのトピック名
+   topic = "<ここにntfy.shのトピック名を書く>"  # 誰でも読み書きできるので、推測されない文字列にしてください
    message = "PR is ready for review: {url}"  # メッセージテンプレート
    priority = 4  # 通知の優先度（1=最低、3=デフォルト、4=高、5=最高）
    ```
