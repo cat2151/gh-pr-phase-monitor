@@ -207,7 +207,7 @@ def determine_phase(pr: Dict[str, Any]) -> str:
 
             if latest_reviewer_state == "COMMENTED" and swe_agent_completed:
                 # Reviewer used COMMENTED (suggestions only) and swe-agent completed work → phase3
-                pass
+                return PHASE_3
             else:
                 # Either swe-agent just started, or no clear completion signal → phase2
                 return PHASE_2
