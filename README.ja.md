@@ -105,8 +105,27 @@ cat-github-watcher/
    
    # "good first issue"のissueをCopilotに自動割り当て（オプション）
    # 有効にすると、issueをブラウザで開き、"Assign to Copilot"ボタンを押すよう促します
+   # automated = true にすると、ブラウザ自動操縦でボタンを自動的にクリックします（Selenium必要）
    [assign_to_copilot]
    enabled = false  # trueにすると自動割り当て機能を有効化
+   automated = false  # trueにするとブラウザ自動操縦を有効化（要：pip install selenium webdriver-manager）
+   wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
+   browser = "edge"  # 使用するブラウザ（"edge", "chrome", "firefox"）
+   ```
+
+4. （オプション）ブラウザ自動操縦を使用する場合は、Seleniumをインストール：
+   ```bash
+   pip install -r requirements-automation.txt
+   ```
+   または
+   ```bash
+   pip install selenium webdriver-manager
+   ```
+   
+   さらに、使用するブラウザのドライバーが必要です：
+   - **Edge**: Windows 10/11に標準搭載（追加インストール不要）
+   - **Chrome**: ChromeDriverが自動的にダウンロードされます
+   - **Firefox**: GeckoDriverが自動的にダウンロードされます
    ```
 
 ### 実行

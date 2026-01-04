@@ -105,8 +105,27 @@ The tool identifies the following four phases:
    
    # Auto-assign "good first issue" issues to Copilot (optional)
    # When enabled, it will open the issue in your browser and prompt you to press the "Assign to Copilot" button
+   # Set automated = true to enable browser automation that automatically clicks the buttons (requires Selenium)
    [assign_to_copilot]
    enabled = false  # Set to true to enable auto-assignment feature
+   automated = false  # Set to true to enable browser automation (requires: pip install selenium webdriver-manager)
+   wait_seconds = 10  # How long to wait after opening browser before clicking (seconds)
+   browser = "edge"  # Browser to use: "edge", "chrome", or "firefox"
+   ```
+
+4. (Optional) If you want to use browser automation, install Selenium:
+   ```bash
+   pip install -r requirements-automation.txt
+   ```
+   Or:
+   ```bash
+   pip install selenium webdriver-manager
+   ```
+   
+   Additionally, you need the browser driver for your chosen browser:
+   - **Edge**: Pre-installed on Windows 10/11 (no additional installation needed)
+   - **Chrome**: ChromeDriver will be automatically downloaded
+   - **Firefox**: GeckoDriver will be automatically downloaded
    ```
 
 ### Run
