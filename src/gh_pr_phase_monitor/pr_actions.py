@@ -8,7 +8,12 @@ from pathlib import Path
 from typing import Any, Dict
 
 from .colors import colorize_phase
-from .comment_manager import post_phase2_comment, post_phase3_comment
+from .comment_manager import (
+    get_existing_comments,
+    has_phase3_review_comment,
+    post_phase2_comment,
+    post_phase3_comment,
+)
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
 
@@ -84,8 +89,15 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
 
     # Open browser and post comment when in phase 3
     if phase == PHASE_3:
-        print("    Opening browser...")
-        open_browser(url)
+        # Check if phase3 comment already exists
+        existing_comments = get_existing_comments(url, None)
+        comment_already_exists = has_phase3_review_comment(existing_comments)
+
+        if not comment_already_exists:
+            print("    Opening browser...")
+            open_browser(url)
+        else:
+            print("    Browser already opened (comment exists), skipping")
 
         print("    Posting comment for phase3...")
         # phase3_comment_message is required and validated in main()
