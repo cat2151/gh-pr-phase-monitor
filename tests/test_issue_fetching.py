@@ -317,6 +317,7 @@ class TestAssignIssueToCopilot:
     @patch("webbrowser.open")
     def test_successful_assignment(self, mock_browser_open):
         """Test successful issue browser opening"""
+        mock_browser_open.return_value = True
         issue = {
             "repository": {"name": "test-repo", "owner": "test-owner"},
             "number": 123,
@@ -342,6 +343,21 @@ class TestAssignIssueToCopilot:
         result = assign_issue_to_copilot(issue)
 
         assert result is False
+
+    @patch("webbrowser.open")
+    def test_browser_open_returns_false(self, mock_browser_open):
+        """Test when webbrowser.open returns False"""
+        mock_browser_open.return_value = False
+        issue = {
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "number": 123,
+            "url": "https://github.com/test-owner/test-repo/issues/123",
+        }
+
+        result = assign_issue_to_copilot(issue)
+
+        assert result is False
+        mock_browser_open.assert_called_once_with("https://github.com/test-owner/test-repo/issues/123")
 
     def test_missing_url_field(self):
         """Test validation of missing URL field"""

@@ -3,7 +3,6 @@ Issue fetching module for GitHub issues
 """
 
 import json
-import subprocess
 import webbrowser
 from typing import Any, Dict, List, Optional
 
@@ -157,17 +156,21 @@ def assign_issue_to_copilot(issue: Dict[str, Any]) -> bool:
 
     try:
         # Open the issue in the default browser
-        webbrowser.open(issue_url)
-        
+        opened = webbrowser.open(issue_url)
+
         # Get issue details for logging
         repo_info = issue.get("repository", {})
         repo_name = repo_info.get("name", "unknown")
         owner = repo_info.get("owner", "unknown")
         issue_number = issue.get("number", "unknown")
-        
-        print(f"  ✓ Opened issue #{issue_number} in browser: {owner}/{repo_name}")
-        print(f"    Please manually click the 'Assign to Copilot' button in your browser")
-        return True
+
+        if opened:
+            print(f"  ✓ Opened issue #{issue_number} in browser: {owner}/{repo_name}")
+            print(f"    Please manually click the 'Assign to Copilot' button in your browser")
+        else:
+            print(f"  ✗ Failed to open browser for issue #{issue_number}")
+
+        return opened
 
     except Exception as e:
         print(f"  ✗ Failed to open browser for issue: {e}")

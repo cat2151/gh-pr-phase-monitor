@@ -177,7 +177,7 @@ if __name__ == "__main__":
 
     test_display_issues_handles_exceptions()
     print("✓ Test 3 passed: display_issues_handles_exceptions")
-    
+
     test_display_issues_with_assign_disabled()
     print("✓ Test 4 passed: display_issues_with_assign_disabled")
 
