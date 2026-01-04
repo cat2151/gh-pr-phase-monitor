@@ -100,6 +100,14 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                       }}
                     }}
                   }}
+                  # Note: We fetch only the first 100 review threads; PRs with more than 100
+                  # threads will be truncated unless pagination is added.
+                  reviewThreads(first: 100) {{
+                    nodes {{
+                      isResolved
+                      isOutdated
+                    }}
+                  }}
                   commits(last: 1) {{
                     totalCount
                   }}
@@ -186,6 +194,10 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                     comments_data = pr.get("comments", {})
                     comment_nodes = comments_data.get("nodes", [])
 
+                    # Extract review threads
+                    review_threads_data = pr.get("reviewThreads", {})
+                    review_threads = review_threads_data.get("nodes", [])
+
                     # Add repository info to PR
                     pr_with_repo = {
                         "title": pr.get("title", ""),
@@ -197,6 +209,7 @@ def get_pr_details_batch(repos: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                         "reviewRequests": review_requests,
                         "comments": comments_data.get("totalCount", 0),
                         "commentNodes": comment_nodes,
+                        "reviewThreads": review_threads,
                         "commits": pr.get("commits", {}).get("totalCount", 0),
                         "autoMergeRequest": pr.get("autoMergeRequest"),
                         "mergeable": pr.get("mergeable", ""),

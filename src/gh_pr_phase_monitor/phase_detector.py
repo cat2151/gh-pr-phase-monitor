@@ -44,12 +44,43 @@ def has_comments_with_reactions(comments: Union[List[Dict[str, Any]], int, None]
     return False
 
 
-def has_inline_review_comments(review_body: str) -> bool:
-    """Check if review body indicates inline code comments were generated
+def has_unresolved_review_threads(review_threads: Union[List[Dict[str, Any]], None]) -> bool:
+    """Check if there are any unresolved review threads (inline comments)
 
-    Copilot's review body contains text like:
+    Review threads contain inline code comments from reviews.
+    If there are unresolved threads, the PR needs fixes (phase2).
+
+    Args:
+        review_threads: List of review thread dictionaries with isResolved, isOutdated, or None
+
+    Returns:
+        True if there are unresolved review threads, False otherwise
+    """
+    if not review_threads or not isinstance(review_threads, list):
+        return False
+
+    # Check if any thread is unresolved and not outdated
+    for thread in review_threads:
+        is_resolved = thread.get("isResolved", False)
+        is_outdated = thread.get("isOutdated", False)
+
+        # If a thread is not resolved and not outdated, it needs attention
+        if not is_resolved and not is_outdated:
+            return True
+
+    return False
+
+
+def has_inline_review_comments(review_body: str) -> bool:
+    """DEPRECATED: Check if review body indicates inline code comments were generated
+
+    This function is kept for backward compatibility but should not be used
+    for new code. Use has_unresolved_review_threads() instead which checks
+    actual review thread data rather than trying to infer from text patterns.
+
+    Copilot's review body MAY contain text like:
     "Copilot reviewed X out of Y changed files in this pull request and generated N comment(s)."
-    when inline comments are present.
+    when inline comments are present. However, this pattern is not always present.
 
     Args:
         review_body: The body text of the review
@@ -62,6 +93,7 @@ def has_inline_review_comments(review_body: str) -> bool:
 
     # Check for the pattern indicating inline comments were generated
     # Pattern matches: "generated 1 comment" or "generated 2 comments" etc.
+    # NOTE: This is unreliable - the pattern may not always be present!
     pattern = r"generated\s+\d+\s+comments?"
     return bool(re.search(pattern, review_body, re.IGNORECASE))
 
@@ -81,6 +113,8 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     review_requests = pr.get("reviewRequests", [])
     # Use commentNodes if available (new API), fall back to comments for legacy compatibility
     comment_nodes = pr.get("commentNodes", pr.get("comments", []))
+    # Get review threads (inline comments)
+    review_threads = pr.get("reviewThreads", [])
 
     # Check if any comments have reactions - this indicates LLM is working
     # When the coding agent is responding to PR comments, those comments
@@ -112,11 +146,11 @@ def determine_phase(pr: Dict[str, Any]) -> str:
         if review_state == "CHANGES_REQUESTED":
             return PHASE_2
 
-        # COMMENTEDの場合、レビュー本文にインラインコメントの存在を示すパターンがあるかチェック
-        # レビューコメントがある場合はphase2（修正が必要）、ない場合はphase3（レビュー待ち）
+        # COMMENTEDの場合、実際のreview threads(インラインコメント)を確認
+        # 未解決のレビュースレッドがある場合はphase2（修正が必要）、ない場合はphase3（レビュー待ち）
         if review_state == "COMMENTED":
-            review_body = latest_review.get("body", "")
-            if has_inline_review_comments(review_body):
+            # Check actual review threads instead of text patterns
+            if has_unresolved_review_threads(review_threads):
                 return PHASE_2
             # レビューコメントがない場合はphase3
             return PHASE_3
@@ -127,19 +161,19 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     # Phase 3: copilot-swe-agent の修正後
     # ただし、copilot-pull-request-reviewerの未解決レビューがある場合はphase2
     if author_login == "copilot-swe-agent":
+        # Check if there are unresolved review threads
+        if has_unresolved_review_threads(review_threads):
+            return PHASE_2
+
+        # Also check the most recent copilot-pull-request-reviewer review state
         # copilot-pull-request-reviewerのレビューを探す（最新から逆順で）
         for review in reversed(reviews):
             reviewer_login = review.get("author", {}).get("login", "")
             if reviewer_login == "copilot-pull-request-reviewer":
                 review_state = review.get("state", "")
-                review_body = review.get("body", "")
 
                 # CHANGES_REQUESTEDの場合はphase2
                 if review_state == "CHANGES_REQUESTED":
-                    return PHASE_2
-
-                # インラインレビューコメントがある場合はphase2
-                if review_state == "COMMENTED" and has_inline_review_comments(review_body):
                     return PHASE_2
 
                 # 最新のcopilot-pull-request-reviewerレビューまで確認したら、
