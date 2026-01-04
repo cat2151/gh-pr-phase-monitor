@@ -11,10 +11,14 @@ from .colors import colorize_phase
 from .comment_manager import (
     post_phase2_comment,
 )
+from .notifier import send_phase3_notification
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
 # Track which PRs have had their browser opened: set of (url, phase) tuples
 _browser_opened: Set[Tuple[str, str]] = set()
+
+# Track which PRs have had notifications sent: set of (url, phase) tuples
+_notifications_sent: Set[Tuple[str, str]] = set()
 
 
 def mark_pr_ready(pr_url: str, repo_dir: Path = None) -> bool:
@@ -87,7 +91,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         else:
             print("    Failed to post comment")
 
-    # Open browser when in phase 3
+    # Open browser and send notification when in phase 3
     if phase == PHASE_3:
         # Check if browser was already opened for this PR in this phase
         browser_key = (url, phase)
@@ -97,6 +101,23 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
             _browser_opened.add(browser_key)
         else:
             print("    Browser already opened for this PR, skipping")
+
+        # Send notification if configured and not already attempted
+        # Note: Notifications are tracked per (url, phase) tuple, meaning if a PR
+        # transitions from phase3 to another phase and back to phase3, a new
+        # notification will NOT be sent. This prevents duplicate notifications for
+        # the same phase of the same PR across monitoring iterations.
+        notification_key = (url, phase)
+        if notification_key not in _notifications_sent:
+            # Mark as attempted regardless of outcome to avoid repeated checks
+            _notifications_sent.add(notification_key)
+
+            if config and config.get("ntfy", {}).get("enabled", False):
+                print("    Sending ntfy notification...")
+                if send_phase3_notification(config, url, title):
+                    print("    Notification sent successfully")
+                else:
+                    print("    Failed to send notification")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:

@@ -12,3 +12,11 @@ interval = "1m"
 # Note: This tool now monitors ALL repositories under the current GitHub user account
 # It uses GraphQL API to efficiently fetch all repositories with open PRs
 # No need to specify repository directories anymore!
+
+# ntfy.sh notification settings (optional)
+# Sends mobile notifications when phase3 is detected
+[ntfy]
+enabled = false  # Set to true to enable notifications
+topic = "gh-pr-phase-monitor"  # Your ntfy.sh topic name
+message = "PR is ready for review: {url}"  # Message template, {url} will be replaced with PR URL
+priority = 4  # Optional: notification priority (1=min, 3=default, 4=high, 5=max)

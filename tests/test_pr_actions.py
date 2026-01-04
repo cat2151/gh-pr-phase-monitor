@@ -12,8 +12,9 @@ class TestProcessPR:
     """Test the process_pr function"""
 
     def setup_method(self):
-        """Clear the browser opened tracking before each test"""
+        """Clear the browser opened and notification tracking before each test"""
         pr_actions._browser_opened.clear()
+        pr_actions._notifications_sent.clear()
 
     def test_browser_not_opened_for_phase1(self):
         """Browser should not open for phase1"""
@@ -119,3 +120,156 @@ class TestProcessPR:
             # Third call should still not open browser
             process_pr(pr, {})
             assert mock_browser.call_count == 1
+
+
+class TestPhase3Notifications:
+    """Test notification behavior for phase3"""
+
+    def setup_method(self):
+        """Clear tracking before each test"""
+        pr_actions._browser_opened.clear()
+        pr_actions._notifications_sent.clear()
+
+    def test_notification_sent_when_enabled(self):
+        """Notification should be sent when enabled in config"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {"ntfy": {"enabled": True, "topic": "test-topic", "message": "PR ready: {url}"}}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            mock_notify.return_value = True
+            process_pr(pr, config)
+            # Notification should be sent
+            mock_notify.assert_called_once_with(
+                config, "https://github.com/test-owner/test-repo/pull/1", "Test PR"
+            )
+
+    def test_notification_not_sent_when_disabled(self):
+        """Notification should not be sent when disabled in config"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {"ntfy": {"enabled": False, "topic": "test-topic"}}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            process_pr(pr, config)
+            # Notification should not be sent
+            mock_notify.assert_not_called()
+
+    def test_notification_not_sent_when_no_config(self):
+        """Notification should not be sent when ntfy not in config"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            process_pr(pr, config)
+            # Notification should not be sent
+            mock_notify.assert_not_called()
+
+    def test_notification_sent_only_once(self):
+        """Notification should be sent only once per PR"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {"ntfy": {"enabled": True, "topic": "test-topic", "message": "PR ready: {url}"}}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            mock_notify.return_value = True
+            # First call should send notification
+            process_pr(pr, config)
+            assert mock_notify.call_count == 1
+
+            # Second call should not send notification again
+            process_pr(pr, config)
+            assert mock_notify.call_count == 1
+
+            # Third call should still not send notification
+            process_pr(pr, config)
+            assert mock_notify.call_count == 1
+
+    def test_notification_not_sent_for_phase1(self):
+        """Notification should not be sent for phase1"""
+        pr = {
+            "isDraft": True,
+            "reviews": [],
+            "latestReviews": [],
+            "reviewRequests": [{"login": "user1"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {"ntfy": {"enabled": True, "topic": "test-topic"}}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify, patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready:
+            mock_ready.return_value = True
+            process_pr(pr, config)
+            # Notification should not be sent for phase1
+            mock_notify.assert_not_called()
+
+    def test_notification_not_sent_for_phase2(self):
+        """Notification should not be sent for phase2"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "CHANGES_REQUESTED",
+                    "body": "Please fix",
+                }
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "CHANGES_REQUESTED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {"ntfy": {"enabled": True, "topic": "test-topic"}}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify, patch("src.gh_pr_phase_monitor.pr_actions.post_phase2_comment") as mock_comment:
+            mock_comment.return_value = True
+            process_pr(pr, config)
+            # Notification should not be sent for phase2
+            mock_notify.assert_not_called()
+
