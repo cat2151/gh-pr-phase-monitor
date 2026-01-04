@@ -133,15 +133,15 @@ def determine_phase(pr: Dict[str, Any]) -> str:
             if reviewer_login == "copilot-pull-request-reviewer":
                 review_state = review.get("state", "")
                 review_body = review.get("body", "")
-                
+
                 # CHANGES_REQUESTEDの場合はphase2
                 if review_state == "CHANGES_REQUESTED":
                     return PHASE_2
-                
+
                 # インラインレビューコメントがある場合はphase2
                 if review_state == "COMMENTED" and has_inline_review_comments(review_body):
                     return PHASE_2
-        
+
         # 未解決のレビューコメントがない場合はphase3
         return PHASE_3
 
