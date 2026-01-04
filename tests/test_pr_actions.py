@@ -4,11 +4,16 @@ Tests for PR actions including browser opening behavior
 
 from unittest.mock import patch
 
+from src.gh_pr_phase_monitor import pr_actions
 from src.gh_pr_phase_monitor.pr_actions import process_pr
 
 
 class TestProcessPR:
     """Test the process_pr function"""
+
+    def setup_method(self):
+        """Clear the browser opened tracking before each test"""
+        pr_actions._browser_opened.clear()
 
     def test_browser_not_opened_for_phase1(self):
         """Browser should not open for phase1"""
@@ -88,3 +93,29 @@ class TestProcessPR:
             process_pr(pr, {})
             # Browser should not be called for LLM working
             mock_browser.assert_not_called()
+
+    def test_browser_opened_only_once_for_phase3(self):
+        """Browser should open only once for phase3, even if called multiple times"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser:
+            # First call should open browser
+            process_pr(pr, {})
+            assert mock_browser.call_count == 1
+
+            # Second call should not open browser again
+            process_pr(pr, {})
+            assert mock_browser.call_count == 1
+
+            # Third call should still not open browser
+            process_pr(pr, {})
+            assert mock_browser.call_count == 1

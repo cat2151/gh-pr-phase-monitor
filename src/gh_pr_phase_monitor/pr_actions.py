@@ -5,13 +5,16 @@ PR actions such as marking ready and opening browser
 import subprocess
 import webbrowser
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Set, Tuple
 
 from .colors import colorize_phase
 from .comment_manager import (
     post_phase2_comment,
 )
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
+
+# Track which PRs have had their browser opened: (url, phase) -> True
+_browser_opened: Set[Tuple[str, str]] = set()
 
 
 def mark_pr_ready(pr_url: str, repo_dir: Path = None) -> bool:
@@ -86,8 +89,14 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
 
     # Open browser when in phase 3
     if phase == PHASE_3:
-        print("    Opening browser...")
-        open_browser(url)
+        # Check if browser was already opened for this PR in this phase
+        browser_key = (url, phase)
+        if browser_key not in _browser_opened:
+            print("    Opening browser...")
+            open_browser(url)
+            _browser_opened.add(browser_key)
+        else:
+            print("    Browser already opened for this PR, skipping")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
