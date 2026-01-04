@@ -56,7 +56,7 @@ class TestProcessPR:
             mock_browser.assert_not_called()
 
     def test_browser_opened_for_phase3(self):
-        """Browser should open for phase3"""
+        """Browser should open for phase3 when comment does not exist"""
         pr = {
             "isDraft": False,
             "reviews": [
@@ -72,10 +72,16 @@ class TestProcessPR:
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser, patch(
             "src.gh_pr_phase_monitor.pr_actions.post_phase3_comment"
-        ) as mock_comment:
+        ) as mock_comment, patch(
+            "src.gh_pr_phase_monitor.pr_actions.get_existing_comments"
+        ) as mock_get_comments, patch(
+            "src.gh_pr_phase_monitor.pr_actions.has_phase3_review_comment"
+        ) as mock_has_comment:
             mock_comment.return_value = True
+            mock_get_comments.return_value = []
+            mock_has_comment.return_value = False  # Comment does not exist
             process_pr(pr, config)
-            # Browser should be called for phase3
+            # Browser should be called for phase3 when comment does not exist
             mock_browser.assert_called_once_with("https://github.com/test-owner/test-repo/pull/1")
 
     def test_browser_not_opened_for_llm_working(self):
@@ -92,4 +98,33 @@ class TestProcessPR:
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser:
             process_pr(pr, {})
             # Browser should not be called for LLM working
+            mock_browser.assert_not_called()
+
+    def test_browser_not_opened_for_phase3_when_comment_exists(self):
+        """Browser should not open for phase3 when comment already exists"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+
+        config = {"phase3_comment_message": "Test message"}
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser, patch(
+            "src.gh_pr_phase_monitor.pr_actions.post_phase3_comment"
+        ) as mock_comment, patch(
+            "src.gh_pr_phase_monitor.pr_actions.get_existing_comments"
+        ) as mock_get_comments, patch(
+            "src.gh_pr_phase_monitor.pr_actions.has_phase3_review_comment"
+        ) as mock_has_comment:
+            mock_comment.return_value = True
+            mock_get_comments.return_value = [{"body": "@user Test message"}]
+            mock_has_comment.return_value = True  # Comment already exists
+            process_pr(pr, config)
+            # Browser should NOT be called when comment already exists
             mock_browser.assert_not_called()
