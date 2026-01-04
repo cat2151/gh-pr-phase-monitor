@@ -127,8 +127,8 @@ def determine_phase(pr: Dict[str, Any]) -> str:
     # Phase 3: copilot-swe-agent の修正後
     # ただし、copilot-pull-request-reviewerの未解決レビューがある場合はphase2
     if author_login == "copilot-swe-agent":
-        # copilot-pull-request-reviewerのレビューを探す
-        for review in reviews:
+        # copilot-pull-request-reviewerのレビューを探す（最新から逆順で）
+        for review in reversed(reviews):
             reviewer_login = review.get("author", {}).get("login", "")
             if reviewer_login == "copilot-pull-request-reviewer":
                 review_state = review.get("state", "")
