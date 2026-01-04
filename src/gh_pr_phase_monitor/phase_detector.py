@@ -125,7 +125,28 @@ def determine_phase(pr: Dict[str, Any]) -> str:
         return PHASE_3
 
     # Phase 3: copilot-swe-agent の修正後
+    # ただし、copilot-pull-request-reviewerの未解決レビューがある場合はphase2
     if author_login == "copilot-swe-agent":
+        # copilot-pull-request-reviewerのレビューを探す（最新から逆順で）
+        for review in reversed(reviews):
+            reviewer_login = review.get("author", {}).get("login", "")
+            if reviewer_login == "copilot-pull-request-reviewer":
+                review_state = review.get("state", "")
+                review_body = review.get("body", "")
+
+                # CHANGES_REQUESTEDの場合はphase2
+                if review_state == "CHANGES_REQUESTED":
+                    return PHASE_2
+
+                # インラインレビューコメントがある場合はphase2
+                if review_state == "COMMENTED" and has_inline_review_comments(review_body):
+                    return PHASE_2
+
+                # 最新のcopilot-pull-request-reviewerレビューまで確認したら、
+                # それより古いレビューは無視する
+                break
+
+        # 未解決のレビューコメントがない場合はphase3
         return PHASE_3
 
     return PHASE_LLM_WORKING

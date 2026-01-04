@@ -161,19 +161,19 @@ class TestDeterminePhase:
         assert determine_phase(pr) == "phase3"
 
     def test_phase3_copilot_swe_agent(self):
-        """Copilot SWE agent as latest reviewer should be phase3"""
+        """Copilot SWE agent as latest reviewer should be phase3 when previous review had no inline comments"""
         pr = {
             "isDraft": False,
             "reviews": [
                 {
                     "author": {"login": "copilot-pull-request-reviewer"},
                     "state": "COMMENTED",
-                    "body": "Please fix issues",
+                    "body": "## Pull request overview\n\nLooks good overall",  # No inline comments
                 },
-                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Fixed the issues"},
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Made some improvements"},
             ],
             "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
-            "comments": [],
+            "commentNodes": [],
         }
         assert determine_phase(pr) == "phase3"
 
@@ -344,3 +344,66 @@ class TestDeterminePhase:
         }
 
         assert determine_phase(pr) == "phase2"
+
+    def test_phase2_when_copilot_swe_agent_after_review_comments(self):
+        """When copilot-swe-agent posts after copilot-pull-request-reviewer with review comments, should be phase2 not phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "Copilot reviewed 2 out of 2 changed files in this pull request and generated 3 comments.",
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Working on the fixes"},
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+        }
+
+        # Should be phase2 because there are unresolved review comments from copilot-pull-request-reviewer
+        assert determine_phase(pr) == "phase2"
+
+    def test_phase2_when_copilot_swe_agent_after_changes_requested(self):
+        """When copilot-swe-agent posts after copilot-pull-request-reviewer with CHANGES_REQUESTED, should be phase2 not phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "CHANGES_REQUESTED",
+                    "body": "Please address these issues",
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Addressing the issues"},
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+        }
+
+        # Should be phase2 because there are unresolved CHANGES_REQUESTED from copilot-pull-request-reviewer
+        assert determine_phase(pr) == "phase2"
+
+    def test_phase3_when_copilot_swe_agent_after_resolved_reviews(self):
+        """When copilot-pull-request-reviewer posts multiple reviews and most recent has no issues, should be phase3"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "CHANGES_REQUESTED",
+                    "body": "Please address these issues",
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Addressing the issues"},
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "COMMENTED",
+                    "body": "## Pull request overview\n\nLooks good now",  # No inline comments
+                },
+                {"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED", "body": "Made final improvements"},
+            ],
+            "latestReviews": [{"author": {"login": "copilot-swe-agent"}, "state": "COMMENTED"}],
+            "commentNodes": [],
+        }
+
+        # Should be phase3 because the most recent review from copilot-pull-request-reviewer has no issues
+        assert determine_phase(pr) == "phase3"
