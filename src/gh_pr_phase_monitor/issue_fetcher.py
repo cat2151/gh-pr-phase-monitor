@@ -144,8 +144,7 @@ def assign_issue_to_copilot(issue: Dict[str, Any]) -> bool:
     owner = issue["repository"]["owner"]
     issue_number = issue["number"]
 
-    # Use gh CLI to post a comment that triggers Copilot assignment
-    # The comment "Assign to Copilot" is a GitHub feature that assigns the issue to Copilot
+    # Post a comment "Assign to Copilot" which triggers GitHub's workflow for Copilot assignment
     try:
         cmd = [
             "gh",
@@ -158,7 +157,15 @@ def assign_issue_to_copilot(issue: Dict[str, Any]) -> bool:
             "Assign to Copilot",
         ]
 
-        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
+        subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+            timeout=30,  # 30 second timeout for the gh command
+        )
 
         print(f"  ✓ Assigned issue #{issue_number} to Copilot in {owner}/{repo_name}")
         return True
@@ -167,4 +174,7 @@ def assign_issue_to_copilot(issue: Dict[str, Any]) -> bool:
         print(f"  ✗ Failed to assign issue #{issue_number} to Copilot: {e}")
         if e.stderr:
             print(f"    stderr: {e.stderr}")
+        return False
+    except subprocess.TimeoutExpired:
+        print(f"  ✗ Timeout while assigning issue #{issue_number} to Copilot")
         return False

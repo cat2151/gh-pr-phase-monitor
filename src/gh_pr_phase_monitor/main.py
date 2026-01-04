@@ -134,7 +134,10 @@ def main():
                                     print(f"     URL: {issue['url']}")
                                     print(f"     Author: {issue['author']['login']}")
                                     print(f"     Updated: {issue['updatedAt']}")
-                                    print(f"     Labels: {', '.join(issue['labels'])}")
+                                    # Safely join labels, ensuring they are all strings
+                                    labels = issue.get('labels', [])
+                                    label_str = ', '.join(str(label) for label in labels)
+                                    print(f"     Labels: {label_str}")
                                     print("\n  Attempting to assign to Copilot...")
 
                                     # Assign the issue to Copilot
