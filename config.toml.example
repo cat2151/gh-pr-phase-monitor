@@ -22,3 +22,9 @@ enabled = false  # Set to true to enable notifications
 topic = "<your-ntfy.sh-topic-name>" # Use a hard-to-guess topic name for security
 message = "PR is ready for review: {url}"  # Message template, {url} will be replaced with PR URL
 priority = 4  # Optional: notification priority (1=min, 3=default, 4=high, 5=max)
+
+# Auto-assign "good first issue" issues to Copilot (optional)
+# When enabled, the tool will automatically open the issue in a browser
+# and attempt to click the "Assign to Copilot" button using browser automation
+[assign_to_copilot]
+enabled = false  # Set to true to enable auto-assignment feature

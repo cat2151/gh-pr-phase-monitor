@@ -4,6 +4,7 @@ Issue fetching module for GitHub issues
 
 import json
 import subprocess
+import webbrowser
 from typing import Any, Dict, List, Optional
 
 from .graphql_client import execute_graphql_query
@@ -132,59 +133,42 @@ def get_issues_from_repositories(repos: List[Dict[str, Any]], limit: int = 10, l
 
 
 def assign_issue_to_copilot(issue: Dict[str, Any]) -> bool:
-    """Assign an issue to GitHub Copilot by posting an 'Assign to Copilot' comment
+    """Assign an issue to GitHub Copilot by opening the issue in a browser
+    
+    Opens the issue URL in the default browser. The user can then manually
+    click the "Assign to Copilot" button on the GitHub issue page.
+    
+    This function no longer posts a comment, as that approach was found to
+    increase assignee count without actually assigning Copilot, which polluted
+    the issue information.
 
     Args:
-        issue: Issue dictionary with 'repository' (name, owner), 'number' fields
+        issue: Issue dictionary with 'url' field
 
     Returns:
-        True if assignment was successful, False otherwise
+        True if the browser was successfully opened, False otherwise
     """
-    # Validate that the issue dictionary contains the required fields before accessing them
-    if "repository" not in issue or "number" not in issue:
-        print("  ✗ Invalid issue data: missing required fields")
+    # Validate that the issue dictionary contains the required fields
+    if "url" not in issue:
+        print("  ✗ Invalid issue data: missing 'url' field")
         return False
 
-    repository = issue["repository"]
-    if not isinstance(repository, dict) or "name" not in repository or "owner" not in repository:
-        print("  ✗ Invalid issue data: missing repository fields")
-        return False
+    issue_url = issue["url"]
 
-    repo_name = repository["name"]
-    owner = repository["owner"]
-    issue_number = issue["number"]
-
-    # Post a comment "Assign to Copilot" which triggers GitHub's workflow for Copilot assignment
     try:
-        cmd = [
-            "gh",
-            "issue",
-            "comment",
-            str(issue_number),
-            "--repo",
-            f"{owner}/{repo_name}",
-            "--body",
-            "Assign to Copilot",
-        ]
-
-        subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=True,
-            timeout=30,  # 30 second timeout for the gh command
-        )
-
-        print(f"  ✓ Assigned issue #{issue_number} to Copilot in {owner}/{repo_name}")
+        # Open the issue in the default browser
+        webbrowser.open(issue_url)
+        
+        # Get issue details for logging
+        repo_info = issue.get("repository", {})
+        repo_name = repo_info.get("name", "unknown")
+        owner = repo_info.get("owner", "unknown")
+        issue_number = issue.get("number", "unknown")
+        
+        print(f"  ✓ Opened issue #{issue_number} in browser: {owner}/{repo_name}")
+        print(f"    Please manually click the 'Assign to Copilot' button in your browser")
         return True
 
-    except subprocess.CalledProcessError as e:
-        print(f"  ✗ Failed to assign issue #{issue_number} to Copilot: {e}")
-        if e.stderr:
-            print(f"    stderr: {e.stderr}")
-        return False
-    except subprocess.TimeoutExpired:
-        print(f"  ✗ Timeout while assigning issue #{issue_number} to Copilot")
+    except Exception as e:
+        print(f"  ✗ Failed to open browser for issue: {e}")
         return False
