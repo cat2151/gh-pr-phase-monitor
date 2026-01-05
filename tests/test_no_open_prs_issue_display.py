@@ -211,6 +211,46 @@ def test_display_issues_with_custom_limit():
             assert call_args[1]["limit"] == 5
 
 
+def test_display_issues_with_none_config():
+    """
+    Test that display_issues_from_repos_without_prs handles None config gracefully
+    """
+    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
+            # Mock response: repos with no PRs but with issues
+            mock_get_repos.return_value = [
+                {
+                    "name": "test-repo",
+                    "owner": "testuser",
+                    "openIssueCount": 10,
+                }
+            ]
+
+            # Mock issue response
+            mock_get_issues.return_value = [
+                {
+                    "title": f"Issue {i}",
+                    "url": f"https://github.com/testuser/test-repo/issues/{i}",
+                    "number": i,
+                    "updatedAt": f"2024-01-{i:02d}T00:00:00Z",
+                    "author": {"login": "contributor1"},
+                    "repository": {"owner": "testuser", "name": "test-repo"},
+                }
+                for i in range(1, 11)
+            ]
+
+            # Call the function with None config - should use default limit of 10
+            display_issues_from_repos_without_prs(None)
+
+            # Verify that the function fetched repos without PRs
+            mock_get_repos.assert_called_once()
+
+            # Verify that issues were fetched with the default limit of 10
+            mock_get_issues.assert_called_once()
+            call_args = mock_get_issues.call_args
+            assert call_args[1]["limit"] == 10
+
+
 if __name__ == "__main__":
     test_display_issues_when_no_repos_with_prs()
     print("✓ Test 1 passed: display_issues_when_no_repos_with_prs")
@@ -226,5 +266,8 @@ if __name__ == "__main__":
 
     test_display_issues_with_custom_limit()
     print("✓ Test 5 passed: display_issues_with_custom_limit")
+
+    test_display_issues_with_none_config()
+    print("✓ Test 6 passed: display_issues_with_none_config")
 
     print("\n✅ All tests passed!")

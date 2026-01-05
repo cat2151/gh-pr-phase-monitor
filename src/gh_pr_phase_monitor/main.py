@@ -79,7 +79,7 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                 print(f"{'=' * 50}")
 
             # Get the issue display limit from config (default: 10)
-            issue_limit = config.get("issue_display_limit", 10)
+            issue_limit = config.get("issue_display_limit", 10) if config else 10
 
             # Then, show top N issues from these repositories
             print(f"\n{'=' * 50}")
