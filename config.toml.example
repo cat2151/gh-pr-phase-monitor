@@ -24,6 +24,7 @@ issue_display_limit = 10
 enable_execution_phase1_to_phase2 = false  # Set to true to mark draft PRs as ready
 enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
 enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
+enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
 
 # Rulesets - Fine-grained control per repository or group of repositories
 # Rulesets are applied in order, with later rulesets overriding earlier ones
@@ -37,6 +38,7 @@ enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notificati
 # enable_execution_phase1_to_phase2 = false
 # enable_execution_phase2_to_phase3 = false
 # enable_execution_phase3_send_ntfy = false
+# enable_execution_phase3_to_merge = false
 #
 # [[rulesets]]
 # name = "Enable automation for test repository"
@@ -44,6 +46,7 @@ enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notificati
 # enable_execution_phase1_to_phase2 = true
 # enable_execution_phase2_to_phase3 = true
 # enable_execution_phase3_send_ntfy = true
+# enable_execution_phase3_to_merge = true
 #
 # [[rulesets]]
 # name = "Enable only notifications for production repos"
@@ -51,12 +54,14 @@ enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notificati
 # enable_execution_phase1_to_phase2 = false
 # enable_execution_phase2_to_phase3 = false
 # enable_execution_phase3_send_ntfy = true
+# enable_execution_phase3_to_merge = false
 #
 # You can also use just the repository name without the owner (matches any owner):
 # [[rulesets]]
 # name = "Example with repo name only"
 # repositories = ["my-repo"]  # Matches any owner/my-repo
 # enable_execution_phase1_to_phase2 = true
+# enable_execution_phase3_to_merge = true
 
 # ntfy.sh notification settings (optional)
 # Sends mobile notifications when phase3 is detected
@@ -66,6 +71,18 @@ enabled = false  # Set to true to enable notifications
 topic = "<your-ntfy.sh-topic-name>" # Use a hard-to-guess topic name for security
 message = "PR is ready for review: {url}"  # Message template, {url} will be replaced with PR URL
 priority = 4  # Optional: notification priority (1=min, 3=default, 4=high, 5=max)
+
+# Phase3 merge settings (optional)
+# Automatically merge PRs when they reach phase3 (ready for review)
+# Before merging, a comment defined below will be posted to the PR
+[phase3_merge]
+enabled = false  # Set to true to enable automatic merging (also requires enable_execution_phase3_to_merge = true)
+comment = "All checks passed. Merging PR."  # Comment to post before merging
+automated = false  # Set to true to use browser automation to click the merge button
+automation_backend = "selenium"  # Backend to use: "selenium" or "playwright" (automated mode only)
+wait_seconds = 10  # How long to wait after opening the browser before clicking (automated mode only)
+browser = "edge"  # Browser to use: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
+headless = false  # Run browser in headless mode (no visible window, automated mode only)
 
 # Auto-assign "good first issue" issues to Copilot (optional)
 # When enabled, the tool will automatically open the issue in your browser.

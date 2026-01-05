@@ -1,0 +1,239 @@
+"""
+Tests for Phase3 merge functionality
+"""
+
+from unittest.mock import patch
+
+from src.gh_pr_phase_monitor import pr_actions
+from src.gh_pr_phase_monitor.pr_actions import process_pr
+
+
+class TestPhase3Merge:
+    """Test the phase3 merge functionality"""
+
+    def setup_method(self):
+        """Clear the tracking before each test"""
+        pr_actions._browser_opened.clear()
+        pr_actions._notifications_sent.clear()
+        pr_actions._merged_prs.clear()
+
+    def test_merge_not_attempted_when_disabled(self):
+        """Merge should not be attempted when disabled in config"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {"enabled": False},
+            "enable_execution_phase3_to_merge": False,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            process_pr(pr, config)
+            # Merge should not be attempted
+            mock_merge.assert_not_called()
+            mock_comment.assert_not_called()
+
+    def test_merge_attempted_when_enabled_with_gh_cli(self):
+        """Merge should be attempted using gh CLI when enabled and automated=false"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Test merge comment",
+                "automated": False,
+            },
+            "enable_execution_phase3_to_merge": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            mock_merge.return_value = True
+            mock_comment.return_value = True
+            process_pr(pr, config)
+            # Comment should be posted before merge
+            mock_comment.assert_called_once_with(pr, "Test merge comment", None)
+            # Merge should be attempted via gh CLI
+            mock_merge.assert_called_once_with("https://github.com/test-owner/test-repo/pull/1", None)
+
+    def test_merge_attempted_when_enabled_with_automation(self):
+        """Merge should be attempted using browser automation when enabled and automated=true"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Auto merge comment",
+                "automated": True,
+            },
+            "enable_execution_phase3_to_merge": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr_automated"
+        ) as mock_merge_auto, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            mock_merge_auto.return_value = True
+            mock_comment.return_value = True
+            process_pr(pr, config)
+            # Comment should be posted before merge
+            mock_comment.assert_called_once_with(pr, "Auto merge comment", None)
+            # Merge should be attempted via browser automation
+            mock_merge_auto.assert_called_once_with("https://github.com/test-owner/test-repo/pull/1", config)
+
+    def test_merge_only_once_per_pr(self):
+        """Merge should only be attempted once per PR"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Merging",
+                "automated": False,
+            },
+            "enable_execution_phase3_to_merge": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            mock_merge.return_value = True
+            mock_comment.return_value = True
+
+            # First call should merge
+            process_pr(pr, config)
+            assert mock_merge.call_count == 1
+            assert mock_comment.call_count == 1
+
+            # Second call should not merge again
+            process_pr(pr, config)
+            assert mock_merge.call_count == 1
+            assert mock_comment.call_count == 1
+
+    def test_merge_not_attempted_for_phase1(self):
+        """Merge should not be attempted for phase1"""
+        pr = {
+            "isDraft": True,
+            "reviews": [],
+            "latestReviews": [],
+            "reviewRequests": [{"login": "user1"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Merging",
+            },
+            "enable_execution_phase1_to_phase2": True,
+            "enable_execution_phase3_to_merge": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment, patch(
+            "src.gh_pr_phase_monitor.pr_actions.mark_pr_ready"
+        ) as mock_ready:
+            mock_ready.return_value = True
+            process_pr(pr, config)
+            # Merge should not be attempted for phase1
+            mock_merge.assert_not_called()
+            mock_comment.assert_not_called()
+
+    def test_merge_not_attempted_for_phase2(self):
+        """Merge should not be attempted for phase2"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {
+                    "author": {"login": "copilot-pull-request-reviewer"},
+                    "state": "CHANGES_REQUESTED",
+                    "body": "Please fix",
+                }
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "CHANGES_REQUESTED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Merging",
+            },
+            "enable_execution_phase2_to_phase3": True,
+            "enable_execution_phase3_to_merge": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment, patch(
+            "src.gh_pr_phase_monitor.pr_actions.post_phase2_comment"
+        ) as mock_phase2_comment:
+            mock_phase2_comment.return_value = True
+            process_pr(pr, config)
+            # Merge should not be attempted for phase2
+            mock_merge.assert_not_called()
+            mock_comment.assert_not_called()
+
+    def test_merge_dry_run_mode(self):
+        """Merge should show dry-run message when execution flag is false"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/1",
+        }
+        config = {
+            "phase3_merge": {
+                "enabled": True,
+                "comment": "Merging",
+            },
+            "enable_execution_phase3_to_merge": False,  # Dry-run mode
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
+        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            process_pr(pr, config)
+            # Merge should not be attempted in dry-run mode
+            mock_merge.assert_not_called()
+            mock_comment.assert_not_called()

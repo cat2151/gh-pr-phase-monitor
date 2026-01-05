@@ -59,3 +59,32 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
         stderr = getattr(e, "stderr", "No stderr available")
         print(f"    stderr: {stderr}")
         return False
+
+
+def post_phase3_comment(pr: Dict[str, Any], comment_text: str, repo_dir: Path = None) -> bool:
+    """Post a comment to PR when phase3 merge is about to happen
+
+    Args:
+        pr: PR data dictionary containing url
+        comment_text: The comment text to post (from configuration)
+        repo_dir: Repository directory (optional, not used when working with URLs)
+
+    Returns:
+        True if comment was posted successfully, False otherwise
+    """
+    pr_url = pr.get("url", "")
+    if not pr_url:
+        return False
+
+    # No need to check for existing comment - we want to post this comment before merging
+
+    cmd = ["gh", "pr", "comment", pr_url, "--body", comment_text]
+
+    try:
+        subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"    Error posting comment: {e}")
+        stderr = getattr(e, "stderr", "No stderr available")
+        print(f"    stderr: {stderr}")
+        return False

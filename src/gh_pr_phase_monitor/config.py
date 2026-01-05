@@ -106,6 +106,7 @@ def resolve_execution_config_for_repo(
         - enable_execution_phase1_to_phase2
         - enable_execution_phase2_to_phase3
         - enable_execution_phase3_send_ntfy
+        - enable_execution_phase3_to_merge
     """
     # Full repository identifier
     repo_full_name = f"{repo_owner}/{repo_name}"
@@ -123,6 +124,7 @@ def resolve_execution_config_for_repo(
         "enable_execution_phase1_to_phase2": get_validated_flag("enable_execution_phase1_to_phase2", False),
         "enable_execution_phase2_to_phase3": get_validated_flag("enable_execution_phase2_to_phase3", False),
         "enable_execution_phase3_send_ntfy": get_validated_flag("enable_execution_phase3_send_ntfy", False),
+        "enable_execution_phase3_to_merge": get_validated_flag("enable_execution_phase3_to_merge", False),
     }
 
     # Apply rulesets if they exist
@@ -170,6 +172,10 @@ def resolve_execution_config_for_repo(
             if "enable_execution_phase3_send_ntfy" in ruleset:
                 result["enable_execution_phase3_send_ntfy"] = _validate_boolean_flag(
                     ruleset["enable_execution_phase3_send_ntfy"], "enable_execution_phase3_send_ntfy"
+                )
+            if "enable_execution_phase3_to_merge" in ruleset:
+                result["enable_execution_phase3_to_merge"] = _validate_boolean_flag(
+                    ruleset["enable_execution_phase3_to_merge"], "enable_execution_phase3_to_merge"
                 )
 
     return result
