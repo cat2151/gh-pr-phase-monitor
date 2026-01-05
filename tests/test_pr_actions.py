@@ -473,5 +473,3 @@ class TestDryRunMode:
                 config_exec, "https://github.com/test-owner/test-repo/pull/2", "Test PR"
             )
 
-
-

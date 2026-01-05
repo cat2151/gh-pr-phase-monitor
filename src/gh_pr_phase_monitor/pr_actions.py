@@ -118,7 +118,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         # notification will NOT be sent. This prevents duplicate notifications for
         # the same phase of the same PR across monitoring iterations.
         notification_key = (url, phase)
-        
+
         # Check if ntfy execution is enabled
         execution_enabled = config.get("enable_execution_phase3_send_ntfy", False) if config else False
         ntfy_configured = config and config.get("ntfy", {}).get("enabled", False)
