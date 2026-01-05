@@ -244,6 +244,10 @@ def _assign_with_playwright(
             browser.close()
             return True
 
+    except PlaywrightTimeoutError as e:
+        print(f"  ✗ Playwright timeout error: Page elements not found within timeout period")
+        print(f"     Details: {e}")
+        return False
     except Exception as e:
         print(f"  ✗ Failed to automate button clicks with Playwright: {e}")
         return False
@@ -350,23 +354,24 @@ def _click_button_playwright(page, button_text: str, timeout: int = 10000) -> bo
         and is not designed to handle arbitrary user input.
     """
     try:
-        # Try multiple strategies to find and click the button
-        selectors = [
-            f"button:has-text('{button_text}')",
-            f"button[aria-label='{button_text}']",
-            f"a:has-text('{button_text}')",
+        # Try multiple strategies to find and click the button using Playwright locators
+        locators = [
+            page.get_by_role("button", name=button_text),
+            page.get_by_role("button", name=button_text, exact=True),
+            page.get_by_role("link", name=button_text),
+            page.get_by_text(button_text),
         ]
 
-        for selector in selectors:
+        for locator in locators:
             try:
-                page.click(selector, timeout=timeout)
+                locator.click(timeout=timeout)
                 return True
             except PlaywrightTimeoutError:
                 continue
             except Exception:
                 continue
 
-        # If none of the selectors worked
+        # If none of the locators worked
         return False
 
     except Exception as e:

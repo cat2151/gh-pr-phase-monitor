@@ -191,7 +191,7 @@ class TestPlaywrightBackend:
         with patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", True):
             with patch("src.gh_pr_phase_monitor.browser_automation._create_browser_driver") as mock_driver:
                 mock_driver.return_value = None
-                result = assign_issue_to_copilot_automated(
+                assign_issue_to_copilot_automated(
                     "https://github.com/test/repo/issues/1",
                     config
                 )
