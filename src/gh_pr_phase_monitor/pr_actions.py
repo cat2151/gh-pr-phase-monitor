@@ -11,6 +11,7 @@ from .colors import colorize_phase
 from .comment_manager import (
     post_phase2_comment,
 )
+from .config import resolve_execution_config_for_repo
 from .notifier import send_phase3_notification
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
@@ -75,10 +76,20 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
     print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
     print(f"    URL: {url}")
 
+    # Resolve execution config for this repository
+    if config:
+        exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
+    else:
+        exec_config = {
+            "enable_execution_phase1_to_phase2": False,
+            "enable_execution_phase2_to_phase3": False,
+            "enable_execution_phase3_send_ntfy": False,
+        }
+
     # Mark PR as ready for review when in phase 1
     if phase == PHASE_1:
         # Check if execution is enabled
-        execution_enabled = config.get("enable_execution_phase1_to_phase2", False) if config else False
+        execution_enabled = exec_config["enable_execution_phase1_to_phase2"]
         if execution_enabled:
             print("    Marking PR as ready for review...")
             if mark_pr_ready(url, None):
@@ -91,7 +102,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
     # Post comment when in phase 2
     if phase == PHASE_2:
         # Check if execution is enabled
-        execution_enabled = config.get("enable_execution_phase2_to_phase3", False) if config else False
+        execution_enabled = exec_config["enable_execution_phase2_to_phase3"]
         if execution_enabled:
             print("    Posting comment for phase2...")
             if post_phase2_comment(pr, None):
@@ -120,7 +131,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         notification_key = (url, phase)
 
         # Check if ntfy execution is enabled
-        execution_enabled = config.get("enable_execution_phase3_send_ntfy", False) if config else False
+        execution_enabled = exec_config["enable_execution_phase3_send_ntfy"]
         ntfy_configured = config and config.get("ntfy", {}).get("enabled", False)
 
         # Only track notifications when execution is enabled (not in dry-run mode)
