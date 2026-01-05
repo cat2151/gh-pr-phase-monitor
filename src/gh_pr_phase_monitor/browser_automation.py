@@ -21,7 +21,8 @@ except ImportError:
 
 # Playwright imports are optional
 try:
-    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+    from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+    from playwright.sync_api import sync_playwright
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -73,10 +74,10 @@ def assign_issue_to_copilot_automated(
         config = {}
 
     assign_config = config.get("assign_to_copilot", {})
-    
+
     # Get automation backend (selenium or playwright)
     backend = assign_config.get("automation_backend", "selenium").lower()
-    
+
     if backend == "playwright":
         return _assign_with_playwright(issue_url, assign_config)
     else:
@@ -107,10 +108,10 @@ def merge_pr_automated(
         config = {}
 
     merge_config = config.get("phase3_merge", {})
-    
+
     # Get automation backend (selenium or playwright)
     backend = merge_config.get("automation_backend", "selenium").lower()
-    
+
     if backend == "playwright":
         return _merge_pr_with_playwright(pr_url, merge_config)
     else:
@@ -236,7 +237,7 @@ def _assign_with_playwright(
         with sync_playwright() as p:
             # Initialize the browser
             print(f"  → [Playwright] Opening issue in {browser_type} browser...")
-            
+
             if browser_type == "firefox":
                 browser = p.firefox.launch(headless=headless)
             elif browser_type == "webkit":
@@ -283,7 +284,7 @@ def _assign_with_playwright(
             return True
 
     except PlaywrightTimeoutError as e:
-        print(f"  ✗ Playwright timeout error: Page elements not found within timeout period")
+        print("  ✗ Playwright timeout error: Page elements not found within timeout period")
         print(f"     Details: {e}")
         return False
     except Exception as e:
@@ -536,7 +537,7 @@ def _merge_pr_with_playwright(
         with sync_playwright() as p:
             # Initialize the browser
             print(f"  → [Playwright] Opening PR in {browser_type} browser...")
-            
+
             if browser_type == "firefox":
                 browser = p.firefox.launch(headless=headless)
             elif browser_type == "webkit":
@@ -583,7 +584,7 @@ def _merge_pr_with_playwright(
             return True
 
     except PlaywrightTimeoutError as e:
-        print(f"  ✗ Playwright timeout error: Page elements not found within timeout period")
+        print("  ✗ Playwright timeout error: Page elements not found within timeout period")
         print(f"     Details: {e}")
         return False
     except Exception as e:

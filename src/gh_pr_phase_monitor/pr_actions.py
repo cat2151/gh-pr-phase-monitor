@@ -195,7 +195,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
 
                 # Check if automated merge is enabled
                 merge_automated = config.get("phase3_merge", {}).get("automated", False)
-                
+
                 if merge_automated:
                     print("    Merging PR using browser automation...")
                     if merge_pr_automated(url, config):
