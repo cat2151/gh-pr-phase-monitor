@@ -27,13 +27,21 @@ priority = 4  # Optional: notification priority (1=min, 3=default, 4=high, 5=max
 # When enabled, the tool will automatically open the issue in your browser.
 # You can then manually click the "Assign to Copilot" button on the GitHub issue page.
 # 
-# Automated mode (requires Selenium):
+# Automated mode (requires Selenium or Playwright):
 # If 'automated' is set to true, the tool will use browser automation to
 # automatically click the buttons after waiting for the specified time.
-# This requires: pip install selenium webdriver-manager
+# 
+# Selenium backend:
+#   Install: pip install selenium webdriver-manager
+#   Browsers: "edge", "chrome", or "firefox"
+# 
+# Playwright backend:
+#   Install: pip install playwright && playwright install
+#   Browsers: "chromium", "firefox", or "webkit"
 [assign_to_copilot]
 enabled = false  # Set to true to enable auto-assignment feature
-automated = false  # Set to true to enable automated button clicking (requires Selenium)
+automated = false  # Set to true to enable automated button clicking
+automation_backend = "selenium"  # Backend to use: "selenium" or "playwright"
 wait_seconds = 10  # How long to wait after opening the browser before clicking (automated mode only)
-browser = "edge"  # Browser to use for automation: "edge", "chrome", or "firefox" (automated mode only)
+browser = "edge"  # Browser to use: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
 headless = false  # Run browser in headless mode (no visible window, automated mode only)

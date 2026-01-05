@@ -204,46 +204,73 @@ def assign_issue_to_copilot_automated(issue_url):
 
 ## 推奨案
 
-### 推奨: Selenium WebDriver（方法1）
+### 実装状況: 両方のバックエンドをサポート
 
-理由：
+現在、両方のブラウザ自動化バックエンド（SeleniumとPlaywright）が実装されており、設定で選択可能です。
+
+### Selenium WebDriver（方法1）
+
+**特徴**：
 1. **安定性**: 業界標準で長年の実績
 2. **Windows対応**: Edge（Windows標準ブラウザ）を使用可能
 3. **要素検出**: HTML要素を確実に検出してクリック
 4. **保守性**: 豊富なドキュメントとサンプルコード
 5. **既存実装との統合**: 現在の`assign_issue_to_copilot()`関数を拡張可能
 
+### Playwright（方法2）
+
+**特徴**：
+1. **速度**: より高速な実行
+2. **簡単なセットアップ**: ブラウザが自動管理される
+3. **モダンAPI**: 自動待機機能を持つ最新のAPI設計
+4. **複数ブラウザエンジン**: Chromium、Firefox、WebKitをサポート
+
 ### 実装手順
 
-1. **依存関係の追加**:
+1. **依存関係の追加**（いずれかまたは両方）:
    ```
+   # Selenium
    selenium>=4.0.0
    webdriver-manager>=4.0.0
+   
+   # Playwright
+   playwright>=1.40.0
    ```
 
 2. **設定オプションの追加**（config.toml）:
    ```toml
    [assign_to_copilot]
    enabled = false
-   automated = false  # 新規: 自動ボタンクリックを有効化
-   wait_seconds = 10  # 新規: クリック前の待機時間
-   browser = "edge"   # 新規: 使用するブラウザ（edge, chrome, firefox）
+   automated = false              # 自動ボタンクリックを有効化
+   automation_backend = "selenium" # バックエンド: "selenium" または "playwright"
+   wait_seconds = 10               # クリック前の待機時間
+   browser = "edge"                # Selenium: "edge", "chrome", "firefox"
+                                   # Playwright: "chromium", "firefox", "webkit"
+   headless = false                # ヘッドレスモード（ウィンドウを表示しない）
    ```
 
-3. **issue_fetcher.pyの拡張**:
-   - `assign_issue_to_copilot()`関数を拡張
-   - `automated`設定がtrueの場合、Seleniumを使用
-   - falseの場合、現在の`webbrowser.open()`を使用
+3. **使用方法**:
+   - `automation_backend`を"selenium"または"playwright"に設定
+   - 両方をインストールして比較することも可能
+   - デフォルトはSelenium
 
 4. **エラーハンドリング**:
-   - Seleniumが利用できない場合は、従来の手動方式にフォールバック
+   - バックエンドが利用できない場合は、従来の手動方式にフォールバック
    - ログイン状態のチェック
    - ボタンが見つからない場合の処理
 
-### 代替案: Playwright（方法2）
+### 比較と検証
 
-モダンなアプローチを希望する場合は、Playwrightも検討可能。
-より高速で安定しているが、採用例が少ない。
+両方のバックエンドを実装したことで、以下が可能になりました：
+
+1. **パフォーマンス比較**: `demo_comparison.py`スクリプトで両者を比較
+2. **安定性検証**: 実際の環境で両方をテスト
+3. **使いやすさ評価**: セットアップと保守性を比較
+
+**比較デモの実行**:
+```bash
+python demo_comparison.py
+```
 
 ## 注意事項
 
@@ -265,7 +292,10 @@ def assign_issue_to_copilot_automated(issue_url):
 ## 次のステップ
 
 1. ✅ 方法の調査と文書化（完了）
-2. 🔄 Selenium WebDriverを使用したプロトタイプの実装
-3. 🔄 設定オプションの追加
-4. 🔄 既存コードとの統合
-5. 🔄 テストとドキュメント更新
+2. ✅ Selenium WebDriverを使用したプロトタイプの実装（完了）
+3. ✅ Playwrightバックエンドの実装（完了）
+4. ✅ 設定オプションの追加（完了）
+5. ✅ 既存コードとの統合（完了）
+6. ✅ テストとドキュメント更新（完了）
+7. 🔄 実際の環境でのテストと検証
+8. 🔄 どちらがより適しているかの評価
