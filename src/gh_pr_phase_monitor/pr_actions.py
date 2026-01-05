@@ -118,22 +118,23 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         # notification will NOT be sent. This prevents duplicate notifications for
         # the same phase of the same PR across monitoring iterations.
         notification_key = (url, phase)
-        if notification_key not in _notifications_sent:
-            # Mark as attempted regardless of outcome to avoid repeated checks
-            _notifications_sent.add(notification_key)
+        
+        # Check if ntfy execution is enabled
+        execution_enabled = config.get("enable_execution_phase3_send_ntfy", False) if config else False
+        ntfy_configured = config and config.get("ntfy", {}).get("enabled", False)
 
-            # Check if ntfy execution is enabled
-            execution_enabled = config.get("enable_execution_phase3_send_ntfy", False) if config else False
-            ntfy_configured = config and config.get("ntfy", {}).get("enabled", False)
-
-            if ntfy_configured and execution_enabled:
+        # Only track notifications when execution is enabled (not in dry-run mode)
+        if ntfy_configured and execution_enabled:
+            if notification_key not in _notifications_sent:
+                # Mark as attempted to avoid repeated sends
+                _notifications_sent.add(notification_key)
                 print("    Sending ntfy notification...")
                 if send_phase3_notification(config, url, title):
                     print("    Notification sent successfully")
                 else:
                     print("    Failed to send notification")
-            elif ntfy_configured and not execution_enabled:
-                print("    [DRY-RUN] Would send ntfy notification (enable_execution_phase3_send_ntfy=false)")
+        elif ntfy_configured and not execution_enabled:
+            print("    [DRY-RUN] Would send ntfy notification (enable_execution_phase3_send_ntfy=false)")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:

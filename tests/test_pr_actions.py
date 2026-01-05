@@ -431,4 +431,47 @@ class TestDryRunMode:
                 config, "https://github.com/test-owner/test-repo/pull/1", "Test PR"
             )
 
+    def test_phase3_notification_can_be_sent_after_dry_run(self):
+        """Notification should be sent when execution is enabled, even after processing in dry-run mode"""
+        pr = {
+            "isDraft": False,
+            "reviews": [
+                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED", "body": "Looks good!"}
+            ],
+            "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
+            "repository": {"name": "test-repo", "owner": "test-owner"},
+            "title": "Test PR",
+            "url": "https://github.com/test-owner/test-repo/pull/2",
+        }
+
+        # First process in dry-run mode
+        config_dry = {
+            "ntfy": {"enabled": True, "topic": "test-topic"},
+            "enable_execution_phase3_send_ntfy": False,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            process_pr(pr, config_dry)
+            # Notification should not be sent in dry-run mode
+            mock_notify.assert_not_called()
+
+        # Then process with execution enabled
+        config_exec = {
+            "ntfy": {"enabled": True, "topic": "test-topic"},
+            "enable_execution_phase3_send_ntfy": True,
+        }
+
+        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
+            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
+        ) as mock_notify:
+            mock_notify.return_value = True
+            process_pr(pr, config_exec)
+            # Notification should be sent when execution is enabled, even after dry-run
+            mock_notify.assert_called_once_with(
+                config_exec, "https://github.com/test-owner/test-repo/pull/2", "Test PR"
+            )
+
+
 
