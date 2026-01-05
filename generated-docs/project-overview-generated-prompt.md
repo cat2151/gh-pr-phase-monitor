@@ -1,4 +1,4 @@
-Last updated: 2026-01-05
+Last updated: 2026-01-06
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -95,9 +95,10 @@ GitHub Copilotが自動実装を行うPRのフェーズを監視し、適切な�
 - **全リポジトリ自動監視**: 認証済みGitHubユーザーのユーザー所有リポジトリのPRを自動監視
 - **GraphQL API活用**: 効率的なデータ取得で高速監視を実現
 - **フェーズ検知**: PRの状態（phase1: Draft状態、phase2: レビュー指摘対応中、phase3: レビュー待ち、LLM working: コーディングエージェント作業中）を自動判定
-- **自動コメント投稿**: フェーズに応じて適切なコメントを自動投稿
-- **Draft PR自動Ready化**: phase2でのレビュー指摘対応のため、Draft PRを自動的にReady状態に変更
-- **モバイル通知**: ntfy.shを利用してphase3（レビュー待ち）を検知したらモバイル端末に通知
+- **Dry-runモード**: デフォルトでは監視のみ行い、実際のアクション（コメント投稿、PR Ready化、通知送信）は実行しない。明示的に有効化することで安全に運用可能
+- **自動コメント投稿**: フェーズに応じて適切なコメントを自動投稿（要：設定ファイルで有効化）
+- **Draft PR自動Ready化**: phase2でのレビュー指摘対応のため、Draft PRを自動的にReady状態に変更（要：設定ファイルで有効化）
+- **モバイル通知**: ntfy.shを利用してphase3（レビュー待ち）を検知したらモバイル端末に通知（要：設定ファイルで有効化）
 - **issue一覧表示**: 全PRが「LLM working」の場合、オープンPRのないリポジトリのissue上位10件を表示
 
 ## アーキテクチャ
@@ -153,10 +154,16 @@ cat-github-watcher/
    cp config.toml.example config.toml
    ```
 
-3. `config.toml` を編集して、監視間隔やntfy.sh通知を設定（オプション）：
+3. `config.toml` を編集して、監視間隔や実行モード、ntfy.sh通知、Copilot自動割り当てを設定（オプション）：
    ```toml
    # チェック間隔（"30s", "1m", "5m", "1h", "1d"など）
    interval = "1m"
+   
+   # 実行制御フラグ - デフォルトはDry-runモード
+   # 実際のアクション（PRのReady化、コメント投稿、通知送信）を有効にするにはtrueに設定
+   enable_execution_phase1_to_phase2 = false  # trueにするとdraft PRをready化
+   enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
+   enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
    
    # ntfy.sh通知設定（オプション）
    # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
@@ -165,6 +172,30 @@ cat-github-watcher/
    topic = "<ここにntfy.shのトピック名を書く>"  # 誰でも読み書きできるので、推測されない文字列にしてください
    message = "PR is ready for review: {url}"  # メッセージテンプレート
    priority = 4  # 通知の優先度（1=最低、3=デフォルト、4=高、5=最高）
+   
+   # "good first issue"のissueをCopilotに自動割り当て（オプション）
+   # 有効にすると、issueをブラウザで開き、"Assign to Copilot"ボタンを押すよう促します
+   # automated = true にすると、ブラウザ自動操縦でボタンを自動的にクリックします（Selenium必要）
+   [assign_to_copilot]
+   enabled = false  # trueにすると自動割り当て機能を有効化
+   automated = false  # trueにするとブラウザ自動操縦を有効化（要：pip install selenium webdriver-manager）
+   wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
+   browser = "edge"  # 使用するブラウザ（"edge", "chrome", "firefox"）
+   ```
+
+4. （オプション）ブラウザ自動操縦を使用する場合は、Seleniumをインストール：
+   ```bash
+   pip install -r requirements-automation.txt
+   ```
+   または
+   ```bash
+   pip install selenium webdriver-manager
+   ```
+   
+   さらに、使用するブラウザのドライバーが必要です：
+   - **Edge**: Windows 10/11に標準搭載（追加インストール不要）
+   - **Chrome**: ChromeDriverが自動的にダウンロードされます
+   - **Firefox**: GeckoDriverが自動的にダウンロードされます
    ```
 
 ### 実行
@@ -187,11 +218,26 @@ python3 -m src.gh_pr_phase_monitor.main [config.toml]
 2. **PR検知**: オープンPRを持つリポジトリを自動検出
 3. **フェーズ判定**: 各PRのフェーズを判定（phase1/2/3、LLM working）
 4. **アクション実行**:
-   - **phase1**: 何もしない（Draft状態で待機）
-   - **phase2**: Draft PRをReady状態に変更し、Copilotに変更適用を依頼するコメントを投稿
-   - **phase3**: レビュー待ちを通知（ntfy.sh設定時はモバイル通知、ブラウザでPRページを開く）
+   - **phase1**: デフォルトはDry-run（`enable_execution_phase1_to_phase2 = true`でDraft PRをReady状態に変更）
+   - **phase2**: デフォルトはDry-run（`enable_execution_phase2_to_phase3 = true`でCopilotに変更適用を依頼するコメントを投稿）
+   - **phase3**: ブラウザでPRページを開く（`enable_execution_phase3_send_ntfy = true`でntfy.sh通知も送信）
    - **LLM working**: 待機（全PRがこの状態の場合、オープンPRのないリポジトリのissueを表示）
 5. **繰り返し**: 設定された間隔で監視を継続
+
+### Dry-runモード
+
+デフォルトでは、ツールは**Dry-runモード**で動作し、実際のアクションは実行しません。これにより、安全に動作を確認できます。
+
+- **Phase1（Draft → Ready化）**: `[DRY-RUN] Would mark PR as ready for review` と表示されるが、実際には何もしない
+- **Phase2（コメント投稿）**: `[DRY-RUN] Would post comment for phase2` と表示されるが、実際には何もしない
+- **Phase3（ntfy通知）**: `[DRY-RUN] Would send ntfy notification` と表示されるが、実際には何もしない
+
+実際のアクションを有効にするには、`config.toml`で以下のフラグを`true`に設定します：
+```toml
+enable_execution_phase1_to_phase2 = true  # Draft PRをReady化
+enable_execution_phase2_to_phase3 = true  # Phase2コメント投稿
+enable_execution_phase3_send_ntfy = true  # ntfy通知送信
+```
 
 ### 停止
 
@@ -237,13 +283,26 @@ MIT License - 詳細はLICENSEファイルを参照してください
 📄 _config.yml
 📄 cat-github-watcher.py
 📄 config.toml.example
+📄 demo_automation.py
+📄 demo_comparison.py
+📁 docs/
+  📖 IMPLEMENTATION_SUMMARY.ja.md
+  📖 IMPLEMENTATION_SUMMARY.md
+  📖 PR67_IMPLEMENTATION.md
+  📖 RULESETS.md
+  📖 VERIFICATION_GUIDE.en.md
+  📖 VERIFICATION_GUIDE.md
+  📖 browser-automation-approaches.en.md
+  📖 browser-automation-approaches.md
 📁 generated-docs/
 📄 pytest.ini
+📄 requirements-automation.txt
 📄 ruff.toml
 📁 src/
   📄 __init__.py
   📁 gh_pr_phase_monitor/
     📄 __init__.py
+    📄 browser_automation.py
     📄 colors.py
     📄 comment_fetcher.py
     📄 comment_manager.py
@@ -259,6 +318,8 @@ MIT License - 詳細はLICENSEファイルを参照してください
     📄 pr_fetcher.py
     📄 repository_fetcher.py
 📁 tests/
+  📄 test_browser_automation.py
+  📄 test_config_rulesets.py
   📄 test_integration_issue_fetching.py
   📄 test_interval_parsing.py
   📄 test_issue_fetching.py
@@ -267,6 +328,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_phase_detection.py
   📄 test_post_comment.py
   📄 test_pr_actions.py
+  📄 test_pr_actions_with_rulesets.py
 
 ## ファイル詳細分析
 
@@ -279,6 +341,14 @@ MIT License - 詳細はLICENSEファイルを参照してください
 README.ja.md
 README.md
 STRUCTURE.md
+docs/IMPLEMENTATION_SUMMARY.ja.md
+docs/IMPLEMENTATION_SUMMARY.md
+docs/PR67_IMPLEMENTATION.md
+docs/RULESETS.md
+docs/VERIFICATION_GUIDE.en.md
+docs/VERIFICATION_GUIDE.md
+docs/browser-automation-approaches.en.md
+docs/browser-automation-approaches.md
 
 上記の情報を基に、プロンプトで指定された形式でプロジェクト概要を生成してください。
 特に以下の点を重視してください：
@@ -290,4 +360,4 @@ STRUCTURE.md
 
 
 ---
-Generated at: 2026-01-05 07:01:26 JST
+Generated at: 2026-01-06 07:01:32 JST
