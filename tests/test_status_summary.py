@@ -25,22 +25,23 @@ class TestDisplayStatusSummary:
             assert any("No open PRs to monitor" in str(call) for call in calls)
 
     def test_display_status_summary_with_mixed_phases(self):
-        """Test that display_status_summary correctly counts and displays PRs by phase"""
-        # Create mock PR data
+        """Test that display_status_summary correctly displays PRs by phase"""
+        # Create mock PR data with repository info
         all_prs = [
-            {"title": "PR 1", "url": "https://github.com/owner/repo/pulls/1"},
-            {"title": "PR 2", "url": "https://github.com/owner/repo/pulls/2"},
-            {"title": "PR 3", "url": "https://github.com/owner/repo/pulls/3"},
-            {"title": "PR 4", "url": "https://github.com/owner/repo/pulls/4"},
-            {"title": "PR 5", "url": "https://github.com/owner/repo/pulls/5"},
+            {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 3", "url": "https://github.com/owner/repo2/pulls/3", "repository": {"name": "repo2", "owner": "owner"}},
+            {"title": "PR 4", "url": "https://github.com/owner/repo2/pulls/4", "repository": {"name": "repo2", "owner": "owner"}},
+            {"title": "PR 5", "url": "https://github.com/owner/repo3/pulls/5", "repository": {"name": "repo3", "owner": "owner"}},
         ]
         
         # Mixed phases: 1 phase1, 2 phase2, 1 phase3, 1 LLM working
         pr_phases = [PHASE_1, PHASE_2, PHASE_2, PHASE_3, PHASE_LLM_WORKING]
         
         repos_with_prs = [
-            {"name": "repo1", "owner": "owner", "openPRCount": 3},
+            {"name": "repo1", "owner": "owner", "openPRCount": 2},
             {"name": "repo2", "owner": "owner", "openPRCount": 2},
+            {"name": "repo3", "owner": "owner", "openPRCount": 1},
         ]
         
         with patch("builtins.print") as mock_print:
@@ -50,24 +51,22 @@ class TestDisplayStatusSummary:
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
             
-            # Verify that total PR count is displayed
-            assert "Total open PRs: 5" in output
-            
-            # Verify phase counts
-            assert "Phase 1 (Draft): 1 PR(s)" in output
-            assert "Phase 2 (Addressing review comments): 2 PR(s)" in output
-            assert "Phase 3 (Waiting for review): 1 PR(s)" in output
-            assert "LLM working: 1 PR(s)" in output
-            
-            # Verify repository count
-            assert "Monitoring 2 repositories" in output
+            # Verify that PRs are displayed in the format [owner/repo] [phase] title
+            assert "[owner/repo1]" in output
+            assert "[owner/repo2]" in output
+            assert "[owner/repo3]" in output
+            assert "PR 1" in output
+            assert "PR 2" in output
+            assert "PR 3" in output
+            assert "PR 4" in output
+            assert "PR 5" in output
 
     def test_display_status_summary_with_all_llm_working(self):
         """Test that display_status_summary correctly handles all PRs in LLM working state"""
-        # Create mock PR data
+        # Create mock PR data with repository info
         all_prs = [
-            {"title": "PR 1", "url": "https://github.com/owner/repo/pulls/1"},
-            {"title": "PR 2", "url": "https://github.com/owner/repo/pulls/2"},
+            {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
         ]
         
         # All PRs are in LLM working state
@@ -82,24 +81,18 @@ class TestDisplayStatusSummary:
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
             
-            # Verify that total PR count is displayed
-            assert "Total open PRs: 2" in output
-            
-            # Verify only LLM working is displayed
-            assert "LLM working: 2 PR(s)" in output
-            
-            # Verify other phases are not mentioned
-            assert "Phase 1" not in output
-            assert "Phase 2" not in output
-            assert "Phase 3" not in output
+            # Verify that PRs are displayed
+            assert "[owner/repo1]" in output
+            assert "PR 1" in output
+            assert "PR 2" in output
 
     def test_display_status_summary_with_single_phase(self):
         """Test that display_status_summary correctly handles PRs in single phase"""
-        # Create mock PR data
+        # Create mock PR data with repository info
         all_prs = [
-            {"title": "PR 1", "url": "https://github.com/owner/repo/pulls/1"},
-            {"title": "PR 2", "url": "https://github.com/owner/repo/pulls/2"},
-            {"title": "PR 3", "url": "https://github.com/owner/repo/pulls/3"},
+            {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 3", "url": "https://github.com/owner/repo1/pulls/3", "repository": {"name": "repo1", "owner": "owner"}},
         ]
         
         # All PRs are in phase 3
@@ -114,20 +107,15 @@ class TestDisplayStatusSummary:
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
             
-            # Verify that total PR count is displayed
-            assert "Total open PRs: 3" in output
-            
-            # Verify only phase 3 is displayed
-            assert "Phase 3 (Waiting for review): 3 PR(s)" in output
-            
-            # Verify other phases are not mentioned
-            assert "Phase 1" not in output
-            assert "Phase 2" not in output
-            assert "LLM working:" not in output
+            # Verify that PRs are displayed
+            assert "[owner/repo1]" in output
+            assert "PR 1" in output
+            assert "PR 2" in output
+            assert "PR 3" in output
 
     def test_display_status_summary_displays_summary_header(self):
         """Test that display_status_summary displays a clear summary header"""
-        all_prs = [{"title": "PR 1", "url": "https://github.com/owner/repo/pulls/1"}]
+        all_prs = [{"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}}]
         pr_phases = [PHASE_1]
         repos_with_prs = [{"name": "repo1", "owner": "owner", "openPRCount": 1}]
         

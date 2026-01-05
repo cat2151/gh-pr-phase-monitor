@@ -25,12 +25,15 @@ def display_status_summary(all_prs, pr_phases, repos_with_prs):
     
     This summary helps users understand the overall status at a glance,
     especially useful on terminals with limited display lines.
+    Uses the same format as process_pr() for consistency.
     
     Args:
         all_prs: List of all PRs
         pr_phases: List of phase strings corresponding to all_prs
         repos_with_prs: List of repositories with open PRs
     """
+    from .colors import colorize_phase
+    
     print(f"\n{'=' * 50}")
     print("Status Summary:")
     print(f"{'=' * 50}")
@@ -39,34 +42,16 @@ def display_status_summary(all_prs, pr_phases, repos_with_prs):
         print("  No open PRs to monitor")
         return
     
-    # Count PRs by phase
-    phase_counts = {
-        PHASE_1: 0,
-        PHASE_2: 0,
-        PHASE_3: 0,
-        PHASE_LLM_WORKING: 0
-    }
-    
-    for phase in pr_phases:
-        if phase in phase_counts:
-            phase_counts[phase] += 1
-    
-    # Display summary
-    total_prs = len(all_prs)
-    print(f"  Total open PRs: {total_prs}")
-    
-    if phase_counts[PHASE_1] > 0:
-        print(f"  - Phase 1 (Draft): {phase_counts[PHASE_1]} PR(s)")
-    if phase_counts[PHASE_2] > 0:
-        print(f"  - Phase 2 (Addressing review comments): {phase_counts[PHASE_2]} PR(s)")
-    if phase_counts[PHASE_3] > 0:
-        print(f"  - Phase 3 (Waiting for review): {phase_counts[PHASE_3]} PR(s)")
-    if phase_counts[PHASE_LLM_WORKING] > 0:
-        print(f"  - LLM working: {phase_counts[PHASE_LLM_WORKING]} PR(s)")
-    
-    # Show repository count
-    if repos_with_prs:
-        print(f"  Monitoring {len(repos_with_prs)} repositories")
+    # Display each PR using the same format as process_pr()
+    for pr, phase in zip(all_prs, pr_phases):
+        repo_info = pr.get("repository", {})
+        repo_name = repo_info.get("name", "Unknown")
+        repo_owner = repo_info.get("owner", "Unknown")
+        title = pr.get("title", "Unknown")
+        
+        # Display phase with colors using the same format
+        phase_display = colorize_phase(phase)
+        print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
 
 
 def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None):
