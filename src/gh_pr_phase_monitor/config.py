@@ -51,6 +51,27 @@ def parse_interval(interval_str: str) -> int:
         return value * 86400
 
 
+def _validate_boolean_flag(value: Any, flag_name: str) -> bool:
+    """Validate that a configuration flag is a boolean value
+
+    Args:
+        value: The value to validate
+        flag_name: Name of the flag for error messages
+
+    Returns:
+        The boolean value
+
+    Raises:
+        ValueError: If the value is not a boolean
+    """
+    if not isinstance(value, bool):
+        raise ValueError(
+            f"Configuration flag '{flag_name}' must be a boolean (true/false), "
+            f"got {type(value).__name__}: {value}"
+        )
+    return value
+
+
 def load_config(config_path: str = "config.toml") -> Dict[str, Any]:
     """Load configuration from TOML file
 
@@ -89,11 +110,21 @@ def resolve_execution_config_for_repo(
     # Full repository identifier
     repo_full_name = f"{repo_owner}/{repo_name}"
 
-    # Start with global defaults (backward compatibility)
+    # Start with global defaults (backward compatibility) with validation
+    def get_validated_flag(flag_name: str, default: bool = False) -> bool:
+        """Get and validate a global configuration flag"""
+        value = config.get(flag_name, default)
+        if value is not default and not isinstance(value, bool):
+            raise ValueError(
+                f"Global configuration flag '{flag_name}' must be a boolean (true/false), "
+                f"got {type(value).__name__}: {value}"
+            )
+        return value
+
     result = {
-        "enable_execution_phase1_to_phase2": config.get("enable_execution_phase1_to_phase2", False),
-        "enable_execution_phase2_to_phase3": config.get("enable_execution_phase2_to_phase3", False),
-        "enable_execution_phase3_send_ntfy": config.get("enable_execution_phase3_send_ntfy", False),
+        "enable_execution_phase1_to_phase2": get_validated_flag("enable_execution_phase1_to_phase2", False),
+        "enable_execution_phase2_to_phase3": get_validated_flag("enable_execution_phase2_to_phase3", False),
+        "enable_execution_phase3_send_ntfy": get_validated_flag("enable_execution_phase3_send_ntfy", False),
     }
 
     # Apply rulesets if they exist
@@ -128,13 +159,19 @@ def resolve_execution_config_for_repo(
                 applies = True
                 break
 
-        # If this ruleset applies, override execution flags
+        # If this ruleset applies, override execution flags with validation
         if applies:
             if "enable_execution_phase1_to_phase2" in ruleset:
-                result["enable_execution_phase1_to_phase2"] = ruleset["enable_execution_phase1_to_phase2"]
+                result["enable_execution_phase1_to_phase2"] = _validate_boolean_flag(
+                    ruleset["enable_execution_phase1_to_phase2"], "enable_execution_phase1_to_phase2"
+                )
             if "enable_execution_phase2_to_phase3" in ruleset:
-                result["enable_execution_phase2_to_phase3"] = ruleset["enable_execution_phase2_to_phase3"]
+                result["enable_execution_phase2_to_phase3"] = _validate_boolean_flag(
+                    ruleset["enable_execution_phase2_to_phase3"], "enable_execution_phase2_to_phase3"
+                )
             if "enable_execution_phase3_send_ntfy" in ruleset:
-                result["enable_execution_phase3_send_ntfy"] = ruleset["enable_execution_phase3_send_ntfy"]
+                result["enable_execution_phase3_send_ntfy"] = _validate_boolean_flag(
+                    ruleset["enable_execution_phase3_send_ntfy"], "enable_execution_phase3_send_ntfy"
+                )
 
     return result

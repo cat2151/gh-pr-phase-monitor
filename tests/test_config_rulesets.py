@@ -306,3 +306,119 @@ class TestResolveExecutionConfigForRepo:
         assert result["enable_execution_phase1_to_phase2"] is True
         assert result["enable_execution_phase2_to_phase3"] is False
         assert result["enable_execution_phase3_send_ntfy"] is False
+
+
+class TestBooleanValidation:
+    """Test validation of boolean configuration values"""
+
+    def test_rejects_string_value_in_global_config(self):
+        """Should raise ValueError when global config has string instead of boolean"""
+        import pytest
+        
+        config = {
+            "enable_execution_phase1_to_phase2": "true",  # String instead of boolean
+        }
+        
+        with pytest.raises(ValueError) as exc_info:
+            resolve_execution_config_for_repo(config, "owner", "repo")
+        
+        assert "must be a boolean" in str(exc_info.value)
+        assert "enable_execution_phase1_to_phase2" in str(exc_info.value)
+
+    def test_rejects_integer_value_in_global_config(self):
+        """Should raise ValueError when global config has integer instead of boolean"""
+        import pytest
+        
+        config = {
+            "enable_execution_phase2_to_phase3": 1,  # Integer instead of boolean
+        }
+        
+        with pytest.raises(ValueError) as exc_info:
+            resolve_execution_config_for_repo(config, "owner", "repo")
+        
+        assert "must be a boolean" in str(exc_info.value)
+        assert "enable_execution_phase2_to_phase3" in str(exc_info.value)
+
+    def test_rejects_string_value_in_ruleset(self):
+        """Should raise ValueError when ruleset has string instead of boolean"""
+        import pytest
+        
+        config = {
+            "enable_execution_phase1_to_phase2": False,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase1_to_phase2": "yes",  # String instead of boolean
+                }
+            ],
+        }
+        
+        with pytest.raises(ValueError) as exc_info:
+            resolve_execution_config_for_repo(config, "owner", "test-repo")
+        
+        assert "must be a boolean" in str(exc_info.value)
+        assert "enable_execution_phase1_to_phase2" in str(exc_info.value)
+
+    def test_rejects_integer_value_in_ruleset(self):
+        """Should raise ValueError when ruleset has integer instead of boolean"""
+        import pytest
+        
+        config = {
+            "enable_execution_phase3_send_ntfy": False,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_send_ntfy": 0,  # Integer instead of boolean
+                }
+            ],
+        }
+        
+        with pytest.raises(ValueError) as exc_info:
+            resolve_execution_config_for_repo(config, "owner", "test-repo")
+        
+        assert "must be a boolean" in str(exc_info.value)
+        assert "enable_execution_phase3_send_ntfy" in str(exc_info.value)
+
+    def test_accepts_valid_boolean_values(self):
+        """Should accept proper boolean values"""
+        config = {
+            "enable_execution_phase1_to_phase2": True,
+            "enable_execution_phase2_to_phase3": False,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase1_to_phase2": False,
+                    "enable_execution_phase2_to_phase3": True,
+                    "enable_execution_phase3_send_ntfy": True,
+                }
+            ],
+        }
+        
+        # Should not raise any exception
+        result = resolve_execution_config_for_repo(config, "owner", "test-repo")
+        
+        assert result["enable_execution_phase1_to_phase2"] is False
+        assert result["enable_execution_phase2_to_phase3"] is True
+        assert result["enable_execution_phase3_send_ntfy"] is True
+
+    def test_validation_does_not_affect_non_matching_rulesets(self):
+        """Validation should only occur for rulesets that match the repository"""
+        import pytest
+        
+        config = {
+            "enable_execution_phase1_to_phase2": False,
+            "rulesets": [
+                {
+                    "repositories": ["other-repo"],
+                    "enable_execution_phase1_to_phase2": "invalid",  # Invalid but won't be checked
+                },
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase1_to_phase2": True,  # Valid
+                },
+            ],
+        }
+        
+        # Should not raise error because first ruleset doesn't match
+        result = resolve_execution_config_for_repo(config, "owner", "test-repo")
+        assert result["enable_execution_phase1_to_phase2"] is True
