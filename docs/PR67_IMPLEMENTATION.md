@@ -2,9 +2,9 @@
 
 ## 概要 / Overview
 
-PR 67に関連して、Chromeと Playwrightを使う機能を実装し、Seleniumとどちらがこの目的に向いているか検証できるようにしました。
+PR 67に関連して、Playwrightを使う機能を実装し、Seleniumとどちらがこの目的に向いているか検証できるようにしました。
 
-Related to PR 67, implemented functionality using Chrome and Playwright to enable verification of which is more suitable for the purpose compared to Selenium.
+Related to PR 67, implemented Playwright functionality to enable verification of which is more suitable for the purpose compared to Selenium.
 
 ## 実装内容 / Implementation
 
