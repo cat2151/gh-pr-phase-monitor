@@ -114,6 +114,7 @@ The tool determines the following four phases:
    # Phase3 Auto-Merge Settings (optional)
    # Automatically merges PRs when they reach phase3 (awaiting review)
    # The comment defined below will be posted to the PR before merging
+   # After successful merge, the feature branch is automatically deleted
    [phase3_merge]
    enabled = false  # Set to true to enable auto-merge (requires enable_execution_phase3_to_merge = true)
    comment = "All checks passed. Merging PR."  # Comment to post before merging
