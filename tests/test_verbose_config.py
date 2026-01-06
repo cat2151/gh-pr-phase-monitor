@@ -187,12 +187,12 @@ def test_print_config_no_rulesets():
 def test_print_config_defaults():
     """Test configuration printing with default values"""
     config = {}
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     # Should still print configuration with defaults
     assert "Configuration Settings:" in output
     assert "[Main Settings]" in output
@@ -200,3 +200,25 @@ def test_print_config_defaults():
     assert "interval: 1m" in output
     assert "issue_display_limit: 10" in output
     assert "verbose: False" in output
+
+
+def test_print_config_with_assign_lowest_number_issue():
+    """Test configuration printing with assign_lowest_number_issue setting"""
+    config = {
+        "interval": "1m",
+        "verbose": True,
+        "assign_to_copilot": {
+            "enabled": True,
+            "assign_lowest_number_issue": True,
+            "automated": False,
+        },
+    }
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        print_config(config)
+    output = f.getvalue()
+
+    assert "[Auto-assign to Copilot Settings]" in output
+    assert "enabled: True" in output
+    assert "assign_lowest_number_issue: True" in output
