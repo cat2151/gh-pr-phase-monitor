@@ -53,14 +53,22 @@ def get_issues_from_repositories(repos: List[Dict[str, Any]], limit: int = 10, l
                 labels_json = json.dumps(labels)
                 labels_filter = f", labels: {labels_json}"
 
-            # Fetch up to ISSUES_PER_REPO issues per repository (sorted by updated time)
+            # Determine ordering based on sort_by_number parameter
+            # When sorting by number, we need to fetch issues ordered by CREATED_AT ascending
+            # (since issue numbers are assigned sequentially at creation time)
+            if sort_by_number:
+                order_clause = "orderBy: {field: CREATED_AT, direction: ASC}"
+            else:
+                order_clause = "orderBy: {field: UPDATED_AT, direction: DESC}"
+
+            # Fetch up to ISSUES_PER_REPO issues per repository
             repo_query = f"""
             {alias}: repository(owner: {owner_literal}, name: {repo_name_literal}) {{
               name
               owner {{
                 login
               }}
-              issues(first: {ISSUES_PER_REPO}, states: OPEN, orderBy: {{field: UPDATED_AT, direction: DESC}}{labels_filter}) {{
+              issues(first: {ISSUES_PER_REPO}, states: OPEN, {order_clause}{labels_filter}) {{
                 nodes {{
                   title
                   url
@@ -126,7 +134,9 @@ def get_issues_from_repositories(repos: List[Dict[str, Any]], limit: int = 10, l
                     }
                     all_issues.append(issue_with_repo)
 
-    # Sort all issues by updatedAt timestamp in descending order or by issue number in ascending order
+    # Sort all issues after combining results from multiple repositories
+    # Note: Issues from each repository are already pre-sorted by the GraphQL API,
+    # but we need to re-sort the combined results across all repositories
     if sort_by_number:
         all_issues.sort(key=lambda x: x["number"])
     else:
