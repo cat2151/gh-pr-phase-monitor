@@ -9,7 +9,7 @@ import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
 from .colors import colorize_phase
-from .config import load_config, parse_interval
+from .config import load_config, parse_interval, print_config
 from .github_client import (
     assign_issue_to_copilot,
     get_issues_from_repositories,
@@ -317,6 +317,10 @@ def main():
     print("Monitoring all repositories for the current GitHub user")
     print("Press CTRL+C to stop monitoring")
     print("=" * 50)
+
+    # Print configuration if verbose mode is enabled
+    if config.get("verbose", False):
+        print_config(config)
 
     # Set up signal handler for graceful interruption
     def signal_handler(_signum, _frame):

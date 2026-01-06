@@ -88,6 +88,87 @@ def load_config(config_path: str = "config.toml") -> Dict[str, Any]:
         return tomli.load(f)
 
 
+def print_config(config: Dict[str, Any]) -> None:
+    """Print all configuration settings in a readable format
+
+    Args:
+        config: Configuration dictionary loaded from TOML
+    """
+    print("\n" + "=" * 50)
+    print("Configuration Settings:")
+    print("=" * 50)
+    
+    # Print main settings
+    print("\n[Main Settings]")
+    print(f"  interval: {config.get('interval', '1m')}")
+    print(f"  issue_display_limit: {config.get('issue_display_limit', 10)}")
+    print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '')}")
+    print(f"  verbose: {config.get('verbose', False)}")
+    
+    # Print execution flags
+    print("\n[Global Execution Flags]")
+    print(f"  enable_execution_phase1_to_phase2: {config.get('enable_execution_phase1_to_phase2', False)}")
+    print(f"  enable_execution_phase2_to_phase3: {config.get('enable_execution_phase2_to_phase3', False)}")
+    print(f"  enable_execution_phase3_send_ntfy: {config.get('enable_execution_phase3_send_ntfy', False)}")
+    print(f"  enable_execution_phase3_to_merge: {config.get('enable_execution_phase3_to_merge', False)}")
+    
+    # Print rulesets
+    rulesets = config.get("rulesets", [])
+    if rulesets and isinstance(rulesets, list):
+        print("\n[Rulesets]")
+        for i, ruleset in enumerate(rulesets, 1):
+            if isinstance(ruleset, dict):
+                print(f"\n  Ruleset #{i}:")
+                print(f"    name: {ruleset.get('name', 'N/A')}")
+                print(f"    repositories: {ruleset.get('repositories', [])}")
+                print(f"    enable_execution_phase1_to_phase2: {ruleset.get('enable_execution_phase1_to_phase2', 'not set')}")
+                print(f"    enable_execution_phase2_to_phase3: {ruleset.get('enable_execution_phase2_to_phase3', 'not set')}")
+                print(f"    enable_execution_phase3_send_ntfy: {ruleset.get('enable_execution_phase3_send_ntfy', 'not set')}")
+                print(f"    enable_execution_phase3_to_merge: {ruleset.get('enable_execution_phase3_to_merge', 'not set')}")
+    else:
+        print("\n[Rulesets]")
+        print("  No rulesets configured")
+    
+    # Print ntfy settings
+    ntfy = config.get("ntfy")
+    if ntfy and isinstance(ntfy, dict):
+        print("\n[ntfy.sh Notification Settings]")
+        print(f"  enabled: {ntfy.get('enabled', False)}")
+        if ntfy.get('enabled', False):
+            print(f"  topic: {ntfy.get('topic', 'N/A')}")
+            print(f"  message: {ntfy.get('message', 'N/A')}")
+            print(f"  priority: {ntfy.get('priority', 4)}")
+    
+    # Print phase3_merge settings
+    phase3_merge = config.get("phase3_merge")
+    if phase3_merge and isinstance(phase3_merge, dict):
+        print("\n[Phase3 Merge Settings]")
+        print(f"  enabled: {phase3_merge.get('enabled', False)}")
+        if phase3_merge.get('enabled', False):
+            print(f"  comment: {phase3_merge.get('comment', 'N/A')}")
+            print(f"  automated: {phase3_merge.get('automated', False)}")
+            if phase3_merge.get('automated', False):
+                print(f"  automation_backend: {phase3_merge.get('automation_backend', 'selenium')}")
+                print(f"  wait_seconds: {phase3_merge.get('wait_seconds', 10)}")
+                print(f"  browser: {phase3_merge.get('browser', 'edge')}")
+                print(f"  headless: {phase3_merge.get('headless', False)}")
+    
+    # Print assign_to_copilot settings
+    assign_to_copilot = config.get("assign_to_copilot")
+    if assign_to_copilot and isinstance(assign_to_copilot, dict):
+        print("\n[Auto-assign to Copilot Settings]")
+        print(f"  enabled: {assign_to_copilot.get('enabled', False)}")
+        if assign_to_copilot.get('enabled', False):
+            print(f"  automated: {assign_to_copilot.get('automated', False)}")
+            if assign_to_copilot.get('automated', False):
+                print(f"  automation_backend: {assign_to_copilot.get('automation_backend', 'selenium')}")
+                print(f"  wait_seconds: {assign_to_copilot.get('wait_seconds', 10)}")
+                print(f"  browser: {assign_to_copilot.get('browser', 'edge')}")
+                print(f"  headless: {assign_to_copilot.get('headless', False)}")
+    
+    print("\n" + "=" * 50)
+
+
 def resolve_execution_config_for_repo(
     config: Dict[str, Any], repo_owner: str, repo_name: str
 ) -> Dict[str, bool]:
@@ -179,3 +260,20 @@ def resolve_execution_config_for_repo(
                 )
 
     return result
+
+
+def print_repo_execution_config(
+    repo_owner: str, repo_name: str, exec_config: Dict[str, bool]
+) -> None:
+    """Print execution configuration for a specific repository
+
+    Args:
+        repo_owner: Repository owner
+        repo_name: Repository name
+        exec_config: Execution configuration dictionary
+    """
+    print(f"    [Execution Config for {repo_owner}/{repo_name}]")
+    print(f"      enable_execution_phase1_to_phase2: {exec_config.get('enable_execution_phase1_to_phase2', False)}")
+    print(f"      enable_execution_phase2_to_phase3: {exec_config.get('enable_execution_phase2_to_phase3', False)}")
+    print(f"      enable_execution_phase3_send_ntfy: {exec_config.get('enable_execution_phase3_send_ntfy', False)}")
+    print(f"      enable_execution_phase3_to_merge: {exec_config.get('enable_execution_phase3_to_merge', False)}")

@@ -13,7 +13,7 @@ from .comment_manager import (
     post_phase2_comment,
     post_phase3_comment,
 )
-from .config import resolve_execution_config_for_repo
+from .config import resolve_execution_config_for_repo, print_repo_execution_config
 from .notifier import send_phase3_notification
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
@@ -111,6 +111,10 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
     # Resolve execution config for this repository
     if config:
         exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
+        
+        # Print execution config if verbose mode is enabled
+        if config.get("verbose", False):
+            print_repo_execution_config(repo_owner, repo_name, exec_config)
     else:
         exec_config = {
             "enable_execution_phase1_to_phase2": False,
