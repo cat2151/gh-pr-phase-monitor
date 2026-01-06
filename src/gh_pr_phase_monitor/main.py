@@ -8,6 +8,8 @@ import time
 import traceback
 from typing import Any, Dict, List, Optional, Tuple
 
+import tomli
+
 from .colors import colorize_phase
 from .config import get_config_mtime, load_config, parse_interval, print_config
 from .github_client import (
@@ -58,6 +60,9 @@ def wait_with_countdown(
     This function checks the config file's modification timestamp every second during the wait.
     If the config file has been modified, it reloads the configuration and updates the interval.
     
+    Note: The filesystem check every second is intentional per the issue requirements for
+    hot reload functionality during the wait state.
+    
     Args:
         interval_seconds: Number of seconds to wait
         interval_str: Human-readable interval string (e.g., "1m", "30s")
@@ -76,7 +81,6 @@ def wait_with_countdown(
     current_interval_seconds = interval_seconds
     current_interval_str = interval_str
     current_mtime = last_config_mtime
-    config_was_reloaded = False
     
     # Track actual elapsed time from the start of wait
     wait_start_time = time.time()
@@ -93,6 +97,7 @@ def wait_with_countdown(
         remaining -= 1
         
         # Check if config file has been modified
+        # Note: This check happens every second as per hot reload requirements
         try:
             new_mtime = get_config_mtime(config_path)
             if new_mtime != current_mtime:
@@ -111,7 +116,6 @@ def wait_with_countdown(
                     current_interval_seconds = new_interval_seconds
                     current_interval_str = new_interval_str
                     current_mtime = new_mtime
-                    config_was_reloaded = True
                     
                     print(f"設定を再読み込みしました。")
                     print(f"新しい監視間隔: {new_interval_str} ({new_interval_seconds}秒)")
@@ -124,16 +128,9 @@ def wait_with_countdown(
                     print(f"Waiting {current_interval_str} until next check...")
                     print(f"{'=' * 50}")
                     
-                except (ValueError, KeyError) as e:
-                    # Config file has invalid format or missing required fields
+                except (ValueError, tomli.TOMLDecodeError) as e:
+                    # Config file has invalid format (TOML parsing error or invalid interval)
                     print(f"設定ファイルの再読み込みに失敗しました: {e}")
-                    print("前の設定を使い続けます。")
-                    print(f"{'=' * 50}")
-                    print(f"Waiting {current_interval_str} until next check...")
-                    print(f"{'=' * 50}")
-                except Exception as e:
-                    # Unexpected error during config reload
-                    print(f"予期しないエラーが発生しました: {e}")
                     print("前の設定を使い続けます。")
                     print(f"{'=' * 50}")
                     print(f"Waiting {current_interval_str} until next check...")
