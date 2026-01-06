@@ -20,6 +20,12 @@ issue_display_limit = 10
 # Default: "" (disabled)
 all_phase3_timeout = ""
 
+# Verbose mode - Print detailed configuration information
+# When enabled, prints all settings at startup and per-repository settings during execution
+# This helps detect configuration mistakes
+# Default: false
+verbose = false
+
 # Note: This tool monitors user-owned repositories under the current GitHub user account
 # It uses GraphQL API to efficiently fetch all repositories with open PRs
 # Organization repositories are NOT included (YAGNI principle - keeping it simple)
