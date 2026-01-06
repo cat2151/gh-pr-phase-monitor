@@ -114,7 +114,7 @@ def print_config(config: Dict[str, Any]) -> None:
     
     # Print rulesets
     rulesets = config.get("rulesets", [])
-    if rulesets:
+    if rulesets and isinstance(rulesets, list):
         print("\n[Rulesets]")
         for i, ruleset in enumerate(rulesets, 1):
             if isinstance(ruleset, dict):
@@ -130,8 +130,8 @@ def print_config(config: Dict[str, Any]) -> None:
         print("  No rulesets configured")
     
     # Print ntfy settings
-    ntfy = config.get("ntfy", {})
-    if ntfy:
+    ntfy = config.get("ntfy")
+    if ntfy and isinstance(ntfy, dict):
         print("\n[ntfy.sh Notification Settings]")
         print(f"  enabled: {ntfy.get('enabled', False)}")
         if ntfy.get('enabled', False):
@@ -140,8 +140,8 @@ def print_config(config: Dict[str, Any]) -> None:
             print(f"  priority: {ntfy.get('priority', 4)}")
     
     # Print phase3_merge settings
-    phase3_merge = config.get("phase3_merge", {})
-    if phase3_merge:
+    phase3_merge = config.get("phase3_merge")
+    if phase3_merge and isinstance(phase3_merge, dict):
         print("\n[Phase3 Merge Settings]")
         print(f"  enabled: {phase3_merge.get('enabled', False)}")
         if phase3_merge.get('enabled', False):
@@ -154,8 +154,8 @@ def print_config(config: Dict[str, Any]) -> None:
                 print(f"  headless: {phase3_merge.get('headless', False)}")
     
     # Print assign_to_copilot settings
-    assign_to_copilot = config.get("assign_to_copilot", {})
-    if assign_to_copilot:
+    assign_to_copilot = config.get("assign_to_copilot")
+    if assign_to_copilot and isinstance(assign_to_copilot, dict):
         print("\n[Auto-assign to Copilot Settings]")
         print(f"  enabled: {assign_to_copilot.get('enabled', False)}")
         if assign_to_copilot.get('enabled', False):
