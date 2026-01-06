@@ -180,7 +180,10 @@ def check_all_phase3_timeout(
     current_time = time.time()
     
     # Check if all PRs are in phase3
-    if all_prs and pr_phases and all(phase == PHASE_3 for phase in pr_phases):
+    # Validate that all_prs and pr_phases have the same length before checking
+    if (all_prs and pr_phases and 
+        len(all_prs) == len(pr_phases) and 
+        all(phase == PHASE_3 for phase in pr_phases)):
         # All PRs are in phase3
         if _all_phase3_start_time is None:
             # First time all PRs are in phase3

@@ -168,3 +168,15 @@ class TestAllPhase3Timeout:
             assert "phase3" in output
             assert "レビュー待ち" in output
             assert "API利用の浪費を防止" in output
+
+    def test_mismatched_list_lengths(self):
+        """Test that mismatched all_prs and pr_phases lengths are handled correctly"""
+        all_prs = [
+            {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
+            {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
+        ]
+        pr_phases = [PHASE_3]  # Only one phase for two PRs - mismatched!
+        config = {"all_phase3_timeout": "1s"}
+        
+        # Should not exit or crash, just reset timer due to mismatch
+        check_all_phase3_timeout(all_prs, pr_phases, config)
