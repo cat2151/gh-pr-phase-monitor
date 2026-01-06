@@ -60,10 +60,11 @@ def merge_pr(pr_url: str, repo_dir: Path = None) -> bool:
         True if PR was successfully merged, False otherwise
 
     Note:
-        Uses --squash for a clean commit history. Does not use --auto flag
+        Uses --squash for a clean commit history and --delete-branch to
+        automatically delete the feature branch after merge. Does not use --auto flag
         because phase3 detection already implies all required checks have passed.
     """
-    cmd = ["gh", "pr", "merge", pr_url, "--squash"]
+    cmd = ["gh", "pr", "merge", pr_url, "--squash", "--delete-branch"]
 
     try:
         subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", check=True)

@@ -480,6 +480,17 @@ def _merge_pr_with_selenium(
             return False
 
         print("  ✓ Clicked 'Confirm merge' button")
+
+        # Wait for merge to complete and delete branch button to appear
+        time.sleep(3)
+
+        # Click "Delete branch" button
+        print("  → Looking for 'Delete branch' button...")
+        if not _click_button_selenium(driver, "Delete branch"):
+            print("  ⚠ Could not find or click 'Delete branch' button (may have already been deleted)")
+        else:
+            print("  ✓ Clicked 'Delete branch' button")
+
         print("  ✓ [Selenium] Successfully automated PR merge")
 
         # Wait a bit before closing
@@ -566,6 +577,17 @@ def _merge_pr_with_playwright(
                     return False
 
                 print("  ✓ Clicked 'Confirm merge' button")
+
+                # Wait for merge to complete and delete branch button to appear
+                time.sleep(3)
+
+                # Click "Delete branch" button
+                print("  → Looking for 'Delete branch' button...")
+                if not _click_button_playwright(page, "Delete branch"):
+                    print("  ⚠ Could not find or click 'Delete branch' button (may have already been deleted)")
+                else:
+                    print("  ✓ Clicked 'Delete branch' button")
+
                 print("  ✓ [Playwright] Successfully automated PR merge")
 
                 # Wait a bit before closing

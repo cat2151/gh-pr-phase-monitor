@@ -2,10 +2,10 @@
 Tests for Phase3 merge functionality
 """
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from src.gh_pr_phase_monitor import pr_actions
-from src.gh_pr_phase_monitor.pr_actions import process_pr
+from src.gh_pr_phase_monitor.pr_actions import merge_pr, process_pr
 
 
 class TestPhase3Merge:
@@ -369,3 +369,27 @@ class TestPhase3Merge:
             mock_merge.assert_called_once()
             # PR SHOULD be in merged_prs set (prevents duplicate merges)
             assert "https://github.com/test-owner/test-repo/pull/1" in pr_actions._merged_prs
+
+    def test_merge_includes_delete_branch_flag(self):
+        """Merge command should include --delete-branch flag"""
+        pr_url = "https://github.com/test-owner/test-repo/pull/123"
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=0)
+            result = merge_pr(pr_url)
+
+            # Verify the command was called
+            assert result is True
+            mock_run.assert_called_once()
+
+            # Get the actual command that was called
+            call_args = mock_run.call_args
+            cmd = call_args[0][0]
+
+            # Verify the command includes --delete-branch flag
+            assert "gh" in cmd
+            assert "pr" in cmd
+            assert "merge" in cmd
+            assert pr_url in cmd
+            assert "--squash" in cmd
+            assert "--delete-branch" in cmd
