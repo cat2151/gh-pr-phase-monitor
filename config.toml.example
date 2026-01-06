@@ -79,38 +79,22 @@ enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
 # enable_execution_phase1_to_phase2 = true
 # enable_execution_phase3_to_merge = true
 #
-# Per-ruleset phase3_merge and assign_to_copilot configuration examples:
+# Per-ruleset phase3_merge and assign_to_copilot on/off configuration:
 #
-# Note: The [rulesets.phase3_merge] and [rulesets.assign_to_copilot] sections
-# belong to the [[rulesets]] array element immediately above them. This is TOML's
-# syntax for defining sub-tables within array elements.
+# You can enable or disable phase3_merge and assign_to_copilot features per repository
+# by adding simple boolean flags in rulesets. When enabled, the feature uses the global
+# settings defined in [phase3_merge] and [assign_to_copilot] sections.
 #
 # [[rulesets]]
-# name = "Custom merge settings for specific repo"
+# name = "Enable merge for specific repo"
 # repositories = ["owner/test-repo"]
 # enable_execution_phase3_to_merge = true
-# # The following [rulesets.phase3_merge] section belongs to the ruleset above
-# [rulesets.phase3_merge]
-# enabled = true
-# comment = "Custom merge comment for test repo"
-# automated = true
-# automation_backend = "playwright"
-# wait_seconds = 15
-# browser = "chromium"
-# headless = true
+# enable_phase3_merge = true  # Use global [phase3_merge] settings for this repo
 #
 # [[rulesets]]
-# name = "Custom auto-assign settings for another repo"
+# name = "Enable auto-assign for another repo"
 # repositories = ["owner/another-repo"]
-# # The following [rulesets.assign_to_copilot] section belongs to the ruleset above
-# [rulesets.assign_to_copilot]
-# enabled = true
-# assign_lowest_number_issue = true
-# automated = true
-# automation_backend = "selenium"
-# wait_seconds = 5
-# browser = "chrome"
-# headless = false
+# enable_assign_to_copilot = true  # Use global [assign_to_copilot] settings for this repo
 
 
 # ntfy.sh notification settings (optional)

@@ -225,8 +225,8 @@ def resolve_execution_config_for_repo(
         "enable_execution_phase2_to_phase3": get_validated_flag("enable_execution_phase2_to_phase3", False),
         "enable_execution_phase3_send_ntfy": get_validated_flag("enable_execution_phase3_send_ntfy", False),
         "enable_execution_phase3_to_merge": get_validated_flag("enable_execution_phase3_to_merge", False),
-        "phase3_merge": config.get("phase3_merge", {}).copy() if isinstance(config.get("phase3_merge"), dict) else {},
-        "assign_to_copilot": config.get("assign_to_copilot", {}).copy() if isinstance(config.get("assign_to_copilot"), dict) else {},
+        "enable_phase3_merge": None,  # None means not set by rulesets, use global
+        "enable_assign_to_copilot": None,  # None means not set by rulesets, use global
     }
 
     # Apply rulesets if they exist
@@ -280,19 +280,15 @@ def resolve_execution_config_for_repo(
                     ruleset["enable_execution_phase3_to_merge"], "enable_execution_phase3_to_merge"
                 )
             
-            # Apply phase3_merge settings from ruleset if present
-            if "phase3_merge" in ruleset:
-                ruleset_phase3_merge = ruleset["phase3_merge"]
-                if isinstance(ruleset_phase3_merge, dict):
-                    # Deep merge: update existing settings with ruleset settings
-                    result["phase3_merge"].update(ruleset_phase3_merge)
-            
-            # Apply assign_to_copilot settings from ruleset if present
-            if "assign_to_copilot" in ruleset:
-                ruleset_assign_to_copilot = ruleset["assign_to_copilot"]
-                if isinstance(ruleset_assign_to_copilot, dict):
-                    # Deep merge: update existing settings with ruleset settings
-                    result["assign_to_copilot"].update(ruleset_assign_to_copilot)
+            # Apply simple on/off flags for phase3_merge and assign_to_copilot
+            if "enable_phase3_merge" in ruleset:
+                result["enable_phase3_merge"] = _validate_boolean_flag(
+                    ruleset["enable_phase3_merge"], "enable_phase3_merge"
+                )
+            if "enable_assign_to_copilot" in ruleset:
+                result["enable_assign_to_copilot"] = _validate_boolean_flag(
+                    ruleset["enable_assign_to_copilot"], "enable_assign_to_copilot"
+                )
 
     return result
 
@@ -312,19 +308,5 @@ def print_repo_execution_config(
     print(f"      enable_execution_phase2_to_phase3: {exec_config.get('enable_execution_phase2_to_phase3', False)}")
     print(f"      enable_execution_phase3_send_ntfy: {exec_config.get('enable_execution_phase3_send_ntfy', False)}")
     print(f"      enable_execution_phase3_to_merge: {exec_config.get('enable_execution_phase3_to_merge', False)}")
-    
-    # Print phase3_merge settings if present
-    phase3_merge = exec_config.get("phase3_merge")
-    if phase3_merge and isinstance(phase3_merge, dict):
-        print(f"      phase3_merge.enabled: {phase3_merge.get('enabled', False)}")
-        if phase3_merge.get("enabled"):
-            print(f"      phase3_merge.comment: {phase3_merge.get('comment', 'N/A')}")
-            print(f"      phase3_merge.automated: {phase3_merge.get('automated', False)}")
-    
-    # Print assign_to_copilot settings if present
-    assign_to_copilot = exec_config.get("assign_to_copilot")
-    if assign_to_copilot and isinstance(assign_to_copilot, dict):
-        print(f"      assign_to_copilot.enabled: {assign_to_copilot.get('enabled', False)}")
-        if assign_to_copilot.get("enabled"):
-            print(f"      assign_to_copilot.assign_lowest_number_issue: {assign_to_copilot.get('assign_lowest_number_issue', False)}")
-            print(f"      assign_to_copilot.automated: {assign_to_copilot.get('automated', False)}")
+    print(f"      enable_phase3_merge: {exec_config.get('enable_phase3_merge', False)}")
+    print(f"      enable_assign_to_copilot: {exec_config.get('enable_assign_to_copilot', False)}")

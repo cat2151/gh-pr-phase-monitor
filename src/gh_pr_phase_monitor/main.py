@@ -301,7 +301,7 @@ def _resolve_assign_to_copilot_config(issue: Dict[str, Any], config: Dict[str, A
         config: Global configuration dictionary
         
     Returns:
-        Configuration dictionary with resolved assign_to_copilot settings
+        Configuration dictionary with assign_to_copilot settings if enabled for this repo
     """
     # Get repository-specific configuration
     repo_info = issue.get("repository", {})
@@ -310,8 +310,17 @@ def _resolve_assign_to_copilot_config(issue: Dict[str, Any], config: Dict[str, A
     
     if repo_owner and repo_name:
         exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
-        # Create a temporary config with the resolved assign_to_copilot settings
-        return {"assign_to_copilot": exec_config.get("assign_to_copilot", {})}
+        # Check if assign_to_copilot is enabled for this repo
+        enable_assign_flag = exec_config.get("enable_assign_to_copilot")
+        if enable_assign_flag is None:
+            # Not set by rulesets, use global config for backward compatibility
+            return config
+        elif enable_assign_flag:
+            # Enabled for this repo, use global assign_to_copilot settings
+            return {"assign_to_copilot": config.get("assign_to_copilot", {})}
+        else:
+            # Disabled for this repo
+            return {"assign_to_copilot": {"enabled": False}}
     else:
         return config
 
