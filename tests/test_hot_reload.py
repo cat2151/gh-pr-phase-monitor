@@ -4,6 +4,7 @@ Tests for hot reload functionality
 
 import os
 import tempfile
+import threading
 import time
 
 import pytest
@@ -184,7 +185,6 @@ class TestWaitWithCountdownHotReload:
     
     def test_wait_with_countdown_no_config_change(self):
         """Test that wait_with_countdown works correctly when config doesn't change"""
-        import threading
         from src.gh_pr_phase_monitor.main import wait_with_countdown
         
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
@@ -209,7 +209,6 @@ class TestWaitWithCountdownHotReload:
     
     def test_wait_with_countdown_with_config_change(self):
         """Test that wait_with_countdown detects and reloads config changes"""
-        import threading
         from src.gh_pr_phase_monitor.main import wait_with_countdown
         
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
@@ -247,7 +246,6 @@ class TestWaitWithCountdownHotReload:
     
     def test_wait_with_countdown_handles_invalid_config(self):
         """Test that wait_with_countdown handles invalid config gracefully"""
-        import threading
         from src.gh_pr_phase_monitor.main import wait_with_countdown
         
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
