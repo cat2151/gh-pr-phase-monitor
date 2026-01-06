@@ -210,7 +210,11 @@ class TestWaitWithCountdown:
 
     def test_countdown_displays_elapsed_time(self):
         """Test that countdown displays correctly with elapsed time formatting"""
-        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep:
+        with patch("builtins.print") as mock_print, \
+             patch("time.sleep") as mock_sleep, \
+             patch("time.time") as mock_time:
+            # Mock time.time to simulate passage of time
+            mock_time.side_effect = [0, 0, 1, 2, 3, 3]  # start, loop checks
             wait_with_countdown(3, "3s")
 
             # Verify print was called with header
@@ -229,7 +233,11 @@ class TestWaitWithCountdown:
 
     def test_countdown_uses_carriage_return_for_updates(self):
         """Test that countdown uses ANSI escape sequences (carriage return) for in-place updates"""
-        with patch("builtins.print") as mock_print, patch("time.sleep"):
+        with patch("builtins.print") as mock_print, \
+             patch("time.sleep") as mock_sleep, \
+             patch("time.time") as mock_time:
+            # Mock time.time to simulate passage of time
+            mock_time.side_effect = [0, 0, 1, 2, 2]
             wait_with_countdown(2, "2s")
 
             # Check that carriage return is used in countdown lines
@@ -245,7 +253,11 @@ class TestWaitWithCountdown:
 
     def test_countdown_handles_different_intervals(self):
         """Test that countdown properly handles different time intervals"""
-        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep:
+        with patch("builtins.print") as mock_print, \
+             patch("time.sleep") as mock_sleep, \
+             patch("time.time") as mock_time:
+            # Mock time.time to simulate passage of time
+            mock_time.side_effect = [0, 0, 1, 2, 3, 4, 5, 5]
             wait_with_countdown(5, "5s")
 
             # Verify sleep was called 5 times (once per second)
@@ -258,7 +270,13 @@ class TestWaitWithCountdown:
 
     def test_countdown_formats_time_correctly(self):
         """Test that countdown formats time with minutes and seconds"""
-        with patch("builtins.print") as mock_print, patch("time.sleep"):
+        with patch("builtins.print") as mock_print, \
+             patch("time.sleep") as mock_sleep, \
+             patch("time.time") as mock_time:
+            # Mock time.time to simulate 90 seconds of elapsed time
+            # We need enough values for 90 iterations + extra for checks
+            times = [0] + [i for i in range(91) for _ in range(2)]  # start + pairs for each iteration
+            mock_time.side_effect = times
             wait_with_countdown(90, "90s")
 
             calls = [str(call) for call in mock_print.call_args_list]

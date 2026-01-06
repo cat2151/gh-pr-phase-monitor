@@ -5,7 +5,6 @@ Tests for hot reload functionality
 import os
 import tempfile
 import time
-from pathlib import Path
 
 import pytest
 
@@ -165,7 +164,7 @@ class TestHotReloadScenarios:
 
         try:
             # Initial load
-            config = load_config(config_path)
+            load_config(config_path)
             mtime1 = get_config_mtime(config_path)
             
             # Wait but don't modify
@@ -178,3 +177,121 @@ class TestHotReloadScenarios:
             assert mtime1 == mtime2
         finally:
             os.unlink(config_path)
+
+
+class TestWaitWithCountdownHotReload:
+    """Test hot reload functionality in wait_with_countdown"""
+    
+    def test_wait_with_countdown_no_config_change(self):
+        """Test that wait_with_countdown works correctly when config doesn't change"""
+        import threading
+        from src.gh_pr_phase_monitor.main import wait_with_countdown
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write('interval = "3s"\n')
+            config_path = f.name
+        
+        try:
+            initial_mtime = get_config_mtime(config_path)
+            
+            # Run wait with countdown
+            new_config, new_interval_seconds, new_interval_str, new_mtime = wait_with_countdown(
+                3, "3s", config_path, initial_mtime
+            )
+            
+            # Config should not be reloaded (empty dict returned)
+            assert new_config == {}
+            assert new_mtime == initial_mtime
+            assert new_interval_seconds == 3
+            assert new_interval_str == "3s"
+        finally:
+            os.unlink(config_path)
+    
+    def test_wait_with_countdown_with_config_change(self):
+        """Test that wait_with_countdown detects and reloads config changes"""
+        import threading
+        from src.gh_pr_phase_monitor.main import wait_with_countdown
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write('interval = "5s"\nverbose = false\n')
+            config_path = f.name
+        
+        try:
+            initial_mtime = get_config_mtime(config_path)
+            
+            # Function to modify config after 1 second
+            def modify_config():
+                time.sleep(1)
+                with open(config_path, "w") as f:
+                    f.write('interval = "10s"\nverbose = true\n')
+            
+            # Start background thread to modify config
+            thread = threading.Thread(target=modify_config)
+            thread.daemon = True
+            thread.start()
+            
+            # Run wait with countdown
+            new_config, new_interval_seconds, new_interval_str, new_mtime = wait_with_countdown(
+                5, "5s", config_path, initial_mtime
+            )
+            
+            # Config should be reloaded
+            assert new_config != {}
+            assert new_config["interval"] == "10s"
+            assert new_config["verbose"] is True
+            assert new_mtime != initial_mtime
+            assert new_interval_seconds == 10
+            assert new_interval_str == "10s"
+        finally:
+            os.unlink(config_path)
+    
+    def test_wait_with_countdown_handles_invalid_config(self):
+        """Test that wait_with_countdown handles invalid config gracefully"""
+        import threading
+        from src.gh_pr_phase_monitor.main import wait_with_countdown
+        
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
+            f.write('interval = "3s"\n')
+            config_path = f.name
+        
+        try:
+            initial_mtime = get_config_mtime(config_path)
+            
+            # Function to write invalid config after 1 second
+            def write_invalid_config():
+                time.sleep(1)
+                with open(config_path, "w") as f:
+                    f.write('interval = invalid\n')  # Invalid TOML
+            
+            # Start background thread to modify config
+            thread = threading.Thread(target=write_invalid_config)
+            thread.daemon = True
+            thread.start()
+            
+            # Run wait with countdown (shorter duration to avoid repeated checks)
+            new_config, new_interval_seconds, new_interval_str, new_mtime = wait_with_countdown(
+                3, "3s", config_path, initial_mtime
+            )
+            
+            # Config should not be reloaded due to error
+            assert new_config == {}
+            assert new_interval_seconds == 3
+            assert new_interval_str == "3s"
+            # mtime may or may not be updated depending on timing
+        finally:
+            os.unlink(config_path)
+    
+    def test_wait_with_countdown_without_config_path(self):
+        """Test that wait_with_countdown works without config path (backward compatibility)"""
+        from src.gh_pr_phase_monitor.main import wait_with_countdown
+        
+        # Run wait without config path
+        new_config, new_interval_seconds, new_interval_str, new_mtime = wait_with_countdown(
+            2, "2s"
+        )
+        
+        # Should complete without errors
+        assert new_config == {}
+        assert new_interval_seconds == 2
+        assert new_interval_str == "2s"
+        assert new_mtime == 0.0
