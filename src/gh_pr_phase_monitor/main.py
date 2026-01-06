@@ -19,7 +19,7 @@ from .github_client import (
     get_repositories_with_no_prs_and_open_issues,
     get_repositories_with_open_prs,
 )
-from .phase_detector import PHASE_LLM_WORKING, PHASE_1, PHASE_2, PHASE_3, determine_phase
+from .phase_detector import PHASE_3, PHASE_LLM_WORKING, determine_phase
 from .pr_actions import process_pr
 
 # Track PR states and detection times
@@ -42,7 +42,7 @@ def format_elapsed_time(seconds: float) -> str:
     """
     minutes = int(seconds // 60)
     secs = int(seconds % 60)
-    
+
     if minutes > 0:
         return f"{minutes}分{secs}秒"
     else:
@@ -50,8 +50,8 @@ def format_elapsed_time(seconds: float) -> str:
 
 
 def wait_with_countdown(
-    interval_seconds: int, 
-    interval_str: str, 
+    interval_seconds: int,
+    interval_str: str,
     config_path: str = "",
     last_config_mtime: float = 0.0
 ) -> Tuple[Dict[str, Any], int, str, float]:
@@ -75,34 +75,34 @@ def wait_with_countdown(
     print(f"\n{'=' * 50}")
     print(f"Waiting {interval_str} until next check...")
     print(f"{'=' * 50}")
-    
+
     # Current config values (may be updated during wait)
     current_config = {}
     current_interval_seconds = interval_seconds
     current_interval_str = interval_str
     current_mtime = last_config_mtime
-    
+
     # Track actual elapsed time from the start of wait
     wait_start_time = time.time()
-    
+
     # Display countdown with updates every second using ANSI escape sequences
     while True:
         # Calculate actual elapsed time
         actual_elapsed = time.time() - wait_start_time
-        
+
         # Check if we've waited long enough
         if actual_elapsed >= interval_seconds:
             break
-            
+
         elapsed_str = format_elapsed_time(actual_elapsed)
         # Print countdown on same line using carriage return
         print(f"\r待機中... 経過時間: {elapsed_str}     ", end="", flush=True)
-        
+
         # Calculate remaining time
         remaining = interval_seconds - actual_elapsed
         sleep_duration = min(1, remaining)
         time.sleep(sleep_duration)
-        
+
         # Check if config file has been modified (only if config_path is provided)
         # Note: This check happens every second as per hot reload requirements
         if config_path:
@@ -113,29 +113,29 @@ def wait_with_countdown(
                     print(f"\n\n{'=' * 50}")
                     print("設定ファイルの変更を検知しました。再読み込みします...")
                     print(f"{'=' * 50}")
-                    
+
                     try:
                         new_config = load_config(config_path)
                         new_interval_str = new_config.get("interval", "1m")
                         new_interval_seconds = parse_interval(new_interval_str)
-                        
+
                         # Update current values
                         current_config = new_config
                         current_interval_seconds = new_interval_seconds
                         current_interval_str = new_interval_str
                         current_mtime = new_mtime
-                        
-                        print(f"設定を再読み込みしました。")
+
+                        print("設定を再読み込みしました。")
                         print(f"新しい監視間隔: {new_interval_str} ({new_interval_seconds}秒)")
-                        
+
                         # Print config if verbose mode is enabled
                         if new_config.get("verbose", False):
                             print_config(new_config)
-                        
+
                         print(f"{'=' * 50}")
                         print(f"Waiting {current_interval_str} until next check...")
                         print(f"{'=' * 50}")
-                        
+
                     except (ValueError, tomli.TOMLDecodeError) as e:
                         # Config file has invalid format (TOML parsing error or invalid interval)
                         # Update mtime to avoid repeatedly trying to reload the same broken config
@@ -145,20 +145,20 @@ def wait_with_countdown(
                         print(f"{'=' * 50}")
                         print(f"Waiting {current_interval_str} until next check...")
                         print(f"{'=' * 50}")
-                    
+
             except FileNotFoundError:
                 # Config file was deleted, continue with current config
                 pass
             except (OSError, PermissionError):
                 # File system errors (e.g., permission issues), ignore and continue
                 pass
-    
+
     # Final update - show actual elapsed time
     actual_elapsed = time.time() - wait_start_time
     elapsed_str = format_elapsed_time(actual_elapsed)
     print(f"\r待機中... 経過時間: {elapsed_str}     ", flush=True)
     print()  # New line after countdown completes
-    
+
     return current_config, current_interval_seconds, current_interval_str, current_mtime
 
 
@@ -194,15 +194,15 @@ def display_status_summary(all_prs: List[Dict[str, Any]], pr_phases: List[str], 
     print(f"\n{'=' * 50}")
     print("Status Summary:")
     print(f"{'=' * 50}")
-    
+
     if not all_prs:
         print("  No open PRs to monitor")
         cleanup_old_pr_states([])
         return
-    
+
     current_time = time.time()
     current_states = []
-    
+
     # Display each PR using the same format as process_pr()
     for pr, phase in zip(all_prs, pr_phases):
         repo_info = pr.get("repository", {})
@@ -210,33 +210,33 @@ def display_status_summary(all_prs: List[Dict[str, Any]], pr_phases: List[str], 
         repo_owner = repo_info.get("owner", "Unknown")
         title = pr.get("title", "Unknown")
         url = pr.get("url", "")
-        
+
         # Track state for elapsed time
         state_key = (url, phase)
         current_states.append(state_key)
         if state_key not in _pr_state_times:
             _pr_state_times[state_key] = current_time
-        
+
         # Calculate elapsed time
         elapsed = current_time - _pr_state_times[state_key]
-        
+
         # Display phase with colors using the same format
         phase_display = colorize_phase(phase)
-        
+
         # Show elapsed time if state has persisted for more than 60 seconds
         if elapsed >= 60:
             elapsed_str = format_elapsed_time(elapsed)
             print(f"  [{repo_owner}/{repo_name}] {phase_display} {title} (現在、検知してから{elapsed_str}経過)")
         else:
             print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
-    
+
     # Clean up old PR states that are no longer present
     cleanup_old_pr_states(current_states)
 
 
 def check_all_phase3_timeout(
-    all_prs: List[Dict[str, Any]], 
-    pr_phases: List[str], 
+    all_prs: List[Dict[str, Any]],
+    pr_phases: List[str],
     config: Optional[Dict[str, Any]] = None
 ) -> None:
     """Check if all PRs have been in phase3 for too long and exit if timeout reached
@@ -247,17 +247,17 @@ def check_all_phase3_timeout(
         config: Configuration dictionary (optional)
     """
     global _all_phase3_start_time
-    
+
     # Get timeout setting from config
     timeout_str = ""
     if config:
         timeout_str = config.get("all_phase3_timeout", "")
-    
+
     # If timeout is not configured or empty, don't check
     if not timeout_str:
         _all_phase3_start_time = None
         return
-    
+
     # Parse timeout to seconds
     try:
         timeout_seconds = parse_interval(timeout_str)
@@ -265,13 +265,13 @@ def check_all_phase3_timeout(
         print(f"Warning: Invalid all_phase3_timeout format: {e}")
         _all_phase3_start_time = None
         return
-    
+
     current_time = time.time()
-    
+
     # Check if all PRs are in phase3
     # Validate that all_prs and pr_phases have the same length before checking
-    if (all_prs and pr_phases and 
-        len(all_prs) == len(pr_phases) and 
+    if (all_prs and pr_phases and
+        len(all_prs) == len(pr_phases) and
         all(phase == PHASE_3 for phase in pr_phases)):
         # All PRs are in phase3
         if _all_phase3_start_time is None:
@@ -313,38 +313,69 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
 
             # Check if auto-assign feature is enabled in config
             assign_enabled = False
+            assign_lowest_number = False
             if config:
                 assign_config = config.get("assign_to_copilot", {})
                 assign_enabled = assign_config.get("enabled", False)
+                assign_lowest_number = assign_config.get("assign_lowest_number_issue", False)
 
             # Only try to auto-assign if the feature is enabled
             if assign_enabled:
-                # First, try to fetch and auto-assign "good first issue" issues
-                print(f"\n{'=' * 50}")
-                print("Checking for 'good first issue' issues to auto-assign to Copilot...")
-                print(f"{'=' * 50}")
+                # Check which mode to use: lowest number or good first issue
+                if assign_lowest_number:
+                    # Fetch and auto-assign the issue with the lowest number
+                    print(f"\n{'=' * 50}")
+                    print("Checking for the issue with the lowest number to auto-assign to Copilot...")
+                    print(f"{'=' * 50}")
 
-                good_first_issues = get_issues_from_repositories(
-                    repos_with_issues, limit=1, labels=["good first issue"]
-                )
+                    lowest_number_issues = get_issues_from_repositories(
+                        repos_with_issues, limit=1, sort_by_number=True
+                    )
 
-                if good_first_issues:
-                    issue = good_first_issues[0]
-                    print("\n  Found top 'good first issue' (sorted by last update, descending):")
-                    print(f"  #{issue['number']}: {issue['title']}")
-                    print(f"     URL: {issue['url']}")
-                    # Safely join labels, ensuring they are all strings
-                    labels = issue.get('labels', [])
-                    label_str = ', '.join(str(label) for label in labels)
-                    print(f"     Labels: {label_str}")
-                    print("\n  Attempting to assign to Copilot...")
+                    if lowest_number_issues:
+                        issue = lowest_number_issues[0]
+                        print("\n  Found issue with lowest number:")
+                        print(f"  #{issue['number']}: {issue['title']}")
+                        print(f"     URL: {issue['url']}")
+                        # Safely join labels, ensuring they are all strings
+                        labels = issue.get('labels', [])
+                        label_str = ', '.join(str(label) for label in labels)
+                        print(f"     Labels: {label_str}")
+                        print("\n  Attempting to assign to Copilot...")
 
-                    # Assign the issue to Copilot and check the result
-                    success = assign_issue_to_copilot(issue, config)
-                    if not success:
-                        print("  Assignment failed - will retry on next iteration")
+                        # Assign the issue to Copilot and check the result
+                        success = assign_issue_to_copilot(issue, config)
+                        if not success:
+                            print("  Assignment failed - will retry on next iteration")
+                    else:
+                        print("  No issues found in repositories without open PRs")
                 else:
-                    print("  No 'good first issue' issues found in repositories without open PRs")
+                    # Original behavior: try to fetch and auto-assign "good first issue" issues
+                    print(f"\n{'=' * 50}")
+                    print("Checking for 'good first issue' issues to auto-assign to Copilot...")
+                    print(f"{'=' * 50}")
+
+                    good_first_issues = get_issues_from_repositories(
+                        repos_with_issues, limit=1, labels=["good first issue"]
+                    )
+
+                    if good_first_issues:
+                        issue = good_first_issues[0]
+                        print("\n  Found top 'good first issue' (sorted by last update, descending):")
+                        print(f"  #{issue['number']}: {issue['title']}")
+                        print(f"     URL: {issue['url']}")
+                        # Safely join labels, ensuring they are all strings
+                        labels = issue.get('labels', [])
+                        label_str = ', '.join(str(label) for label in labels)
+                        print(f"     Labels: {label_str}")
+                        print("\n  Attempting to assign to Copilot...")
+
+                        # Assign the issue to Copilot and check the result
+                        success = assign_issue_to_copilot(issue, config)
+                        if not success:
+                            print("  Assignment failed - will retry on next iteration")
+                    else:
+                        print("  No 'good first issue' issues found in repositories without open PRs")
             else:
                 print(f"\n{'=' * 50}")
                 print("Auto-assign to Copilot feature is disabled")
@@ -500,7 +531,7 @@ def main():
         # incomplete or empty data, which is acceptable as it reflects the actual
         # state that was successfully retrieved before the error.
         display_status_summary(all_prs, pr_phases, repos_with_prs)
-        
+
         # Check if all PRs are in phase3 for too long and exit if timeout reached
         check_all_phase3_timeout(all_prs, pr_phases, config)
 
@@ -508,7 +539,7 @@ def main():
         new_config, new_interval_seconds, new_interval_str, new_config_mtime = wait_with_countdown(
             interval_seconds, interval_str, config_path, config_mtime
         )
-        
+
         # Update config and interval based on what was returned from wait
         # Config will be non-empty only if successfully reloaded during wait
         config_reloaded = new_config_mtime != config_mtime

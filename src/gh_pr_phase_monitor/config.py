@@ -113,21 +113,21 @@ def print_config(config: Dict[str, Any]) -> None:
     print("\n" + "=" * 50)
     print("Configuration Settings:")
     print("=" * 50)
-    
+
     # Print main settings
     print("\n[Main Settings]")
     print(f"  interval: {config.get('interval', '1m')}")
     print(f"  issue_display_limit: {config.get('issue_display_limit', 10)}")
     print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '')}")
     print(f"  verbose: {config.get('verbose', False)}")
-    
+
     # Print execution flags
     print("\n[Global Execution Flags]")
     print(f"  enable_execution_phase1_to_phase2: {config.get('enable_execution_phase1_to_phase2', False)}")
     print(f"  enable_execution_phase2_to_phase3: {config.get('enable_execution_phase2_to_phase3', False)}")
     print(f"  enable_execution_phase3_send_ntfy: {config.get('enable_execution_phase3_send_ntfy', False)}")
     print(f"  enable_execution_phase3_to_merge: {config.get('enable_execution_phase3_to_merge', False)}")
-    
+
     # Print rulesets
     rulesets = config.get("rulesets", [])
     if rulesets and isinstance(rulesets, list):
@@ -144,7 +144,7 @@ def print_config(config: Dict[str, Any]) -> None:
     else:
         print("\n[Rulesets]")
         print("  No rulesets configured")
-    
+
     # Print ntfy settings
     ntfy = config.get("ntfy")
     if ntfy and isinstance(ntfy, dict):
@@ -154,7 +154,7 @@ def print_config(config: Dict[str, Any]) -> None:
             print(f"  topic: {ntfy.get('topic', 'N/A')}")
             print(f"  message: {ntfy.get('message', 'N/A')}")
             print(f"  priority: {ntfy.get('priority', 4)}")
-    
+
     # Print phase3_merge settings
     phase3_merge = config.get("phase3_merge")
     if phase3_merge and isinstance(phase3_merge, dict):
@@ -168,20 +168,21 @@ def print_config(config: Dict[str, Any]) -> None:
                 print(f"  wait_seconds: {phase3_merge.get('wait_seconds', 10)}")
                 print(f"  browser: {phase3_merge.get('browser', 'edge')}")
                 print(f"  headless: {phase3_merge.get('headless', False)}")
-    
+
     # Print assign_to_copilot settings
     assign_to_copilot = config.get("assign_to_copilot")
     if assign_to_copilot and isinstance(assign_to_copilot, dict):
         print("\n[Auto-assign to Copilot Settings]")
         print(f"  enabled: {assign_to_copilot.get('enabled', False)}")
         if assign_to_copilot.get('enabled', False):
+            print(f"  assign_lowest_number_issue: {assign_to_copilot.get('assign_lowest_number_issue', False)}")
             print(f"  automated: {assign_to_copilot.get('automated', False)}")
             if assign_to_copilot.get('automated', False):
                 print(f"  automation_backend: {assign_to_copilot.get('automation_backend', 'selenium')}")
                 print(f"  wait_seconds: {assign_to_copilot.get('wait_seconds', 10)}")
                 print(f"  browser: {assign_to_copilot.get('browser', 'edge')}")
                 print(f"  headless: {assign_to_copilot.get('headless', False)}")
-    
+
     print("\n" + "=" * 50)
 
 

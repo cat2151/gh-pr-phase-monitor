@@ -309,6 +309,128 @@ class TestGetIssuesFromRepositories:
         assert issues[0]["title"] == "Good First Issue"
         assert "good first issue" in issues[0]["labels"]
 
+    @patch("subprocess.run")
+    def test_get_issues_sorted_by_number(self, mock_run):
+        """Test sorting issues by issue number in ascending order"""
+        repos = [{"name": "repo1", "owner": "user1"}]
+
+        mock_response = {
+            "data": {
+                "repo0": {
+                    "name": "repo1",
+                    "owner": {"login": "user1"},
+                    "issues": {
+                        "nodes": [
+                            {
+                                "title": "Issue 10",
+                                "url": "https://github.com/user1/repo1/issues/10",
+                                "number": 10,
+                                "createdAt": "2024-01-10T00:00:00Z",
+                                "updatedAt": "2024-01-15T00:00:00Z",
+                                "author": {"login": "author1"},
+                                "labels": {"nodes": []},
+                            },
+                            {
+                                "title": "Issue 5",
+                                "url": "https://github.com/user1/repo1/issues/5",
+                                "number": 5,
+                                "createdAt": "2024-01-05T00:00:00Z",
+                                "updatedAt": "2024-01-10T00:00:00Z",
+                                "author": {"login": "author2"},
+                                "labels": {"nodes": []},
+                            },
+                            {
+                                "title": "Issue 20",
+                                "url": "https://github.com/user1/repo1/issues/20",
+                                "number": 20,
+                                "createdAt": "2024-01-20T00:00:00Z",
+                                "updatedAt": "2024-01-20T00:00:00Z",
+                                "author": {"login": "author3"},
+                                "labels": {"nodes": []},
+                            }
+                        ]
+                    },
+                }
+            }
+        }
+
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(mock_response)
+        mock_run.return_value = mock_result
+
+        # Test with sort_by_number=True - should return issue with lowest number first
+        issues = get_issues_from_repositories(repos, limit=10, sort_by_number=True)
+
+        assert len(issues) == 3
+        # Issues should be sorted by number in ascending order
+        assert issues[0]["number"] == 5
+        assert issues[0]["title"] == "Issue 5"
+        assert issues[1]["number"] == 10
+        assert issues[1]["title"] == "Issue 10"
+        assert issues[2]["number"] == 20
+        assert issues[2]["title"] == "Issue 20"
+
+    @patch("subprocess.run")
+    def test_get_issues_default_sorting_by_updated_at(self, mock_run):
+        """Test default sorting by updatedAt in descending order"""
+        repos = [{"name": "repo1", "owner": "user1"}]
+
+        mock_response = {
+            "data": {
+                "repo0": {
+                    "name": "repo1",
+                    "owner": {"login": "user1"},
+                    "issues": {
+                        "nodes": [
+                            {
+                                "title": "Issue 10",
+                                "url": "https://github.com/user1/repo1/issues/10",
+                                "number": 10,
+                                "createdAt": "2024-01-10T00:00:00Z",
+                                "updatedAt": "2024-01-15T00:00:00Z",
+                                "author": {"login": "author1"},
+                                "labels": {"nodes": []},
+                            },
+                            {
+                                "title": "Issue 5",
+                                "url": "https://github.com/user1/repo1/issues/5",
+                                "number": 5,
+                                "createdAt": "2024-01-05T00:00:00Z",
+                                "updatedAt": "2024-01-10T00:00:00Z",
+                                "author": {"login": "author2"},
+                                "labels": {"nodes": []},
+                            },
+                            {
+                                "title": "Issue 20",
+                                "url": "https://github.com/user1/repo1/issues/20",
+                                "number": 20,
+                                "createdAt": "2024-01-20T00:00:00Z",
+                                "updatedAt": "2024-01-20T00:00:00Z",
+                                "author": {"login": "author3"},
+                                "labels": {"nodes": []},
+                            }
+                        ]
+                    },
+                }
+            }
+        }
+
+        mock_result = MagicMock()
+        mock_result.stdout = json.dumps(mock_response)
+        mock_run.return_value = mock_result
+
+        # Test with sort_by_number=False (default) - should return issue with latest update first
+        issues = get_issues_from_repositories(repos, limit=10, sort_by_number=False)
+
+        assert len(issues) == 3
+        # Issues should be sorted by updatedAt in descending order
+        assert issues[0]["number"] == 20
+        assert issues[0]["title"] == "Issue 20"
+        assert issues[1]["number"] == 10
+        assert issues[1]["title"] == "Issue 10"
+        assert issues[2]["number"] == 5
+        assert issues[2]["title"] == "Issue 5"
+
 
 class TestAssignIssueToCopilot:
     """Tests for assign_issue_to_copilot function"""

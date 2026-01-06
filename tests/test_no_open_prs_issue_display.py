@@ -251,6 +251,92 @@ def test_display_issues_with_none_config():
             assert call_args[1]["limit"] == 10
 
 
+def test_display_issues_with_assign_lowest_number():
+    """
+    Test that display_issues_from_repos_without_prs correctly assigns the lowest numbered issue
+    when assign_lowest_number_issue is enabled
+    """
+    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+                # Mock response: repos with no PRs but with issues
+                mock_get_repos.return_value = [
+                    {
+                        "name": "test-repo",
+                        "owner": "testuser",
+                        "openIssueCount": 3,
+                    }
+                ]
+
+                # Mock lowest number issue response
+                mock_get_issues.side_effect = [
+                    # First call: lowest number issue
+                    [
+                        {
+                            "title": "Issue with lowest number",
+                            "url": "https://github.com/testuser/test-repo/issues/5",
+                            "number": 5,
+                            "updatedAt": "2024-01-05T00:00:00Z",
+                            "author": {"login": "contributor1"},
+                            "repository": {"owner": "testuser", "name": "test-repo"},
+                            "labels": ["bug"],
+                        }
+                    ],
+                    # Second call: top 10 issues
+                    [
+                        {
+                            "title": "Issue 1",
+                            "url": "https://github.com/testuser/test-repo/issues/5",
+                            "number": 5,
+                            "updatedAt": "2024-01-05T00:00:00Z",
+                            "author": {"login": "contributor1"},
+                            "repository": {"owner": "testuser", "name": "test-repo"},
+                        },
+                        {
+                            "title": "Issue 2",
+                            "url": "https://github.com/testuser/test-repo/issues/10",
+                            "number": 10,
+                            "updatedAt": "2024-01-10T00:00:00Z",
+                            "author": {"login": "contributor2"},
+                            "repository": {"owner": "testuser", "name": "test-repo"},
+                        },
+                    ],
+                ]
+
+                mock_assign.return_value = True
+
+                # Create config with assign_to_copilot enabled and assign_lowest_number_issue enabled
+                config = {
+                    "assign_to_copilot": {
+                        "enabled": True,
+                        "assign_lowest_number_issue": True
+                    }
+                }
+
+                # Call the function with config
+                display_issues_from_repos_without_prs(config)
+
+                # Verify that the function fetched repos without PRs
+                mock_get_repos.assert_called_once()
+
+                # Verify that issues were fetched twice (lowest number issue + top 10)
+                assert mock_get_issues.call_count == 2
+
+                # Verify first call was for lowest number issue (with sort_by_number=True)
+                first_call = mock_get_issues.call_args_list[0]
+                assert first_call[1]["limit"] == 1
+                assert first_call[1]["sort_by_number"] is True
+                # Should not have labels filter for lowest number mode
+                assert "labels" not in first_call[1] or first_call[1]["labels"] is None
+
+                # Verify second call was for top 10 issues
+                second_call = mock_get_issues.call_args_list[1]
+                assert second_call[1]["limit"] == 10
+
+                # Verify assignment was attempted
+                mock_assign.assert_called_once()
+
+
 if __name__ == "__main__":
     test_display_issues_when_no_repos_with_prs()
     print("✓ Test 1 passed: display_issues_when_no_repos_with_prs")
@@ -269,5 +355,8 @@ if __name__ == "__main__":
 
     test_display_issues_with_none_config()
     print("✓ Test 6 passed: display_issues_with_none_config")
+
+    test_display_issues_with_assign_lowest_number()
+    print("✓ Test 7 passed: display_issues_with_assign_lowest_number")
 
     print("\n✅ All tests passed!")
