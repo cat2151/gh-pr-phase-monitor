@@ -114,6 +114,7 @@ cat-github-watcher/
    # Phase3自動マージ設定（オプション）
    # PRがphase3（レビュー待ち）に達したら自動的にマージします
    # マージ前に、以下で定義したコメントがPRに投稿されます
+   # マージ成功後、自動的にfeature branchが削除されます
    [phase3_merge]
    enabled = false  # trueにすると自動マージを有効化（enable_execution_phase3_to_merge = trueも必要）
    comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント

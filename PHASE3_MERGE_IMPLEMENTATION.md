@@ -35,12 +35,14 @@ enable_execution_phase3_to_merge = true
 Two merge methods are available:
 
 #### A. CLI-based merge (default, `automated = false`)
-- Uses `gh pr merge --auto --squash` command
+- Uses `gh pr merge --squash --delete-branch` command
+- Automatically deletes the feature branch after merge
 - Faster and more reliable
 - Recommended for most use cases
 
 #### B. Browser automation (`automated = true`)
-- Opens PR in browser and clicks "Merge pull request" and "Confirm merge" buttons
+- Opens PR in browser and clicks "Merge pull request", "Confirm merge", and "Delete branch" buttons
+- Automatically deletes the feature branch after merge
 - Uses Selenium or Playwright (same system as "Assign to Copilot")
 - Useful if custom merge workflows require manual steps
 
@@ -50,7 +52,13 @@ Before merging, a configurable comment is posted to the PR:
 - Default: "All checks passed. Merging PR."
 - Can be customized to match your workflow
 
-### 4. Safety Features
+### 4. Branch Deletion
+After a successful merge, the feature branch is automatically deleted:
+- **CLI-based merge**: Uses the `--delete-branch` flag to delete both local and remote branches
+- **Browser automation**: Clicks the "Delete branch" button that appears after merge confirmation
+- Helps keep the repository clean by removing merged branches
+
+### 5. Safety Features
 - **Dry-run mode by default**: Must explicitly enable both `enable_execution_phase3_to_merge = true` and `phase3_merge.enabled = true`
 - **Single merge per PR**: Tracks merged PRs to prevent duplicate merge attempts
 - **Phase3 only**: Merge only happens when PR reaches phase3 (ready for review)

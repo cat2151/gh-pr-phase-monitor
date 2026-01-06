@@ -83,6 +83,7 @@ automation_backend = "selenium"  # Backend to use: "selenium" or "playwright" (a
 wait_seconds = 10  # How long to wait after opening the browser before clicking (automated mode only)
 browser = "edge"  # Browser to use: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
 headless = false  # Run browser in headless mode (no visible window, automated mode only)
+# Note: Feature branch is automatically deleted after successful merge
 
 # Auto-assign "good first issue" issues to Copilot (optional)
 # When enabled, the tool will automatically open the issue in your browser.

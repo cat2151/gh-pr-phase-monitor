@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 
 from src.gh_pr_phase_monitor.browser_automation import (
     assign_issue_to_copilot_automated,
+    merge_pr_automated,
     is_selenium_available,
     is_playwright_available,
 )
@@ -198,3 +199,103 @@ class TestPlaywrightBackend:
                 
                 # Should use Selenium backend (default)
                 mock_driver.assert_called_once()
+
+
+class TestMergePrAutomated:
+    """Tests for merge_pr_automated function"""
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", False)
+    def test_returns_false_when_selenium_unavailable(self):
+        """Test that function returns False when Selenium is not available"""
+        result = merge_pr_automated(
+            "https://github.com/test/repo/pull/1",
+            {}
+        )
+        assert result is False
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._create_browser_driver")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_selenium")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    def test_clicks_delete_branch_button_after_merge(self, mock_sleep, mock_click, mock_create_driver):
+        """Test that function attempts to click Delete branch button after merge"""
+        mock_driver = MagicMock()
+        mock_create_driver.return_value = mock_driver
+        
+        # Mock click function to succeed for all buttons
+        mock_click.return_value = True
+        
+        config = {
+            "phase3_merge": {
+                "wait_seconds": 1,
+                "browser": "edge",
+                "headless": False
+            }
+        }
+        
+        result = merge_pr_automated(
+            "https://github.com/test/repo/pull/1",
+            config
+        )
+        
+        # Should succeed
+        assert result is True
+        
+        # Verify the three button clicks: Merge pull request, Confirm merge, Delete branch
+        assert mock_click.call_count == 3
+        call_args_list = [call[0][1] for call in mock_click.call_args_list]
+        assert "Merge pull request" in call_args_list
+        assert "Confirm merge" in call_args_list
+        assert "Delete branch" in call_args_list
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._create_browser_driver")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_selenium")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    def test_succeeds_even_if_delete_branch_button_not_found(self, mock_sleep, mock_click, mock_create_driver):
+        """Test that function succeeds even if Delete branch button is not found"""
+        mock_driver = MagicMock()
+        mock_create_driver.return_value = mock_driver
+        
+        # Mock click function to succeed for Merge and Confirm, fail for Delete branch
+        def click_side_effect(driver, button_text, timeout=10):
+            if button_text == "Delete branch":
+                return False  # Button not found
+            return True
+        
+        mock_click.side_effect = click_side_effect
+        
+        config = {
+            "phase3_merge": {
+                "wait_seconds": 1,
+                "browser": "edge",
+                "headless": False
+            }
+        }
+        
+        result = merge_pr_automated(
+            "https://github.com/test/repo/pull/1",
+            config
+        )
+        
+        # Should still succeed (merge was successful, branch deletion is optional)
+        assert result is True
+        assert mock_click.call_count == 3
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PLAYWRIGHT_AVAILABLE", False)
+    def test_playwright_returns_false_when_unavailable(self):
+        """Test that Playwright backend returns False when not available"""
+        config = {
+            "phase3_merge": {
+                "automation_backend": "playwright",
+                "browser": "chromium"
+            }
+        }
+        
+        result = merge_pr_automated(
+            "https://github.com/test/repo/pull/1",
+            config
+        )
+        
+        # Should fail because Playwright is not available
+        assert result is False
