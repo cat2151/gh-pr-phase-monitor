@@ -96,12 +96,18 @@ The tool determines the following four phases:
    # Check interval (e.g., "30s", "1m", "5m", "1h", "1d")
    interval = "1m"
    
-   # Execution control flags - Dry-run mode by default
-   # Set to true to enable actual actions (PR ready-up, comment posting, notification sending, merging)
-   enable_execution_phase1_to_phase2 = false  # Set to true to mark draft PRs as ready
-   enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
-   enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
-   enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
+   # Execution control flags - Must be specified in [[rulesets]] sections
+   # Global flags are no longer supported
+   # Use 'repositories = ["all"]' to apply settings to all repositories
+   
+   # Example ruleset configuration:
+   # [[rulesets]]
+   # name = "All repositories default - dry-run mode"
+   # repositories = ["all"]  # "all" matches all repositories
+   # enable_execution_phase1_to_phase2 = false  # Set to true to mark draft PRs as ready
+   # enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
+   # enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
+   # enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
    
    # ntfy.sh notification settings (optional)
    # Notifications include clickable action buttons to open the PR
@@ -116,7 +122,7 @@ The tool determines the following four phases:
    # The comment defined below will be posted to the PR before merging
    # After successful merge, the feature branch is automatically deleted
    [phase3_merge]
-   enabled = false  # Set to true to enable auto-merge (requires enable_execution_phase3_to_merge = true)
+   enabled = false  # Set to true to enable auto-merge (requires enable_execution_phase3_to_merge = true in rulesets)
    comment = "All checks passed. Merging PR."  # Comment to post before merging
    automated = false  # Set to true to click the merge button via browser automation
    automation_backend = "selenium"  # Automation backend: "selenium" or "playwright"

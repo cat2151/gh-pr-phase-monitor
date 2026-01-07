@@ -96,12 +96,18 @@ cat-github-watcher/
    # チェック間隔（"30s", "1m", "5m", "1h", "1d"など）
    interval = "1m"
    
-   # 実行制御フラグ - デフォルトはDry-runモード
-   # 実際のアクション（PRのReady化、コメント投稿、通知送信、マージ）を有効にするにはtrueに設定
-   enable_execution_phase1_to_phase2 = false  # trueにするとdraft PRをready化
-   enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
-   enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
-   enable_execution_phase3_to_merge = false   # trueにするとphase3 PRをマージ
+   # 実行制御フラグ - [[rulesets]]セクション内でのみ指定可能
+   # グローバルフラグはサポートされなくなりました
+   # 全リポジトリに設定を適用するには 'repositories = ["all"]' を使用してください
+   
+   # ルールセット設定例:
+   # [[rulesets]]
+   # name = "全リポジトリのデフォルト - dry-runモード"
+   # repositories = ["all"]  # "all" は全リポジトリにマッチします
+   # enable_execution_phase1_to_phase2 = false  # trueにするとdraft PRをready化
+   # enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
+   # enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
+   # enable_execution_phase3_to_merge = false   # trueにするとphase3 PRをマージ
    
    # ntfy.sh通知設定（オプション）
    # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
@@ -116,7 +122,7 @@ cat-github-watcher/
    # マージ前に、以下で定義したコメントがPRに投稿されます
    # マージ成功後、自動的にfeature branchが削除されます
    [phase3_merge]
-   enabled = false  # trueにすると自動マージを有効化（enable_execution_phase3_to_merge = trueも必要）
+   enabled = false  # trueにすると自動マージを有効化（rulesetsでenable_execution_phase3_to_merge = trueも必要）
    comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント
    automated = false  # trueにするとブラウザ自動操縦でマージボタンをクリック
    automation_backend = "selenium"  # 自動操縦バックエンド: "selenium" または "playwright"

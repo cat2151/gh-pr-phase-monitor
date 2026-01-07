@@ -2,14 +2,14 @@
 
 ## Overview
 
-The ruleset-based configuration feature allows fine-grained control over automatic execution features on a per-repository or per-group basis. Instead of using only global execution flags, you can now define multiple rulesets that apply different configurations to different repositories.
+The ruleset-based configuration feature allows fine-grained control over automatic execution features on a per-repository or per-group basis. All execution control flags must be specified inside `[[rulesets]]` sections - global flags are no longer supported.
 
 ## Features
 
 - **Per-repository control**: Enable or disable features for specific repositories
 - **Pattern matching**: Use "all" to match all repositories, or specify by owner/name or just name
 - **Override mechanism**: Later rulesets override earlier ones, allowing flexible configuration
-- **Backward compatible**: Existing global flags still work and are used as defaults
+- **Ruleset-only**: Execution flags can ONLY be specified in rulesets (global flags are deprecated)
 
 ## Configuration Format
 
@@ -22,6 +22,7 @@ repositories = ["owner/repo", "repo-name", "all"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
+enable_execution_phase3_to_merge = true
 ```
 
 ### Fields
@@ -34,12 +35,13 @@ enable_execution_phase3_send_ntfy = true
 - **enable_execution_phase1_to_phase2** (optional): Enable automatic PR ready marking
 - **enable_execution_phase2_to_phase3** (optional): Enable automatic comment posting
 - **enable_execution_phase3_send_ntfy** (optional): Enable ntfy notifications
+- **enable_execution_phase3_to_merge** (optional): Enable automatic PR merging
 
 ## Resolution Order
 
 Rulesets are applied in the following order:
 
-1. **Global defaults**: Start with global `enable_execution_*` flags
+1. **Default to false**: All execution flags default to false when no rulesets match
 2. **Rulesets in order**: Apply each matching ruleset in the order they appear
 3. **Later overrides earlier**: If multiple rulesets match, later ones override earlier ones
 4. **Partial updates**: Rulesets can specify only some flags, leaving others unchanged
@@ -49,10 +51,14 @@ Rulesets are applied in the following order:
 ### Example 1: Disable all by default, enable for specific repos
 
 ```toml
-# Global defaults - all disabled
+# Disable all by default
+[[rulesets]]
+name = "Default - all disabled"
+repositories = ["all"]
 enable_execution_phase1_to_phase2 = false
 enable_execution_phase2_to_phase3 = false
 enable_execution_phase3_send_ntfy = false
+enable_execution_phase3_to_merge = false
 
 # Enable full automation for a specific repository
 [[rulesets]]
@@ -61,6 +67,7 @@ repositories = ["myorg/my-app"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
+enable_execution_phase3_to_merge = true
 
 # Enable only notifications for production repositories
 [[rulesets]]
@@ -72,18 +79,14 @@ enable_execution_phase3_send_ntfy = true
 ### Example 2: Enable all by default, disable for specific repos
 
 ```toml
-# Global defaults - all disabled for safety
-enable_execution_phase1_to_phase2 = false
-enable_execution_phase2_to_phase3 = false
-enable_execution_phase3_send_ntfy = false
-
-# Enable full automation for all repositories
+# Enable full automation for all repositories by default
 [[rulesets]]
 name = "Enable all by default"
 repositories = ["all"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
+enable_execution_phase3_to_merge = true
 
 # Disable automation for experimental repositories
 [[rulesets]]
@@ -92,16 +95,12 @@ repositories = ["myorg/experimental-1", "experimental-2"]
 enable_execution_phase1_to_phase2 = false
 enable_execution_phase2_to_phase3 = false
 enable_execution_phase3_send_ntfy = false
+enable_execution_phase3_to_merge = false
 ```
 
 ### Example 3: Different settings for different repository groups
 
 ```toml
-# All disabled by default
-enable_execution_phase1_to_phase2 = false
-enable_execution_phase2_to_phase3 = false
-enable_execution_phase3_send_ntfy = false
-
 # Test repositories: Full automation
 [[rulesets]]
 name = "Test repositories"
@@ -109,6 +108,7 @@ repositories = ["test-repo-1", "test-repo-2", "myorg/test-repo-3"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
+enable_execution_phase3_to_merge = true
 
 # Production repositories: Only phase1 and notifications
 [[rulesets]]
