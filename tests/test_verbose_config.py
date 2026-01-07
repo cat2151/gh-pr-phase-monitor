@@ -9,16 +9,12 @@ from src.gh_pr_phase_monitor.config import print_config, print_repo_execution_co
 
 
 def test_print_config_basic():
-    """Test basic configuration printing with deprecated global flags"""
+    """Test basic configuration printing"""
     config = {
         "interval": "1m",
         "issue_display_limit": 10,
         "all_phase3_timeout": "",
         "verbose": True,
-        "enable_execution_phase1_to_phase2": False,
-        "enable_execution_phase2_to_phase3": False,
-        "enable_execution_phase3_send_ntfy": False,
-        "enable_execution_phase3_to_merge": False,
     }
     
     # Capture output
@@ -32,10 +28,6 @@ def test_print_config_basic():
     assert "[Main Settings]" in output
     assert "interval: 1m" in output
     assert "verbose: True" in output
-    # Verify that deprecated global flags are shown with warning
-    assert "[WARNING] Global Execution Flags (DEPRECATED)" in output
-    assert "enable_execution_phase1_to_phase2: False (IGNORED)" in output
-    assert "Please move these settings inside [[rulesets]] sections" in output
 
 
 def test_print_config_with_rulesets():
@@ -224,34 +216,3 @@ def test_print_config_with_assign_lowest_number_issue():
     assert "[Auto-assign to Copilot Settings]" in output
     assert "enabled: True" in output
     assert "assign_lowest_number_issue: True" in output
-
-
-def test_print_config_no_deprecation_warning_without_global_flags():
-    """Test that deprecation warning is NOT shown when no global flags are present"""
-    config = {
-        "interval": "2m",
-        "verbose": True,
-        "rulesets": [
-            {
-                "name": "Test Ruleset",
-                "repositories": ["all"],
-                "enable_execution_phase1_to_phase2": True,
-                "enable_execution_phase2_to_phase3": False,
-            }
-        ],
-    }
-
-    f = io.StringIO()
-    with redirect_stdout(f):
-        print_config(config)
-    output = f.getvalue()
-
-    # Verify configuration is printed normally
-    assert "Configuration Settings:" in output
-    assert "[Main Settings]" in output
-    assert "[Rulesets]" in output
-    
-    # Verify deprecation warning is NOT shown
-    assert "[WARNING] Global Execution Flags (DEPRECATED)" not in output
-    assert "(IGNORED)" not in output
-    assert "Please move these settings inside [[rulesets]] sections" not in output

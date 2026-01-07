@@ -121,22 +121,6 @@ def print_config(config: Dict[str, Any]) -> None:
     print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '')}")
     print(f"  verbose: {config.get('verbose', False)}")
 
-    # Print warning if global execution flags are found (deprecated)
-    deprecated_flags = [
-        "enable_execution_phase1_to_phase2",
-        "enable_execution_phase2_to_phase3",
-        "enable_execution_phase3_send_ntfy",
-        "enable_execution_phase3_to_merge",
-    ]
-    found_deprecated = [flag for flag in deprecated_flags if flag in config]
-    if found_deprecated:
-        print("\n[WARNING] Global Execution Flags (DEPRECATED)")
-        print("  The following global execution flags are no longer supported:")
-        for flag in found_deprecated:
-            print(f"    {flag}: {config.get(flag)} (IGNORED)")
-        print("  Please move these settings inside [[rulesets]] sections.")
-        print("  Use 'repositories = [\"all\"]' to apply settings to all repositories.")
-
     # Print rulesets
     rulesets = config.get("rulesets", [])
     if rulesets and isinstance(rulesets, list):
