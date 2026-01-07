@@ -31,17 +31,13 @@ verbose = false
 # Organization repositories are NOT included (YAGNI principle - keeping it simple)
 # No need to specify repository directories!
 
-# Execution control flags - Dry-run mode by default
-# Set these to true to enable actual actions (marking PRs ready, posting comments, sending notifications)
-# These global flags are used when no rulesets are defined or when rulesets don't apply
-enable_execution_phase1_to_phase2 = false  # Set to true to mark draft PRs as ready
-enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
-enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
-enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
-
-# Rulesets - Fine-grained control per repository or group of repositories
+# Rulesets - Configure execution settings per repository or group of repositories
 # Rulesets are applied in order, with later rulesets overriding earlier ones
 # Each ruleset can specify different execution settings for different repositories
+#
+# IMPORTANT: Execution control flags (enable_execution_*) can ONLY be specified
+# inside [[rulesets]] sections. Global flags are no longer supported.
+# Use 'repositories = ["all"]' to apply settings to all repositories.
 #
 # You can also configure phase3_merge and assign_to_copilot settings per ruleset,
 # allowing different repositories to have different merge or auto-assign behaviors.
@@ -49,12 +45,12 @@ enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
 # Example configurations:
 #
 # [[rulesets]]
-# name = "All repositories default"
+# name = "All repositories default - dry-run mode"
 # repositories = ["all"]  # "all" matches all repositories
-# enable_execution_phase1_to_phase2 = false
-# enable_execution_phase2_to_phase3 = false
-# enable_execution_phase3_send_ntfy = false
-# enable_execution_phase3_to_merge = false
+# enable_execution_phase1_to_phase2 = false  # Set to true to mark draft PRs as ready
+# enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
+# enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
+# enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
 #
 # [[rulesets]]
 # name = "Enable automation for test repository"

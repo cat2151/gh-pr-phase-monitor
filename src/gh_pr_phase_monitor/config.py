@@ -121,12 +121,21 @@ def print_config(config: Dict[str, Any]) -> None:
     print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '')}")
     print(f"  verbose: {config.get('verbose', False)}")
 
-    # Print execution flags
-    print("\n[Global Execution Flags]")
-    print(f"  enable_execution_phase1_to_phase2: {config.get('enable_execution_phase1_to_phase2', False)}")
-    print(f"  enable_execution_phase2_to_phase3: {config.get('enable_execution_phase2_to_phase3', False)}")
-    print(f"  enable_execution_phase3_send_ntfy: {config.get('enable_execution_phase3_send_ntfy', False)}")
-    print(f"  enable_execution_phase3_to_merge: {config.get('enable_execution_phase3_to_merge', False)}")
+    # Print warning if global execution flags are found (deprecated)
+    deprecated_flags = [
+        "enable_execution_phase1_to_phase2",
+        "enable_execution_phase2_to_phase3",
+        "enable_execution_phase3_send_ntfy",
+        "enable_execution_phase3_to_merge",
+    ]
+    found_deprecated = [flag for flag in deprecated_flags if flag in config]
+    if found_deprecated:
+        print("\n[WARNING] Global Execution Flags (DEPRECATED)")
+        print("  The following global execution flags are no longer supported:")
+        for flag in found_deprecated:
+            print(f"    {flag}: {config.get(flag)} (IGNORED)")
+        print("  Please move these settings inside [[rulesets]] sections.")
+        print("  Use 'repositories = [\"all\"]' to apply settings to all repositories.")
 
     # Print rulesets
     rulesets = config.get("rulesets", [])
@@ -192,7 +201,7 @@ def resolve_execution_config_for_repo(
     """Resolve execution configuration for a specific repository using rulesets
 
     This function applies rulesets in order, with later rulesets overriding earlier ones.
-    First applies global settings, then applies matching rulesets.
+    Global execution flags are no longer supported - all settings must be in rulesets.
 
     Args:
         config: Configuration dictionary loaded from TOML
@@ -211,20 +220,12 @@ def resolve_execution_config_for_repo(
     # Full repository identifier
     repo_full_name = f"{repo_owner}/{repo_name}"
 
-    # Start with global defaults (backward compatibility) with validation
-    def get_validated_flag(flag_name: str, default: bool = False) -> bool:
-        """Get and validate a global configuration flag"""
-        value = config.get(flag_name, default)
-        # Only validate if the value was actually provided in config (not using default)
-        if flag_name in config:
-            return _validate_boolean_flag(value, flag_name)
-        return value
-
+    # Start with all flags disabled (no global defaults)
     result = {
-        "enable_execution_phase1_to_phase2": get_validated_flag("enable_execution_phase1_to_phase2", False),
-        "enable_execution_phase2_to_phase3": get_validated_flag("enable_execution_phase2_to_phase3", False),
-        "enable_execution_phase3_send_ntfy": get_validated_flag("enable_execution_phase3_send_ntfy", False),
-        "enable_execution_phase3_to_merge": get_validated_flag("enable_execution_phase3_to_merge", False),
+        "enable_execution_phase1_to_phase2": False,
+        "enable_execution_phase2_to_phase3": False,
+        "enable_execution_phase3_send_ntfy": False,
+        "enable_execution_phase3_to_merge": False,
         "enable_phase3_merge": None,  # None means not set by rulesets, use global
         "enable_assign_to_copilot": None,  # None means not set by rulesets, use global
     }

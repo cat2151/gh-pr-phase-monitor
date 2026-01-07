@@ -10,41 +10,50 @@ from src.gh_pr_phase_monitor.config import resolve_execution_config_for_repo
 class TestResolveExecutionConfigForRepo:
     """Test the resolve_execution_config_for_repo function"""
 
-    def test_no_rulesets_uses_global_config(self):
-        """When no rulesets are defined, use global configuration"""
-        config = {
-            "enable_execution_phase1_to_phase2": True,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": True,
-        }
+    def test_no_rulesets_defaults_to_false(self):
+        """When no rulesets are defined, all flags default to false"""
+        config = {}
         
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         
-        assert result["enable_execution_phase1_to_phase2"] is True
+        assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
-        assert result["enable_execution_phase3_send_ntfy"] is True
+        assert result["enable_execution_phase3_send_ntfy"] is False
+        assert result["enable_execution_phase3_to_merge"] is False
 
-    def test_empty_rulesets_uses_global_config(self):
-        """When rulesets array is empty, use global configuration"""
+    def test_empty_rulesets_defaults_to_false(self):
+        """When rulesets array is empty, all flags default to false"""
         config = {
-            "enable_execution_phase1_to_phase2": True,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": True,
             "rulesets": [],
         }
         
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         
-        assert result["enable_execution_phase1_to_phase2"] is True
+        assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
-        assert result["enable_execution_phase3_send_ntfy"] is True
+        assert result["enable_execution_phase3_send_ntfy"] is False
+        assert result["enable_execution_phase3_to_merge"] is False
+
+    def test_global_flags_are_ignored(self):
+        """Global execution flags are ignored (deprecated)"""
+        config = {
+            "enable_execution_phase1_to_phase2": True,
+            "enable_execution_phase2_to_phase3": True,
+            "enable_execution_phase3_send_ntfy": True,
+            "enable_execution_phase3_to_merge": True,
+        }
+        
+        result = resolve_execution_config_for_repo(config, "owner", "repo")
+        
+        # All should be False because global flags are ignored
+        assert result["enable_execution_phase1_to_phase2"] is False
+        assert result["enable_execution_phase2_to_phase3"] is False
+        assert result["enable_execution_phase3_send_ntfy"] is False
+        assert result["enable_execution_phase3_to_merge"] is False
 
     def test_all_repository_matches_everything(self):
         """Ruleset with 'all' repository should match any repository"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": False,
             "rulesets": [
                 {
                     "name": "Enable all for all repos",
@@ -69,7 +78,6 @@ class TestResolveExecutionConfigForRepo:
     def test_all_is_case_insensitive(self):
         """'all' keyword should be case-insensitive"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
             "rulesets": [
                 {
                     "repositories": ["ALL"],
@@ -88,7 +96,6 @@ class TestResolveExecutionConfigForRepo:
     def test_exact_repository_match(self):
         """Ruleset should match specific repository by owner/name"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
             "rulesets": [
                 {
                     "name": "Enable for specific repo",
@@ -109,7 +116,6 @@ class TestResolveExecutionConfigForRepo:
     def test_repository_name_only_match(self):
         """Ruleset should match by repository name only"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
             "rulesets": [
                 {
                     "repositories": ["test-repo"],
@@ -132,7 +138,6 @@ class TestResolveExecutionConfigForRepo:
     def test_multiple_repositories_in_ruleset(self):
         """Ruleset should match multiple repositories"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
             "rulesets": [
                 {
                     "repositories": ["owner1/repo1", "owner2/repo2", "repo3"],
@@ -156,9 +161,6 @@ class TestResolveExecutionConfigForRepo:
     def test_later_rulesets_override_earlier_ones(self):
         """Later rulesets in the array should override earlier ones"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": False,
             "rulesets": [
                 {
                     "name": "First: enable all for all repos",
@@ -192,9 +194,6 @@ class TestResolveExecutionConfigForRepo:
     def test_partial_override_preserves_other_settings(self):
         """Ruleset can override some flags while keeping others from previous rulesets"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": False,
             "rulesets": [
                 {
                     "repositories": ["all"],
@@ -230,7 +229,6 @@ class TestResolveExecutionConfigForRepo:
     def test_handles_invalid_ruleset_gracefully(self):
         """Should handle invalid ruleset data gracefully"""
         config = {
-            "enable_execution_phase1_to_phase2": True,
             "rulesets": [
                 "invalid_string",  # Invalid type
                 {"repositories": "not_a_list"},  # Invalid repositories type
@@ -240,25 +238,21 @@ class TestResolveExecutionConfigForRepo:
         }
         
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        # Should fall back to global config
-        assert result["enable_execution_phase1_to_phase2"] is True
+        # Should default to False when rulesets are invalid
+        assert result["enable_execution_phase1_to_phase2"] is False
 
-    def test_rulesets_not_list_uses_global_config(self):
-        """When rulesets is not a list, use global configuration"""
+    def test_rulesets_not_list_defaults_to_false(self):
+        """When rulesets is not a list, default to false"""
         config = {
-            "enable_execution_phase1_to_phase2": True,
             "rulesets": "not_a_list",
         }
         
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        assert result["enable_execution_phase1_to_phase2"] is True
+        assert result["enable_execution_phase1_to_phase2"] is False
 
     def test_complex_override_scenario(self):
         """Test a complex scenario with multiple overrides"""
         config = {
-            "enable_execution_phase1_to_phase2": False,
-            "enable_execution_phase2_to_phase3": False,
-            "enable_execution_phase3_send_ntfy": False,
             "rulesets": [
                 {
                     "name": "Enable all for all repos",
