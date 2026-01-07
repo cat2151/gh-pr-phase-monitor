@@ -1,4 +1,4 @@
-Last updated: 2026-01-07
+Last updated: 2026-01-08
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -159,12 +159,18 @@ cat-github-watcher/
    # チェック間隔（"30s", "1m", "5m", "1h", "1d"など）
    interval = "1m"
    
-   # 実行制御フラグ - デフォルトはDry-runモード
-   # 実際のアクション（PRのReady化、コメント投稿、通知送信、マージ）を有効にするにはtrueに設定
-   enable_execution_phase1_to_phase2 = false  # trueにするとdraft PRをready化
-   enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
-   enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
-   enable_execution_phase3_to_merge = false   # trueにするとphase3 PRをマージ
+   # 実行制御フラグ - [[rulesets]]セクション内でのみ指定可能
+   # グローバルフラグはサポートされなくなりました
+   # 全リポジトリに設定を適用するには 'repositories = ["all"]' を使用してください
+   
+   # ルールセット設定例:
+   # [[rulesets]]
+   # name = "全リポジトリのデフォルト - dry-runモード"
+   # repositories = ["all"]  # "all" は全リポジトリにマッチします
+   # enable_execution_phase1_to_phase2 = false  # trueにするとdraft PRをready化
+   # enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
+   # enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
+   # enable_execution_phase3_to_merge = false   # trueにするとphase3 PRをマージ
    
    # ntfy.sh通知設定（オプション）
    # 通知にはPRを開くためのクリック可能なアクションボタンが含まれます
@@ -179,7 +185,7 @@ cat-github-watcher/
    # マージ前に、以下で定義したコメントがPRに投稿されます
    # マージ成功後、自動的にfeature branchが削除されます
    [phase3_merge]
-   enabled = false  # trueにすると自動マージを有効化（enable_execution_phase3_to_merge = trueも必要）
+   enabled = false  # trueにすると自動マージを有効化（rulesetsでenable_execution_phase3_to_merge = trueも必要）
    comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント
    automated = false  # trueにするとブラウザ自動操縦でマージボタンをクリック
    automation_backend = "selenium"  # 自動操縦バックエンド: "selenium" または "playwright"
@@ -339,6 +345,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_all_phase3_timeout.py
   📄 test_browser_automation.py
   📄 test_config_rulesets.py
+  📄 test_config_rulesets_features.py
   📄 test_elapsed_time_display.py
   📄 test_hot_reload.py
   📄 test_integration_issue_fetching.py
@@ -351,6 +358,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_post_comment.py
   📄 test_post_phase3_comment.py
   📄 test_pr_actions.py
+  📄 test_pr_actions_rulesets_features.py
   📄 test_pr_actions_with_rulesets.py
   📄 test_status_summary.py
   📄 test_verbose_config.py
@@ -387,4 +395,4 @@ docs/browser-automation-approaches.md
 
 
 ---
-Generated at: 2026-01-07 07:02:06 JST
+Generated at: 2026-01-08 07:01:32 JST
