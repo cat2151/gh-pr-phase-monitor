@@ -224,3 +224,34 @@ def test_print_config_with_assign_lowest_number_issue():
     assert "[Auto-assign to Copilot Settings]" in output
     assert "enabled: True" in output
     assert "assign_lowest_number_issue: True" in output
+
+
+def test_print_config_no_deprecation_warning_without_global_flags():
+    """Test that deprecation warning is NOT shown when no global flags are present"""
+    config = {
+        "interval": "2m",
+        "verbose": True,
+        "rulesets": [
+            {
+                "name": "Test Ruleset",
+                "repositories": ["all"],
+                "enable_execution_phase1_to_phase2": True,
+                "enable_execution_phase2_to_phase3": False,
+            }
+        ],
+    }
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        print_config(config)
+    output = f.getvalue()
+
+    # Verify configuration is printed normally
+    assert "Configuration Settings:" in output
+    assert "[Main Settings]" in output
+    assert "[Rulesets]" in output
+    
+    # Verify deprecation warning is NOT shown
+    assert "[WARNING] Global Execution Flags (DEPRECATED)" not in output
+    assert "(IGNORED)" not in output
+    assert "Please move these settings inside [[rulesets]] sections" not in output
