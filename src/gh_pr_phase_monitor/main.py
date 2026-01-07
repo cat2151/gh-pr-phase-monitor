@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import tomli
 
 from .colors import colorize_phase
-from .config import get_config_mtime, load_config, parse_interval, print_config
+from .config import get_config_mtime, load_config, parse_interval, print_config, resolve_execution_config_for_repo
 from .github_client import (
     assign_issue_to_copilot,
     get_issues_from_repositories,
@@ -293,6 +293,38 @@ def check_all_phase3_timeout(
         _all_phase3_start_time = None
 
 
+def _resolve_assign_to_copilot_config(issue: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve assign_to_copilot configuration for a specific issue's repository
+    
+    Args:
+        issue: Issue dictionary with repository information
+        config: Global configuration dictionary
+        
+    Returns:
+        Configuration dictionary with assign_to_copilot settings if enabled for this repo
+    """
+    # Get repository-specific configuration
+    repo_info = issue.get("repository", {})
+    repo_owner = repo_info.get("owner", "")
+    repo_name = repo_info.get("name", "")
+    
+    if repo_owner and repo_name:
+        exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
+        # Check if assign_to_copilot is enabled for this repo
+        enable_assign_flag = exec_config.get("enable_assign_to_copilot")
+        if enable_assign_flag is None:
+            # Not set by rulesets, use global config for backward compatibility
+            return config
+        elif enable_assign_flag:
+            # Enabled for this repo, use global assign_to_copilot settings
+            return {"assign_to_copilot": config.get("assign_to_copilot", {})}
+        else:
+            # Disabled for this repo
+            return {"assign_to_copilot": {"enabled": False}}
+    else:
+        return config
+
+
 def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None):
     """Display issues from repositories with no open PRs
 
@@ -312,6 +344,8 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                 print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
 
             # Check if auto-assign feature is enabled in config
+            # We need to check per repository since it can be configured per ruleset
+            # For the global check, we use the global config settings
             assign_enabled = False
             assign_lowest_number = False
             if config:
@@ -343,8 +377,11 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                         print(f"     Labels: {label_str}")
                         print("\n  Attempting to assign to Copilot...")
 
+                        # Get repository-specific configuration
+                        temp_config = _resolve_assign_to_copilot_config(issue, config)
+                        
                         # Assign the issue to Copilot and check the result
-                        success = assign_issue_to_copilot(issue, config)
+                        success = assign_issue_to_copilot(issue, temp_config)
                         if not success:
                             print("  Assignment failed - will retry on next iteration")
                     else:
@@ -370,8 +407,11 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                         print(f"     Labels: {label_str}")
                         print("\n  Attempting to assign to Copilot...")
 
+                        # Get repository-specific configuration
+                        temp_config = _resolve_assign_to_copilot_config(issue, config)
+                        
                         # Assign the issue to Copilot and check the result
-                        success = assign_issue_to_copilot(issue, config)
+                        success = assign_issue_to_copilot(issue, temp_config)
                         if not success:
                             print("  Assignment failed - will retry on next iteration")
                     else:

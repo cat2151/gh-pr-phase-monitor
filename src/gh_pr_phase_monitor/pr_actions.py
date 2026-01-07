@@ -121,6 +121,8 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
             "enable_execution_phase2_to_phase3": False,
             "enable_execution_phase3_send_ntfy": False,
             "enable_execution_phase3_to_merge": False,
+            "enable_phase3_merge": None,
+            "enable_assign_to_copilot": None,
         }
 
     # Mark PR as ready for review when in phase 1
@@ -187,12 +189,26 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         # Merge PR if configured and not already merged
         merge_key = url
         merge_execution_enabled = exec_config["enable_execution_phase3_to_merge"]
-        merge_configured = config and config.get("phase3_merge", {}).get("enabled", False)
+        # Use global phase3_merge configuration
+        phase3_merge_config = config.get("phase3_merge", {}) if config else {}
+        # Check if phase3_merge is enabled:
+        # - If enable_phase3_merge is None (not set by rulesets), use global phase3_merge.enabled for backward compatibility
+        # - If enable_phase3_merge is explicitly True/False from rulesets, respect that
+        enable_phase3_merge_flag = exec_config.get("enable_phase3_merge")
+        if enable_phase3_merge_flag is None:
+            # No ruleset override, use global setting for backward compatibility
+            merge_configured = phase3_merge_config.get("enabled", False)
+        elif enable_phase3_merge_flag:
+            # Ruleset enables it, check global enabled flag too
+            merge_configured = phase3_merge_config.get("enabled", False)
+        else:
+            # Ruleset explicitly disables it
+            merge_configured = False
 
         if merge_configured and merge_execution_enabled:
             if merge_key not in _merged_prs:
                 # Post comment before merging
-                merge_comment = config.get("phase3_merge", {}).get("comment", "All checks passed. Merging PR.")
+                merge_comment = phase3_merge_config.get("comment", "All checks passed. Merging PR.")
                 print(f"    Posting pre-merge comment: '{merge_comment}'...")
                 comment_posted = post_phase3_comment(pr, merge_comment, None)
 
@@ -204,12 +220,14 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
                 print("    Pre-merge comment posted successfully")
 
                 # Check if automated merge is enabled
-                merge_automated = config.get("phase3_merge", {}).get("automated", False)
+                merge_automated = phase3_merge_config.get("automated", False)
 
                 merge_success = False
                 if merge_automated:
                     print("    Merging PR using browser automation...")
-                    if merge_pr_automated(url, config):
+                    # Create a temporary config dict with the global phase3_merge settings
+                    temp_config = {"phase3_merge": phase3_merge_config}
+                    if merge_pr_automated(url, temp_config):
                         print("    PR merged successfully via browser automation")
                         merge_success = True
                     else:

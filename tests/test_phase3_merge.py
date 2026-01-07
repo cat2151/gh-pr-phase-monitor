@@ -103,8 +103,9 @@ class TestPhase3Merge:
             process_pr(pr, config)
             # Comment should be posted before merge
             mock_comment.assert_called_once_with(pr, "Auto merge comment", None)
-            # Merge should be attempted via browser automation
-            mock_merge_auto.assert_called_once_with("https://github.com/test-owner/test-repo/pull/1", config)
+            # Merge should be attempted via browser automation with only phase3_merge config
+            expected_config = {"phase3_merge": config["phase3_merge"]}
+            mock_merge_auto.assert_called_once_with("https://github.com/test-owner/test-repo/pull/1", expected_config)
 
     def test_merge_only_once_per_pr(self):
         """Merge should only be attempted once per PR"""

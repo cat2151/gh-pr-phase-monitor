@@ -188,7 +188,7 @@ def print_config(config: Dict[str, Any]) -> None:
 
 def resolve_execution_config_for_repo(
     config: Dict[str, Any], repo_owner: str, repo_name: str
-) -> Dict[str, bool]:
+) -> Dict[str, Any]:
     """Resolve execution configuration for a specific repository using rulesets
 
     This function applies rulesets in order, with later rulesets overriding earlier ones.
@@ -200,11 +200,13 @@ def resolve_execution_config_for_repo(
         repo_name: Repository name
 
     Returns:
-        Dictionary with execution flags:
+        Dictionary with execution flags and feature settings:
         - enable_execution_phase1_to_phase2
         - enable_execution_phase2_to_phase3
         - enable_execution_phase3_send_ntfy
         - enable_execution_phase3_to_merge
+        - phase3_merge: dict with phase3_merge settings
+        - assign_to_copilot: dict with assign_to_copilot settings
     """
     # Full repository identifier
     repo_full_name = f"{repo_owner}/{repo_name}"
@@ -223,6 +225,8 @@ def resolve_execution_config_for_repo(
         "enable_execution_phase2_to_phase3": get_validated_flag("enable_execution_phase2_to_phase3", False),
         "enable_execution_phase3_send_ntfy": get_validated_flag("enable_execution_phase3_send_ntfy", False),
         "enable_execution_phase3_to_merge": get_validated_flag("enable_execution_phase3_to_merge", False),
+        "enable_phase3_merge": None,  # None means not set by rulesets, use global
+        "enable_assign_to_copilot": None,  # None means not set by rulesets, use global
     }
 
     # Apply rulesets if they exist
@@ -275,12 +279,22 @@ def resolve_execution_config_for_repo(
                 result["enable_execution_phase3_to_merge"] = _validate_boolean_flag(
                     ruleset["enable_execution_phase3_to_merge"], "enable_execution_phase3_to_merge"
                 )
+            
+            # Apply simple on/off flags for phase3_merge and assign_to_copilot
+            if "enable_phase3_merge" in ruleset:
+                result["enable_phase3_merge"] = _validate_boolean_flag(
+                    ruleset["enable_phase3_merge"], "enable_phase3_merge"
+                )
+            if "enable_assign_to_copilot" in ruleset:
+                result["enable_assign_to_copilot"] = _validate_boolean_flag(
+                    ruleset["enable_assign_to_copilot"], "enable_assign_to_copilot"
+                )
 
     return result
 
 
 def print_repo_execution_config(
-    repo_owner: str, repo_name: str, exec_config: Dict[str, bool]
+    repo_owner: str, repo_name: str, exec_config: Dict[str, Any]
 ) -> None:
     """Print execution configuration for a specific repository
 
@@ -294,3 +308,5 @@ def print_repo_execution_config(
     print(f"      enable_execution_phase2_to_phase3: {exec_config.get('enable_execution_phase2_to_phase3', False)}")
     print(f"      enable_execution_phase3_send_ntfy: {exec_config.get('enable_execution_phase3_send_ntfy', False)}")
     print(f"      enable_execution_phase3_to_merge: {exec_config.get('enable_execution_phase3_to_merge', False)}")
+    print(f"      enable_phase3_merge: {exec_config.get('enable_phase3_merge', False)}")
+    print(f"      enable_assign_to_copilot: {exec_config.get('enable_assign_to_copilot', False)}")
