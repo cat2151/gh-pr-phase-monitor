@@ -345,7 +345,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
     📄 pr_fetcher.py
     📄 repository_fetcher.py
 📁 tests/
-  📄 test_all_phase3_timeout.py
+  📄 test_no_change_timeout.py
   📄 test_browser_automation.py
   📄 test_config_rulesets.py
   📄 test_config_rulesets_features.py

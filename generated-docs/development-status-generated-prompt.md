@@ -240,7 +240,7 @@ Last updated: 2026-01-09
 - src/gh_pr_phase_monitor/pr_actions.py
 - src/gh_pr_phase_monitor/pr_fetcher.py
 - src/gh_pr_phase_monitor/repository_fetcher.py
-- tests/test_all_phase3_timeout.py
+- tests/test_no_change_timeout.py
 - tests/test_browser_automation.py
 - tests/test_config_rulesets.py
 - tests/test_config_rulesets_features.py
@@ -401,7 +401,7 @@ src/gh_pr_phase_monitor/config.py
 src/gh_pr_phase_monitor/main.py
 src/gh_pr_phase_monitor/notifier.py
 src/gh_pr_phase_monitor/pr_actions.py
-tests/test_all_phase3_timeout.py
+tests/test_no_change_timeout.py
 tests/test_config_rulesets.py
 tests/test_notification.py
 tests/test_post_comment.py
