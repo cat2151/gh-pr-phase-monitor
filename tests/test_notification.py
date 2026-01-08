@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 from src.gh_pr_phase_monitor.notifier import (
     format_notification_message,
     is_valid_topic,
+    send_all_phase3_notification,
     send_ntfy_notification,
     send_phase3_notification,
 )
@@ -406,7 +407,6 @@ class TestSendAllPhase3Notification:
     def test_notification_disabled(self, mock_send):
         """Test when notifications are disabled"""
         config = {"ntfy": {"enabled": False, "topic": "test-topic"}}
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is False
         mock_send.assert_not_called()
@@ -415,7 +415,6 @@ class TestSendAllPhase3Notification:
     def test_notification_enabled_no_topic(self, mock_send):
         """Test when notifications are enabled but no topic configured"""
         config = {"ntfy": {"enabled": True}}
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is False
         mock_send.assert_not_called()
@@ -431,7 +430,6 @@ class TestSendAllPhase3Notification:
                 "all_phase3_message": "All PRs are ready!",
             }
         }
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is True
         mock_send.assert_called_once()
@@ -444,7 +442,6 @@ class TestSendAllPhase3Notification:
         """Test with default message when not configured"""
         mock_send.return_value = True
         config = {"ntfy": {"enabled": True, "topic": "test-topic"}}
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is True
         # Verify the default message was used
@@ -455,7 +452,6 @@ class TestSendAllPhase3Notification:
     def test_no_ntfy_config(self, mock_send):
         """Test when ntfy config is not present"""
         config = {}
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is False
         mock_send.assert_not_called()
@@ -472,7 +468,6 @@ class TestSendAllPhase3Notification:
                 "priority": 5,
             }
         }
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is True
         # Verify priority 5 was passed
@@ -490,7 +485,6 @@ class TestSendAllPhase3Notification:
                 "all_phase3_message": "All PRs ready",
             }
         }
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is True
         # Verify default priority 4 was used
@@ -508,7 +502,6 @@ class TestSendAllPhase3Notification:
                 "all_phase3_message": "All PRs ready",
             }
         }
-        from src.gh_pr_phase_monitor.notifier import send_all_phase3_notification
         result = send_all_phase3_notification(config)
         assert result is True
         # Verify title was set correctly

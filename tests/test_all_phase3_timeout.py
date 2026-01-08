@@ -3,7 +3,7 @@ Test to verify that the application exits when all PRs remain in phase3 for too 
 """
 
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 
