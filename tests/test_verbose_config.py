@@ -13,7 +13,7 @@ def test_print_config_basic():
     config = {
         "interval": "1m",
         "issue_display_limit": 10,
-        "all_phase3_timeout": "",
+        "no_change_timeout": "",
         "verbose": True,
     }
     

@@ -13,12 +13,13 @@ interval = "1m" # default
 # Default is 10, but can be changed to any positive number (e.g., 5, 15, 20)
 issue_display_limit = 10
 
-# Timeout for "all PRs in phase3" state
-# If all PRs remain in phase3 for this duration, the application will exit
-# to prevent wasting API usage. Set to empty string "" to disable.
+# Timeout for "no state change" condition
+# If the overall PR state (all PR phases) does not change for this duration,
+# the application will exit to prevent wasting API usage.
+# Set to empty string "" to disable.
 # Supported formats: "30s", "1m", "5m", "30m", "1h", "1d"
 # Default: "30m" (30 minutes - safety priority)
-all_phase3_timeout = "30m"
+no_change_timeout = "30m"
 
 # Verbose mode - Print detailed configuration information
 # When enabled, prints all settings at startup and per-repository settings during execution
