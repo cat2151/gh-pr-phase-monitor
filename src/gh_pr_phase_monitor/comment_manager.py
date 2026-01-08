@@ -4,7 +4,7 @@ Comment management for posting and checking PR comments
 
 import subprocess
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from .github_client import get_existing_comments
 
@@ -25,7 +25,7 @@ def has_copilot_apply_comment(comments: List[Dict[str, Any]]) -> bool:
     return False
 
 
-def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
+def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> Optional[bool]:
     """Post a comment to PR when phase2 is detected
 
     Args:
@@ -33,7 +33,9 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
         repo_dir: Repository directory (optional, not used when working with URLs)
 
     Returns:
-        True if comment was posted successfully, False otherwise
+        True if comment was posted successfully
+        None if comment already exists (skipped)
+        False if posting failed (e.g., invalid PR URL, subprocess error)
     """
     pr_url = pr.get("url", "")
     if not pr_url:
@@ -43,7 +45,7 @@ def post_phase2_comment(pr: Dict[str, Any], repo_dir: Path = None) -> bool:
     existing_comments = get_existing_comments(pr_url, repo_dir)
     if has_copilot_apply_comment(existing_comments):
         print("    Comment already exists, skipping")
-        return True
+        return None
 
     # Construct comment body linking to the PR
     # Reviews don't have direct URLs in the JSON, but we can link to the PR
