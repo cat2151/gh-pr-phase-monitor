@@ -186,7 +186,7 @@ class TestPostPhase2Comment:
 
         result = post_phase2_comment(pr, repo_dir)
 
-        assert result is True
+        assert result is None
         mock_run.assert_not_called()
 
     @patch("src.gh_pr_phase_monitor.comment_manager.get_existing_comments")

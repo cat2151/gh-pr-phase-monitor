@@ -144,10 +144,12 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         execution_enabled = exec_config["enable_execution_phase2_to_phase3"]
         if execution_enabled:
             print("    Posting comment for phase2...")
-            if post_phase2_comment(pr, None):
+            result = post_phase2_comment(pr, None)
+            if result is True:
                 print("    Comment posted successfully")
-            else:
+            elif result is False:
                 print("    Failed to post comment")
+            # If result is None, the function already printed "Comment already exists, skipping"
         else:
             print("    [DRY-RUN] Would post comment for phase2 (enable_execution_phase2_to_phase3=false)")
 
