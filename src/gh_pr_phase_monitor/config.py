@@ -118,7 +118,7 @@ def print_config(config: Dict[str, Any]) -> None:
     print("\n[Main Settings]")
     print(f"  interval: {config.get('interval', '1m')}")
     print(f"  issue_display_limit: {config.get('issue_display_limit', 10)}")
-    print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '')}")
+    print(f"  all_phase3_timeout: {config.get('all_phase3_timeout', '30m')}")
     print(f"  verbose: {config.get('verbose', False)}")
 
     # Print rulesets

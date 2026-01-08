@@ -19,8 +19,8 @@ class TestAllPhase3Timeout:
         """Reset global state before each test"""
         main._all_phase3_start_time = None
 
-    def test_no_timeout_when_config_not_set(self):
-        """Test that no timeout occurs when all_phase3_timeout is not configured"""
+    def test_default_timeout_when_config_not_set(self):
+        """Test that default 30m timeout is used when all_phase3_timeout is not configured"""
         all_prs = [
             {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
             {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
@@ -28,8 +28,12 @@ class TestAllPhase3Timeout:
         pr_phases = [PHASE_3, PHASE_3]
         config = {}
         
-        # Should not exit
+        # Should not exit immediately (30m default timeout)
+        # First call initializes the timer
         check_all_phase3_timeout(all_prs, pr_phases, config)
+        
+        # Verify timer was started (not None)
+        assert main._all_phase3_start_time is not None
 
     def test_no_timeout_when_config_is_empty_string(self):
         """Test that no timeout occurs when all_phase3_timeout is empty string"""
