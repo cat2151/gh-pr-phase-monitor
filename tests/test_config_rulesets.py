@@ -94,22 +94,26 @@ class TestResolveExecutionConfigForRepo:
         assert result["enable_execution_phase1_to_phase2"] is True
 
     def test_exact_repository_match(self):
-        """Ruleset should match specific repository by owner/name"""
+        """Ruleset should match specific repository by name"""
         config = {
             "rulesets": [
                 {
                     "name": "Enable for specific repo",
-                    "repositories": ["owner1/repo1"],
+                    "repositories": ["repo1"],
                     "enable_execution_phase1_to_phase2": True,
                 }
             ],
         }
         
-        # Should match
+        # Should match (matches any owner with this repo name)
         result = resolve_execution_config_for_repo(config, "owner1", "repo1")
         assert result["enable_execution_phase1_to_phase2"] is True
         
-        # Should not match
+        # Should match (same repo name, different owner)
+        result = resolve_execution_config_for_repo(config, "owner2", "repo1")
+        assert result["enable_execution_phase1_to_phase2"] is True
+        
+        # Should not match (different repo name)
         result = resolve_execution_config_for_repo(config, "owner2", "repo2")
         assert result["enable_execution_phase1_to_phase2"] is False
 
@@ -140,7 +144,7 @@ class TestResolveExecutionConfigForRepo:
         config = {
             "rulesets": [
                 {
-                    "repositories": ["owner1/repo1", "owner2/repo2", "repo3"],
+                    "repositories": ["repo1", "repo2", "repo3"],
                     "enable_execution_phase1_to_phase2": True,
                 }
             ],
@@ -171,7 +175,7 @@ class TestResolveExecutionConfigForRepo:
                 },
                 {
                     "name": "Second: disable for specific repo",
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase1_to_phase2": False,
                     "enable_execution_phase2_to_phase3": False,
                     "enable_execution_phase3_send_ntfy": False,
@@ -202,7 +206,7 @@ class TestResolveExecutionConfigForRepo:
                     "enable_execution_phase3_send_ntfy": True,
                 },
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase2_to_phase3": False,  # Only override this flag
                 },
             ],
@@ -266,7 +270,7 @@ class TestResolveExecutionConfigForRepo:
                 },
                 {
                     "name": "Fully enable specific repo",
-                    "repositories": ["owner/special-repo"],
+                    "repositories": ["special-repo"],
                     "enable_execution_phase1_to_phase2": True,
                     "enable_execution_phase2_to_phase3": True,
                     "enable_execution_phase3_send_ntfy": True,

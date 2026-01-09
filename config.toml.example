@@ -55,7 +55,7 @@ verbose = false
 #
 # [[rulesets]]
 # name = "Enable automation for test repository"
-# repositories = ["owner/test-repo"]  # Specific repository with owner/name format
+# repositories = ["test-repo"]  # Specify repository by name only
 # enable_execution_phase1_to_phase2 = true
 # enable_execution_phase2_to_phase3 = true
 # enable_execution_phase3_send_ntfy = true
@@ -63,16 +63,15 @@ verbose = false
 #
 # [[rulesets]]
 # name = "Enable only notifications for production repos"
-# repositories = ["owner/prod-repo1", "owner/prod-repo2"]  # Multiple repositories
+# repositories = ["prod-repo1", "prod-repo2"]  # Multiple repositories
 # enable_execution_phase1_to_phase2 = false
 # enable_execution_phase2_to_phase3 = false
 # enable_execution_phase3_send_ntfy = true
 # enable_execution_phase3_to_merge = false
 #
-# You can also use just the repository name without the owner (matches any owner):
 # [[rulesets]]
-# name = "Example with repo name only"
-# repositories = ["my-repo"]  # Matches any owner/my-repo
+# name = "Example with repo name"
+# repositories = ["my-repo"]  # Matches any repository named "my-repo"
 # enable_execution_phase1_to_phase2 = true
 # enable_execution_phase3_to_merge = true
 #
@@ -84,13 +83,13 @@ verbose = false
 #
 # [[rulesets]]
 # name = "Enable merge for specific repo"
-# repositories = ["owner/test-repo"]
+# repositories = ["test-repo"]
 # enable_execution_phase3_to_merge = true
 # enable_phase3_merge = true  # Use global [phase3_merge] settings for this repo
 #
 # [[rulesets]]
 # name = "Enable auto-assign for another repo"
-# repositories = ["owner/another-repo"]
+# repositories = ["another-repo"]
 # enable_assign_to_copilot = true  # Use global [assign_to_copilot] settings for this repo
 
 

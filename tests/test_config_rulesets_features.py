@@ -22,7 +22,7 @@ class TestResolveExecutionConfigWithPhase3MergeFlag:
             "rulesets": [
                 {
                     "name": "Enable merge for test-repo",
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_phase3_merge": True,
                 }
             ],
@@ -44,7 +44,7 @@ class TestResolveExecutionConfigWithPhase3MergeFlag:
                     "enable_phase3_merge": True,
                 },
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_phase3_merge": False,
                 }
             ],
@@ -61,7 +61,7 @@ class TestResolveExecutionConfigWithPhase3MergeFlag:
         config = {
             "rulesets": [
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": True,
                 }
@@ -90,7 +90,7 @@ class TestResolveExecutionConfigWithAssignToCopilotFlag:
             "rulesets": [
                 {
                     "name": "Enable assign for test-repo",
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_assign_to_copilot": True,
                 }
             ],
@@ -112,7 +112,7 @@ class TestResolveExecutionConfigWithAssignToCopilotFlag:
                     "enable_assign_to_copilot": True,
                 },
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_assign_to_copilot": False,
                 }
             ],
@@ -133,7 +133,7 @@ class TestResolveExecutionConfigCombined:
         config = {
             "rulesets": [
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_phase3_merge": True,
                     "enable_assign_to_copilot": True,
                 }
@@ -150,11 +150,11 @@ class TestResolveExecutionConfigCombined:
         config = {
             "rulesets": [
                 {
-                    "repositories": ["owner/repo1"],
+                    "repositories": ["repo1"],
                     "enable_phase3_merge": True,
                 },
                 {
-                    "repositories": ["owner/repo2"],
+                    "repositories": ["repo2"],
                     "enable_assign_to_copilot": True,
                 }
             ],
@@ -180,7 +180,7 @@ class TestResolveExecutionConfigCombined:
                     "enable_assign_to_copilot": True,
                 },
                 {
-                    "repositories": ["owner/special-repo"],
+                    "repositories": ["special-repo"],
                     "enable_phase3_merge": False,
                 }
             ],
@@ -201,7 +201,7 @@ class TestResolveExecutionConfigCombined:
         config = {
             "rulesets": [
                 {
-                    "repositories": ["owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_phase3_merge": "true",  # String instead of boolean - should raise ValueError
                 }
             ],

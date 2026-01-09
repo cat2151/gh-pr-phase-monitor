@@ -7,7 +7,7 @@ The ruleset-based configuration feature allows fine-grained control over automat
 ## Features
 
 - **Per-repository control**: Enable or disable features for specific repositories
-- **Pattern matching**: Use "all" to match all repositories, or specify by owner/name or just name
+- **Pattern matching**: Use "all" to match all repositories, or specify by repository name
 - **Override mechanism**: Later rulesets override earlier ones, allowing flexible configuration
 - **Ruleset-only**: Execution flags can ONLY be specified in rulesets (global flags are deprecated)
 
@@ -18,7 +18,7 @@ Rulesets are defined in the `config.toml` file using the `[[rulesets]]` array sy
 ```toml
 [[rulesets]]
 name = "Ruleset name (optional)"
-repositories = ["owner/repo", "repo-name", "all"]
+repositories = ["repo-name", "another-repo", "all"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
@@ -30,8 +30,7 @@ enable_execution_phase3_to_merge = true
 - **name** (optional): A descriptive name for the ruleset for documentation purposes
 - **repositories** (required): An array of repository patterns to match:
   - `"all"` - Matches all repositories (case-insensitive)
-  - `"owner/repo-name"` - Matches specific repository with owner
-  - `"repo-name"` - Matches any repository with this name, regardless of owner
+  - `"repo-name"` - Matches any repository with this name
 - **enable_execution_phase1_to_phase2** (optional): Enable automatic PR ready marking
 - **enable_execution_phase2_to_phase3** (optional): Enable automatic comment posting
 - **enable_execution_phase3_send_ntfy** (optional): Enable ntfy notifications
@@ -63,7 +62,7 @@ enable_execution_phase3_to_merge = false
 # Enable full automation for a specific repository
 [[rulesets]]
 name = "Full automation for my-app"
-repositories = ["myorg/my-app"]
+repositories = ["my-app"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
@@ -72,7 +71,7 @@ enable_execution_phase3_to_merge = true
 # Enable only notifications for production repositories
 [[rulesets]]
 name = "Production repos - notifications only"
-repositories = ["myorg/prod-api", "myorg/prod-web"]
+repositories = ["prod-api", "prod-web"]
 enable_execution_phase3_send_ntfy = true
 ```
 
@@ -91,7 +90,7 @@ enable_execution_phase3_to_merge = true
 # Disable automation for experimental repositories
 [[rulesets]]
 name = "Disable for experimental repos"
-repositories = ["myorg/experimental-1", "experimental-2"]
+repositories = ["experimental-1", "experimental-2"]
 enable_execution_phase1_to_phase2 = false
 enable_execution_phase2_to_phase3 = false
 enable_execution_phase3_send_ntfy = false
@@ -104,7 +103,7 @@ enable_execution_phase3_to_merge = false
 # Test repositories: Full automation
 [[rulesets]]
 name = "Test repositories"
-repositories = ["test-repo-1", "test-repo-2", "myorg/test-repo-3"]
+repositories = ["test-repo-1", "test-repo-2", "test-repo-3"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
@@ -113,14 +112,14 @@ enable_execution_phase3_to_merge = true
 # Production repositories: Only phase1 and notifications
 [[rulesets]]
 name = "Production repositories"
-repositories = ["myorg/prod-api", "myorg/prod-web"]
+repositories = ["prod-api", "prod-web"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase3_send_ntfy = true
 
 # Personal repositories: Everything enabled
 [[rulesets]]
 name = "Personal projects"
-repositories = ["myuser/personal-project-1", "myuser/personal-project-2"]
+repositories = ["personal-project-1", "personal-project-2"]
 enable_execution_phase1_to_phase2 = true
 enable_execution_phase2_to_phase3 = true
 enable_execution_phase3_send_ntfy = true
@@ -145,7 +144,7 @@ enable_execution_phase3_send_ntfy = true
 # Disable only phase2 for a specific repo (phase1 and phase3 remain enabled)
 [[rulesets]]
 name = "Special case: disable phase2 only"
-repositories = ["myorg/special-repo"]
+repositories = ["special-repo"]
 enable_execution_phase2_to_phase3 = false
 ```
 
@@ -172,7 +171,7 @@ enable_execution_phase3_send_ntfy = true
 # Optionally add rulesets for specific exceptions
 [[rulesets]]
 name = "Disable for experimental repo"
-repositories = ["myorg/experimental"]
+repositories = ["experimental"]
 enable_execution_phase1_to_phase2 = false
 enable_execution_phase2_to_phase3 = false
 enable_execution_phase3_send_ntfy = false
@@ -184,14 +183,14 @@ enable_execution_phase3_send_ntfy = false
 2. **Use descriptive names**: Add a `name` field to each ruleset for documentation
 3. **Order matters**: Place more general rules first (like "all") and specific overrides later
 4. **Test with dry-run**: Test your configuration first with dry-run mode to ensure correct behavior
-5. **Use full repository names**: Prefer `"owner/repo"` format for clarity and to avoid ambiguity
+5. **Use repository names only**: Specify repositories by name only (e.g., `"my-repo"`)
 
 ## Troubleshooting
 
 If features are not enabled/disabled as expected:
 
 1. Check the order of rulesets - later ones override earlier ones
-2. Verify repository name format - use `"owner/repo"` for exact matching
+2. Verify repository name format - use repository name only
 3. Check for typos in repository names
 4. Remember that `"all"` is case-insensitive
 5. Use the test suite to validate configuration: `pytest tests/test_config_rulesets.py -v`

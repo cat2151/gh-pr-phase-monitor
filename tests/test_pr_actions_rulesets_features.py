@@ -39,7 +39,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "rulesets": [
                 {
                     "name": "Enable merge for test-repo",
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": True,  # Enable using global settings
                 }
@@ -84,12 +84,12 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
-                    "repositories": ["owner/repo1"],
+                    "repositories": ["repo1"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": True,
                 },
                 {
-                    "repositories": ["owner/repo2"],
+                    "repositories": ["repo2"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": False,  # Disabled for repo2
                 }
@@ -135,7 +135,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": True,
                 }
@@ -170,7 +170,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": False,  # Disabled for this repo
                 }
@@ -203,7 +203,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
                     "enable_phase3_merge": True,  # Enabled for repo, but global is disabled
                 }

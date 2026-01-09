@@ -89,19 +89,19 @@ enabled = true
 # Test repos: enable with automated merge
 [[rulesets]]
 name = "Test repositories"
-repositories = ["owner/test-repo-1", "owner/test-repo-2"]
+repositories = ["test-repo-1", "test-repo-2"]
 enable_execution_phase3_to_merge = true
 
 # Staging repos: enable with CLI merge
 [[rulesets]]
 name = "Staging repositories"
-repositories = ["owner/staging-repo"]
+repositories = ["staging-repo"]
 enable_execution_phase3_to_merge = true
 
 # Production repos: keep disabled (manual merge required)
 [[rulesets]]
 name = "Production repositories"
-repositories = ["owner/production-repo"]
+repositories = ["production-repo"]
 enable_execution_phase3_to_merge = false
 ```
 

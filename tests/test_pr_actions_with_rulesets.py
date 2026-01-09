@@ -31,8 +31,8 @@ class TestProcessPRWithRulesets:
             "enable_execution_phase1_to_phase2": False,  # Global is disabled
             "rulesets": [
                 {
-                    "name": "Enable for test-owner/test-repo",
-                    "repositories": ["test-owner/test-repo"],
+                    "name": "Enable for test-repo",
+                    "repositories": ["test-repo"],
                     "enable_execution_phase1_to_phase2": True,
                 }
             ],
@@ -64,8 +64,8 @@ class TestProcessPRWithRulesets:
                     "enable_execution_phase1_to_phase2": True,
                 },
                 {
-                    "name": "Disable for test-owner/test-repo",
-                    "repositories": ["test-owner/test-repo"],
+                    "name": "Disable for test-repo",
+                    "repositories": ["test-repo"],
                     "enable_execution_phase1_to_phase2": False,
                 },
             ],
@@ -161,7 +161,7 @@ class TestProcessPRWithRulesets:
             "enable_execution_phase2_to_phase3": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase2_to_phase3": True,
                 }
             ],
@@ -189,7 +189,7 @@ class TestProcessPRWithRulesets:
             "enable_execution_phase3_send_ntfy": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/test-repo"],
+                    "repositories": ["test-repo"],
                     "enable_execution_phase3_send_ntfy": True,
                 }
             ],
@@ -258,7 +258,7 @@ class TestProcessPRWithRulesets:
             "enable_execution_phase1_to_phase2": False,
             "rulesets": [
                 {
-                    "repositories": ["test-owner/enabled-repo"],
+                    "repositories": ["enabled-repo"],
                     "enable_execution_phase1_to_phase2": True,
                 },
                 # disabled-repo not in any ruleset, uses global config (False)

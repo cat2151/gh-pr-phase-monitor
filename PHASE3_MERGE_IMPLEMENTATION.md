@@ -27,7 +27,7 @@ The configuration also works with rulesets for per-repository control:
 ```toml
 [[rulesets]]
 name = "Enable merge for test repo"
-repositories = ["owner/test-repo"]
+repositories = ["test-repo"]
 enable_execution_phase3_to_merge = true
 ```
 

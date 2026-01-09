@@ -189,7 +189,7 @@ def resolve_execution_config_for_repo(
 
     Args:
         config: Configuration dictionary loaded from TOML
-        repo_owner: Repository owner
+        repo_owner: Repository owner (kept for compatibility, but not used in matching)
         repo_name: Repository name
 
     Returns:
@@ -201,9 +201,6 @@ def resolve_execution_config_for_repo(
         - phase3_merge: dict with phase3_merge settings
         - assign_to_copilot: dict with assign_to_copilot settings
     """
-    # Full repository identifier
-    repo_full_name = f"{repo_owner}/{repo_name}"
-
     # Start with all flags disabled (no global defaults)
     result = {
         "enable_execution_phase1_to_phase2": False,
@@ -237,11 +234,7 @@ def resolve_execution_config_for_repo(
             if repo_pattern.lower() == "all":
                 applies = True
                 break
-            # Exact match with full name (owner/repo)
-            if repo_pattern == repo_full_name:
-                applies = True
-                break
-            # Match just the repo name (for backward compatibility)
+            # Match by repository name only
             if repo_pattern == repo_name:
                 applies = True
                 break
