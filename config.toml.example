@@ -114,8 +114,9 @@ all_phase3_message = "All PRs are now in phase3 (ready for review)"  # Message w
 # Phase3 merge settings (optional)
 # Automatically merge PRs when they reach phase3 (ready for review)
 # Before merging, a comment defined below will be posted to the PR
+# Note: To enable/disable per repository, use enable_phase3_merge flag in rulesets
+# To disable for all repositories, add a ruleset with repositories = ["all"] and enable_phase3_merge = false
 [phase3_merge]
-enabled = false  # Set to true to enable automatic merging (also requires enable_execution_phase3_to_merge = true)
 comment = "All checks passed. Merging PR."  # Comment to post before merging
 automated = false  # Set to true to use browser automation to click the merge button
 automation_backend = "selenium"  # Backend to use: "selenium" or "playwright" (automated mode only)
@@ -139,8 +140,10 @@ headless = false  # Run browser in headless mode (no visible window, automated m
 # Playwright backend:
 #   Install: pip install playwright && playwright install
 #   Browsers: "chromium", "firefox", or "webkit"
+# 
+# Note: To enable/disable per repository, use enable_assign_to_copilot flag in rulesets
+# To disable for all repositories, add a ruleset with repositories = ["all"] and enable_assign_to_copilot = false
 [assign_to_copilot]
-enabled = false  # Set to true to enable auto-assignment feature
 assign_lowest_number_issue = false  # Set to true to assign the issue with the lowest number (regardless of "good first issue" label)
 automated = false  # Set to true to enable automated button clicking
 automation_backend = "selenium"  # Backend to use: "selenium" or "playwright"

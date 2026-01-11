@@ -14,7 +14,6 @@ enable_execution_phase3_to_merge = true
 
 # Merge configuration
 [phase3_merge]
-enabled = true
 comment = "All checks passed. Merging this PR automatically."
 automated = false  # Use gh CLI (faster and more reliable)
 ```
@@ -33,7 +32,6 @@ Use this if you need to interact with custom merge workflows or buttons.
 enable_execution_phase3_to_merge = true
 
 [phase3_merge]
-enabled = true
 comment = "🎉 All checks passed! Merging automatically."
 automated = true  # Use browser automation
 automation_backend = "selenium"
@@ -59,7 +57,6 @@ Enable merge only for specific test repositories.
 enable_execution_phase3_to_merge = false
 
 [phase3_merge]
-enabled = true
 comment = "Automated merge after all checks passed."
 
 # Enable only for test repository
@@ -84,7 +81,6 @@ enable_execution_phase3_to_merge = false
 enable_execution_phase3_to_merge = false
 
 [phase3_merge]
-enabled = true
 
 # Test repos: enable with automated merge
 [[rulesets]]
@@ -115,7 +111,6 @@ For running on servers without display.
 enable_execution_phase3_to_merge = true
 
 [phase3_merge]
-enabled = true
 comment = "CI passed. Merging automatically."
 automated = true
 automation_backend = "playwright"  # Playwright has better headless support
@@ -135,7 +130,6 @@ Test the feature without actually merging.
 enable_execution_phase3_to_merge = false
 
 [phase3_merge]
-enabled = true
 comment = "Would merge here"
 automated = false
 ```
@@ -154,7 +148,6 @@ automated = false
 enable_execution_phase3_to_merge = true
 
 [phase3_merge]
-enabled = true
 comment = "📚 Documentation updated. Auto-merging to keep docs fresh!"
 automated = false
 ```
@@ -164,7 +157,6 @@ automated = false
 enable_execution_phase3_to_merge = true
 
 [phase3_merge]
-enabled = true
 comment = "✅ All 250 tests passed. Confidence level: High. Auto-merging."
 automated = false
 ```
@@ -198,7 +190,7 @@ Use rulesets to:
 
 ### Merge Not Happening
 Check:
-1. Both `enable_execution_phase3_to_merge = true` AND `phase3_merge.enabled = true` are set
+1. `enable_execution_phase3_to_merge = true` is set (either globally or in a ruleset for your repository)
 2. PR is in phase3 (not phase1, phase2, or LLM working)
 3. No error messages in console output
 

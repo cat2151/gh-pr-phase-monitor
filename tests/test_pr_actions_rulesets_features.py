@@ -31,7 +31,6 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Global merge comment",
                 "automated": False,
             },
@@ -78,7 +77,6 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Global comment",
             },
             "enable_execution_phase3_to_merge": False,
@@ -128,7 +126,6 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Automated merge",
                 "automated": True,  # Global setting for automation
             },
@@ -164,7 +161,6 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merge comment",
             },
             "enable_execution_phase3_to_merge": False,
@@ -186,7 +182,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             mock_comment.assert_not_called()
 
     def test_no_merge_when_global_phase3_merge_disabled(self):
-        """Merge should not happen when global phase3_merge.enabled is false"""
+        """Merge should still happen even if no global phase3_merge.enabled (removed)"""
         pr = {
             "isDraft": False,
             "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
@@ -197,7 +193,6 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "enabled": False,  # Globally disabled
                 "comment": "Merge comment",
             },
             "enable_execution_phase3_to_merge": False,
@@ -205,7 +200,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Enabled for repo, but global is disabled
+                    "enable_phase3_merge": True,  # Enabled for repo
                 }
             ],
         }
@@ -213,7 +208,9 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
             "src.gh_pr_phase_monitor.pr_actions.merge_pr"
         ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+            mock_merge.return_value = True
+            mock_comment.return_value = True
             process_pr(pr, config)
-            # Merge should not be attempted because global enabled is False
-            mock_merge.assert_not_called()
-            mock_comment.assert_not_called()
+            # Merge SHOULD be attempted now (global enabled flag removed)
+            mock_merge.assert_called_once()
+            mock_comment.assert_called_once()

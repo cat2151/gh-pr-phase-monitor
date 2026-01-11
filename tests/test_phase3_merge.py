@@ -18,7 +18,7 @@ class TestPhase3Merge:
         pr_actions._merged_prs.clear()
 
     def test_merge_not_attempted_when_disabled(self):
-        """Merge should not be attempted when disabled in config"""
+        """Merge should not be attempted when disabled via ruleset"""
         pr = {
             "isDraft": False,
             "reviews": [
@@ -30,8 +30,14 @@ class TestPhase3Merge:
             "url": "https://github.com/test-owner/test-repo/pull/1",
         }
         config = {
-            "phase3_merge": {"enabled": False},
-            "enable_execution_phase3_to_merge": False,
+            "phase3_merge": {"comment": "Merging"},
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": False,
+                    "enable_phase3_merge": False,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -56,11 +62,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Test merge comment",
                 "automated": False,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -88,11 +98,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Auto merge comment",
                 "automated": True,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -121,11 +135,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
                 "automated": False,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -157,11 +175,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
             },
-            "enable_execution_phase1_to_phase2": True,
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase1_to_phase2": True,
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -193,11 +215,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
             },
-            "enable_execution_phase2_to_phase3": True,
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase2_to_phase3": True,
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -225,10 +251,14 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
             },
-            "enable_execution_phase3_to_merge": False,  # Dry-run mode
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": False,  # Dry-run mode
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -253,11 +283,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
                 "automated": False,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -286,11 +320,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
                 "automated": False,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -319,11 +357,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
                 "automated": True,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
@@ -352,11 +394,15 @@ class TestPhase3Merge:
         }
         config = {
             "phase3_merge": {
-                "enabled": True,
                 "comment": "Merging",
                 "automated": False,
             },
-            "enable_execution_phase3_to_merge": True,
+            "rulesets": [
+                {
+                    "repositories": ["test-repo"],
+                    "enable_execution_phase3_to_merge": True,
+                }
+            ],
         }
 
         with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
