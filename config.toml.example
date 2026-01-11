@@ -15,11 +15,19 @@ issue_display_limit = 10
 
 # Timeout for "no state change" condition
 # If the overall PR state (all PR phases) does not change for this duration,
-# the application will exit to prevent wasting API usage.
+# the monitoring interval will be switched to reduced frequency mode (see below).
 # Set to empty string "" to disable.
 # Supported formats: "30s", "1m", "5m", "30m", "1h", "1d"
 # Default: "30m" (30 minutes - safety priority)
 no_change_timeout = "30m"
+
+# Reduced frequency monitoring interval
+# When no state change is detected for the no_change_timeout duration,
+# monitoring switches to this interval to reduce API usage.
+# When changes are detected, monitoring returns to the normal interval.
+# Supported formats: "30s", "1m", "5m", "30m", "1h", "1d"
+# Default: "1h" (1 hour)
+reduced_frequency_interval = "1h"
 
 # Verbose mode - Print detailed configuration information
 # When enabled, prints all settings at startup and per-repository settings during execution

@@ -18,6 +18,7 @@ class TestNoChangeTimeout:
     def setup_method(self):
         """Reset global state before each test"""
         main._last_state = None
+        main._reduced_frequency_mode = False
 
     def test_default_timeout_when_config_not_set(self):
         """Test that default 30m timeout is used when no_change_timeout is not configured"""
@@ -51,7 +52,7 @@ class TestNoChangeTimeout:
         assert main._last_state is None
 
     def test_timeout_when_state_unchanged(self):
-        """Test that application exits when state does not change for timeout duration"""
+        """Test that monitoring switches to reduced frequency mode when state does not change for timeout duration"""
         all_prs = [
             {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
             {"title": "PR 2", "url": "https://github.com/owner/repo1/pulls/2", "repository": {"name": "repo1", "owner": "owner"}},
@@ -60,16 +61,15 @@ class TestNoChangeTimeout:
         config = {"no_change_timeout": "1s"}  # Very short timeout for testing
         
         # First call: initialize the state
-        check_no_state_change_timeout(all_prs, pr_phases, config)
+        result = check_no_state_change_timeout(all_prs, pr_phases, config)
+        assert result is False  # Not in reduced frequency mode yet
         
         # Wait for timeout to elapse
         time.sleep(1.5)
         
-        # Second call with same state: should exit
-        with pytest.raises(SystemExit) as exc_info:
-            check_no_state_change_timeout(all_prs, pr_phases, config)
-        
-        assert exc_info.value.code == 0
+        # Second call with same state: should switch to reduced frequency mode
+        result = check_no_state_change_timeout(all_prs, pr_phases, config)
+        assert result is True  # Now in reduced frequency mode
 
     def test_timer_reset_when_phase_changes(self):
         """Test that timer resets when any PR phase changes"""
@@ -178,7 +178,7 @@ class TestNoChangeTimeout:
         check_no_state_change_timeout(all_prs, pr_phases, config)
 
     def test_timeout_message_in_japanese(self):
-        """Test that exit message is displayed in Japanese"""
+        """Test that mode switch message is displayed in Japanese"""
         all_prs = [
             {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
         ]
@@ -191,16 +191,17 @@ class TestNoChangeTimeout:
         # Wait for timeout to elapse
         time.sleep(1.5)
         
-        # Second call: should exit with Japanese message
+        # Second call: should switch to reduced frequency mode with Japanese message
         with patch("builtins.print") as mock_print:
-            with pytest.raises(SystemExit):
-                check_no_state_change_timeout(all_prs, pr_phases, config)
+            result = check_no_state_change_timeout(all_prs, pr_phases, config)
+            assert result is True
             
             # Check that Japanese message was printed
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
             assert "変化がない" in output
             assert "API利用の浪費を防止" in output
+            assert "監視間隔を" in output  # Check for the interval change message without hardcoding the interval
 
     def test_mismatched_list_lengths(self):
         """Test that mismatched all_prs and pr_phases lengths are handled correctly"""
@@ -255,8 +256,40 @@ class TestNoChangeTimeout:
         
         for phase in phases_sequence:
             pr_phases = [phase]
-            check_no_state_change_timeout(all_prs, pr_phases, config)
+            result = check_no_state_change_timeout(all_prs, pr_phases, config)
+            assert result is False  # Should never enter reduced frequency mode
             time.sleep(0.5)  # Wait between changes but not enough to timeout
         
-        # Should not have exited because state kept changing
+        # Should not have entered reduced frequency mode because state kept changing
         assert True  # If we get here, test passed
+
+    def test_return_to_normal_mode_after_change(self):
+        """Test that monitoring returns to normal mode when changes are detected after timeout"""
+        all_prs = [
+            {"title": "PR 1", "url": "https://github.com/owner/repo1/pulls/1", "repository": {"name": "repo1", "owner": "owner"}},
+        ]
+        config = {"no_change_timeout": "1s"}
+        
+        # First call: start with phase3
+        pr_phases = [PHASE_3]
+        result = check_no_state_change_timeout(all_prs, pr_phases, config)
+        assert result is False
+        
+        # Wait for timeout to elapse
+        time.sleep(1.5)
+        
+        # Second call: should enter reduced frequency mode
+        result = check_no_state_change_timeout(all_prs, pr_phases, config)
+        assert result is True
+        
+        # Third call: change phase, should return to normal mode
+        pr_phases = [PHASE_2]
+        with patch("builtins.print") as mock_print:
+            result = check_no_state_change_timeout(all_prs, pr_phases, config)
+            assert result is False
+            
+            # Check that return-to-normal message was printed
+            calls = [str(call) for call in mock_print.call_args_list]
+            output = " ".join(calls)
+            assert "変化を検知" in output
+            assert "通常の監視間隔に戻ります" in output

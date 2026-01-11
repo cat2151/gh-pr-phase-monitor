@@ -31,6 +31,10 @@ _pr_state_times: Dict[Tuple[str, str], float] = {}
 # State snapshot is a frozenset of (pr_url, phase) tuples
 _last_state: Optional[Tuple[frozenset, float]] = None
 
+# Track the current monitoring mode
+# True = reduced frequency mode (uses the configured reduced_frequency_interval), False = normal mode
+_reduced_frequency_mode: bool = False
+
 
 def format_elapsed_time(seconds: float) -> str:
     """Format elapsed time in Japanese style
@@ -239,26 +243,35 @@ def check_no_state_change_timeout(
     all_prs: List[Dict[str, Any]],
     pr_phases: List[str],
     config: Optional[Dict[str, Any]] = None
-) -> None:
-    """Check if the overall PR state has not changed for too long and exit if timeout reached
+) -> bool:
+    """Check if the overall PR state has not changed for too long and switch to reduced frequency mode
     
     This tracks when ANY change happens in the PR state (phase changes, PRs added/removed).
     Timer starts when the state first becomes stable and resets on any state change.
+    When timeout is reached, monitoring switches to reduced frequency mode (using the configured reduced_frequency_interval).
+    When changes are detected, monitoring returns to normal frequency mode.
     
     Args:
         all_prs: List of all PRs
         pr_phases: List of phase strings corresponding to all_prs
         config: Configuration dictionary (optional)
+        
+    Returns:
+        True if monitoring should switch to reduced frequency mode, False otherwise
     """
-    global _last_state
+    global _last_state, _reduced_frequency_mode
 
     # Get timeout setting from config with default of "30m"
     timeout_str = (config or {}).get("no_change_timeout", "30m")
+    
+    # Get reduced frequency interval setting from config with default of "1h"
+    reduced_interval_str = (config or {}).get("reduced_frequency_interval", "1h")
 
     # If timeout is explicitly set to empty string (disabled), don't check
     if not timeout_str:
         _last_state = None
-        return
+        _reduced_frequency_mode = False
+        return False
 
     # Parse timeout to seconds
     try:
@@ -266,7 +279,8 @@ def check_no_state_change_timeout(
     except ValueError as e:
         print(f"Warning: Invalid no_change_timeout format: {e}")
         _last_state = None
-        return
+        _reduced_frequency_mode = False
+        return False
 
     current_time = time.time()
 
@@ -286,21 +300,32 @@ def check_no_state_change_timeout(
     if _last_state is None:
         # First check - initialize the state
         _last_state = (current_state, current_time)
+        _reduced_frequency_mode = False
     elif _last_state[0] != current_state:
-        # State has changed - reset timer
+        # State has changed - reset timer and return to normal mode
         _last_state = (current_state, current_time)
+        if _reduced_frequency_mode:
+            # Switching back to normal monitoring
+            print(f"\n{'=' * 50}")
+            print("PRの状態に変化を検知しました。")
+            print("通常の監視間隔に戻ります。")
+            print(f"{'=' * 50}")
+        _reduced_frequency_mode = False
     else:
         # State is unchanged - check if timeout has been reached
         state_start_time = _last_state[1]
         elapsed = current_time - state_start_time
-        if elapsed >= timeout_seconds:
-            # Timeout reached - display message and exit
+        if elapsed >= timeout_seconds and not _reduced_frequency_mode:
+            # Timeout reached - switch to reduced frequency mode
             elapsed_str = format_elapsed_time(elapsed)
             print(f"\n{'=' * 50}")
             print(f"PRの状態に変化がない状態が{timeout_str}（{elapsed_str}）続きました。")
-            print("API利用の浪費を防止するため、アプリケーションを終了します。")
+            print(f"API利用の浪費を防止するため、監視間隔を{reduced_interval_str}に変更します。")
+            print("変化があったら元の監視間隔に戻ります。")
             print(f"{'=' * 50}")
-            sys.exit(0)
+            _reduced_frequency_mode = True
+    
+    return _reduced_frequency_mode
 
 
 def _resolve_assign_to_copilot_config(issue: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
@@ -582,12 +607,28 @@ def main():
         # state that was successfully retrieved before the error.
         display_status_summary(all_prs, pr_phases, repos_with_prs)
 
-        # Check if PR state has not changed for too long and exit if timeout reached
-        check_no_state_change_timeout(all_prs, pr_phases, config)
+        # Check if PR state has not changed for too long and switch to reduced frequency mode
+        use_reduced_frequency = check_no_state_change_timeout(all_prs, pr_phases, config)
+        
+        # Determine which interval to use
+        if use_reduced_frequency:
+            # Use reduced frequency interval (default: 1h)
+            reduced_interval_str = (config or {}).get("reduced_frequency_interval", "1h")
+            try:
+                reduced_interval_seconds = parse_interval(reduced_interval_str)
+                current_interval_seconds = reduced_interval_seconds
+                current_interval_str = reduced_interval_str
+            except ValueError as e:
+                print(f"Error: Invalid reduced_frequency_interval format: {e}")
+                sys.exit(1)
+        else:
+            # Use normal interval
+            current_interval_seconds = interval_seconds
+            current_interval_str = interval_str
 
         # Wait with countdown display and check for config changes
         new_config, new_interval_seconds, new_interval_str, new_config_mtime = wait_with_countdown(
-            interval_seconds, interval_str, config_path, config_mtime
+            current_interval_seconds, current_interval_str, config_path, config_mtime
         )
 
         # Update config and interval based on what was returned from wait
