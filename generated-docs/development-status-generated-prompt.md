@@ -1,4 +1,4 @@
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -286,21 +286,20 @@ Last updated: 2026-01-10
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
+9378888 Merge pull request #104 from cat2151/copilot/update-monitoring-interval
+b9a5414 Use consistent defensive pattern for config access
+c61039e Fix docstring and error output consistency
+af3ce89 Fix hardcoded interval references and improve error handling
+648b260 Implement adaptive monitoring intervals instead of app termination
+8293c8f Initial plan
+64d011c Update project summaries (overview & development status) [auto]
 e89deff Merge pull request #102 from cat2151/copilot/remove-owner-from-toml-rulesets
 56556f7 Remove owner/repo format from rulesets, use repository name only
 e210b24 Initial plan
-ff8c32a Merge pull request #101 from cat2151/copilot/update-issue-79-logic
-9b548a8 Update generated docs to reference new test file name
-950800d Rename timeout from all_phase3_timeout to no_change_timeout with new logic
-ab52837 Initial plan
-fb3c0e0 Update project summaries (overview & development status) [auto]
-f08e3cd Merge pull request #99 from cat2151/copilot/fix-comment-posting-messages
-7941590 Fix incorrect line reference in comment - remove specific line number
 
 ### 変更されたファイル:
 MERGE_CONFIGURATION_EXAMPLES.md
 PHASE3_MERGE_IMPLEMENTATION.md
-README.ja.md
 README.md
 config.toml.example
 docs/RULESETS.md
@@ -311,13 +310,11 @@ generated-docs/project-overview.md
 src/gh_pr_phase_monitor/comment_manager.py
 src/gh_pr_phase_monitor/config.py
 src/gh_pr_phase_monitor/main.py
-src/gh_pr_phase_monitor/notifier.py
 src/gh_pr_phase_monitor/pr_actions.py
 tests/test_all_phase3_timeout.py
 tests/test_config_rulesets.py
 tests/test_config_rulesets_features.py
 tests/test_no_change_timeout.py
-tests/test_notification.py
 tests/test_post_comment.py
 tests/test_pr_actions_rulesets_features.py
 tests/test_pr_actions_with_rulesets.py
@@ -325,4 +322,4 @@ tests/test_verbose_config.py
 
 
 ---
-Generated at: 2026-01-10 07:01:25 JST
+Generated at: 2026-01-12 07:01:31 JST

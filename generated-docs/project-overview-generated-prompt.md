@@ -1,4 +1,4 @@
-Last updated: 2026-01-10
+Last updated: 2026-01-12
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -398,4 +398,4 @@ docs/browser-automation-approaches.md
 
 
 ---
-Generated at: 2026-01-10 07:01:25 JST
+Generated at: 2026-01-12 07:01:30 JST
