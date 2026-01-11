@@ -231,9 +231,9 @@ def display_status_summary(all_prs: List[Dict[str, Any]], pr_phases: List[str], 
         # Show elapsed time if state has persisted for more than 60 seconds
         if elapsed >= 60:
             elapsed_str = format_elapsed_time(elapsed)
-            print(f"  [{repo_owner}/{repo_name}] {phase_display} {title} (現在、検知してから{elapsed_str}経過)")
+            print(f"  [{repo_name}] {phase_display} {title} (現在、検知してから{elapsed_str}経過)")
         else:
-            print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
+            print(f"  [{repo_name}] {phase_display} {title}")
 
     # Clean up old PR states that are no longer present
     cleanup_old_pr_states(current_states)
@@ -376,7 +376,7 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
         else:
             print(f"  Found {len(repos_with_issues)} repositories with open issues (no open PRs):")
             for repo in repos_with_issues:
-                print(f"    - {repo['owner']}/{repo['name']}: {repo['openIssueCount']} open issue(s)")
+                print(f"    - {repo['name']}: {repo['openIssueCount']} open issue(s)")
 
             # Check if auto-assign feature is enabled in config
             # We need to check per repository since it can be configured per ruleset
@@ -553,7 +553,7 @@ def main():
             else:
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
-                    print(f"    - {repo['owner']}/{repo['name']}: {repo['openPRCount']} open PR(s)")
+                    print(f"    - {repo['name']}: {repo['openPRCount']} open PR(s)")
 
                 # Phase 2: Get PR details for repositories with open PRs (detailed query)
                 print(f"\nPhase 2: Fetching PR details for {len(repos_with_prs)} repositories...")

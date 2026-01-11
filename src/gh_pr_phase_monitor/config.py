@@ -282,7 +282,7 @@ def print_repo_execution_config(
         repo_name: Repository name
         exec_config: Execution configuration dictionary
     """
-    print(f"    [Execution Config for {repo_owner}/{repo_name}]")
+    print(f"    [Execution Config for {repo_name}]")
     print(f"      enable_execution_phase1_to_phase2: {exec_config.get('enable_execution_phase1_to_phase2', False)}")
     print(f"      enable_execution_phase2_to_phase3: {exec_config.get('enable_execution_phase2_to_phase3', False)}")
     print(f"      enable_execution_phase3_send_ntfy: {exec_config.get('enable_execution_phase3_send_ntfy', False)}")

@@ -154,7 +154,7 @@ def test_print_repo_execution_config():
         print_repo_execution_config("owner", "repo", exec_config)
     output = f.getvalue()
     
-    assert "[Execution Config for owner/repo]" in output
+    assert "[Execution Config for repo]" in output
     assert "enable_execution_phase1_to_phase2: True" in output
     assert "enable_execution_phase2_to_phase3: False" in output
     assert "enable_execution_phase3_send_ntfy: True" in output

@@ -105,7 +105,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
 
     # Display phase with colors
     phase_display = colorize_phase(phase)
-    print(f"  [{repo_owner}/{repo_name}] {phase_display} {title}")
+    print(f"  [{repo_name}] {phase_display} {title}")
     print(f"    URL: {url}")
 
     # Resolve execution config for this repository

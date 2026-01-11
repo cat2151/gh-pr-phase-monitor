@@ -51,10 +51,10 @@ class TestDisplayStatusSummary:
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
             
-            # Verify that PRs are displayed in the format [owner/repo] [phase] title
-            assert "[owner/repo1]" in output
-            assert "[owner/repo2]" in output
-            assert "[owner/repo3]" in output
+            # Verify that PRs are displayed in the format [repo] [phase] title
+            assert "[repo1]" in output
+            assert "[repo2]" in output
+            assert "[repo3]" in output
             assert "PR 1" in output
             assert "PR 2" in output
             assert "PR 3" in output
@@ -82,7 +82,7 @@ class TestDisplayStatusSummary:
             output = " ".join(calls)
             
             # Verify that PRs are displayed
-            assert "[owner/repo1]" in output
+            assert "[repo1]" in output
             assert "PR 1" in output
             assert "PR 2" in output
 
@@ -108,7 +108,7 @@ class TestDisplayStatusSummary:
             output = " ".join(calls)
             
             # Verify that PRs are displayed
-            assert "[owner/repo1]" in output
+            assert "[repo1]" in output
             assert "PR 1" in output
             assert "PR 2" in output
             assert "PR 3" in output
