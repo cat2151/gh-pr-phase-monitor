@@ -248,7 +248,7 @@ def check_no_state_change_timeout(
     
     This tracks when ANY change happens in the PR state (phase changes, PRs added/removed).
     Timer starts when the state first becomes stable and resets on any state change.
-    When timeout is reached, monitoring switches to reduced frequency mode (using the configured reduced-frequency interval).
+    When timeout is reached, monitoring switches to reduced frequency mode (using the configured reduced_frequency_interval).
     When changes are detected, monitoring returns to normal frequency mode.
     
     Args:
@@ -619,7 +619,7 @@ def main():
                 current_interval_seconds = reduced_interval_seconds
                 current_interval_str = reduced_interval_str
             except ValueError as e:
-                print(f"Error: Invalid reduced_frequency_interval format: {e}", file=sys.stderr)
+                print(f"Error: Invalid reduced_frequency_interval format: {e}")
                 sys.exit(1)
         else:
             # Use normal interval
