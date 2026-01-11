@@ -182,7 +182,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             mock_comment.assert_not_called()
 
     def test_no_merge_when_global_phase3_merge_disabled(self):
-        """Merge should still happen even if no global phase3_merge.enabled (removed)"""
+        """Merge should happen by default when phase3_merge config exists (global enabled flag removed)"""
         pr = {
             "isDraft": False,
             "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],

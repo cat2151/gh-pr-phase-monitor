@@ -18,7 +18,7 @@ class TestPhase3Merge:
         pr_actions._merged_prs.clear()
 
     def test_merge_not_attempted_when_disabled(self):
-        """Merge should not be attempted when disabled via ruleset"""
+        """Merge should not be attempted when disabled via enable_phase3_merge=false in ruleset"""
         pr = {
             "isDraft": False,
             "reviews": [
