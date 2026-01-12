@@ -22,6 +22,14 @@ except ImportError:
     PYAUTOGUI_AVAILABLE = False
     pyautogui = None  # Set to None when not available
 
+# Global state to track the last time a browser was opened
+# This prevents opening multiple pages simultaneously which can cause issues
+# with automated merge and assign operations
+_last_browser_open_time: Optional[float] = None
+
+# Minimum time (in seconds) to wait between opening browser pages
+BROWSER_OPEN_COOLDOWN_SECONDS = 60
+
 
 def is_pyautogui_available() -> bool:
     """Check if PyAutoGUI is available for use
@@ -30,6 +38,39 @@ def is_pyautogui_available() -> bool:
         True if PyAutoGUI is installed and available, False otherwise
     """
     return PYAUTOGUI_AVAILABLE
+
+
+def _can_open_browser() -> bool:
+    """Check if enough time has passed since the last browser open
+
+    Returns:
+        True if a browser can be opened (cooldown period has passed), False otherwise
+    """
+    global _last_browser_open_time
+    if _last_browser_open_time is None:
+        return True
+    elapsed = time.time() - _last_browser_open_time
+    return elapsed >= BROWSER_OPEN_COOLDOWN_SECONDS
+
+
+def _record_browser_open() -> None:
+    """Record the current time as the last browser open time"""
+    global _last_browser_open_time
+    _last_browser_open_time = time.time()
+
+
+def _get_remaining_cooldown() -> float:
+    """Get the remaining cooldown time in seconds
+
+    Returns:
+        Remaining seconds until next browser can be opened, or 0 if ready
+    """
+    global _last_browser_open_time
+    if _last_browser_open_time is None:
+        return 0.0
+    elapsed = time.time() - _last_browser_open_time
+    remaining = BROWSER_OPEN_COOLDOWN_SECONDS - elapsed
+    return max(0.0, remaining)
 
 
 def _validate_wait_seconds(config: Dict[str, Any]) -> int:
@@ -184,6 +225,11 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     default browser. You must be already logged into GitHub in that browser for the
     automation to work. The function does not handle authentication.
 
+    Note: To prevent issues with opening multiple pages simultaneously, this function
+    will only open a browser if at least 60 seconds have passed since the last browser
+    was opened. If the cooldown has not elapsed, the function returns False and the
+    operation will be retried in the next monitoring iteration.
+
     Required screenshots (must be provided by user):
     - assign_to_copilot.png: Screenshot of "Assign to Copilot" button
     - assign.png: Screenshot of "Assign" button
@@ -204,6 +250,14 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
         print("  ✗ PyAutoGUI is not installed. Install with: pip install pyautogui pillow")
         return False
 
+    # Check if enough time has passed since the last browser open
+    if not _can_open_browser():
+        remaining = _get_remaining_cooldown()
+        print(f"  ⏳ Browser cooldown in effect. Please wait {int(remaining)} more seconds before opening next page.")
+        print("     This prevents issues with opening multiple pages simultaneously.")
+        print("     Will retry in the next monitoring iteration.")
+        return False
+
     # Get configuration settings
     if config is None:
         config = {}
@@ -216,7 +270,7 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
 
     print("  → [PyAutoGUI] Opening issue in browser...")
     print("  ℹ Ensure you are already logged into GitHub in your default browser")
-    
+
     try:
         opened = webbrowser.open(issue_url)
         if not opened:
@@ -226,6 +280,9 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     except Exception as e:
         print(f"  ✗ Failed to open browser for issue URL '{issue_url}': {e}")
         return False
+
+    # Record the browser open time to enforce cooldown
+    _record_browser_open()
 
     # Wait for the configured time
     print(f"  → Waiting {wait_seconds} seconds for page to load...")
@@ -272,6 +329,11 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
     default browser. You must be already logged into GitHub in that browser for the
     automation to work. The function does not handle authentication.
 
+    Note: To prevent issues with opening multiple pages simultaneously, this function
+    will only open a browser if at least 60 seconds have passed since the last browser
+    was opened. If the cooldown has not elapsed, the function returns False and the
+    operation will be retried in the next monitoring iteration.
+
     Required screenshots (must be provided by user):
     - merge_pull_request.png: Screenshot of "Merge pull request" button
     - confirm_merge.png: Screenshot of "Confirm merge" button
@@ -293,6 +355,14 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
         print("  ✗ PyAutoGUI is not installed. Install with: pip install pyautogui pillow")
         return False
 
+    # Check if enough time has passed since the last browser open
+    if not _can_open_browser():
+        remaining = _get_remaining_cooldown()
+        print(f"  ⏳ Browser cooldown in effect. Please wait {int(remaining)} more seconds before opening next page.")
+        print("     This prevents issues with opening multiple pages simultaneously.")
+        print("     Will retry in the next monitoring iteration.")
+        return False
+
     # Get configuration settings
     if config is None:
         config = {}
@@ -305,7 +375,7 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
 
     print("  → [PyAutoGUI] Opening PR in browser...")
     print("  ℹ Ensure you are already logged into GitHub in your default browser")
-    
+
     try:
         opened = webbrowser.open(pr_url)
         if not opened:
@@ -315,6 +385,9 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
     except Exception as e:
         print(f"  ✗ Failed to open browser for PR URL '{pr_url}': {e}")
         return False
+
+    # Record the browser open time to enforce cooldown
+    _record_browser_open()
 
     # Wait for the configured time
     print(f"  → Waiting {wait_seconds} seconds for page to load...")

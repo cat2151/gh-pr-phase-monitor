@@ -23,6 +23,12 @@ class TestIsPyAutoGUIAvailable:
 class TestAssignIssueToCopilotAutomated:
     """Tests for assign_issue_to_copilot_automated function"""
 
+    def setup_method(self):
+        """Reset cooldown state before each test"""
+        import src.gh_pr_phase_monitor.browser_automation as ba
+
+        ba._last_browser_open_time = None
+
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", False)
     def test_returns_false_when_pyautogui_unavailable(self):
         """Test that function returns False when PyAutoGUI is not available"""
@@ -133,6 +139,12 @@ class TestAssignIssueToCopilotAutomated:
 
 class TestMergePrAutomated:
     """Tests for merge_pr_automated function"""
+
+    def setup_method(self):
+        """Reset cooldown state before each test"""
+        import src.gh_pr_phase_monitor.browser_automation as ba
+
+        ba._last_browser_open_time = None
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", False)
     def test_returns_false_when_pyautogui_unavailable(self):
@@ -280,3 +292,159 @@ class TestGetScreenshotPath:
         result = _get_screenshot_path("test_button", config)
 
         assert result == screenshot_file
+
+
+class TestBrowserCooldown:
+    """Tests for browser cooldown functionality"""
+
+    def setup_method(self):
+        """Reset cooldown state before each test"""
+        import src.gh_pr_phase_monitor.browser_automation as ba
+
+        ba._last_browser_open_time = None
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_assign_respects_cooldown(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
+        """Test that assign_issue_to_copilot_automated respects cooldown"""
+        # Mock click function to succeed
+        mock_click.return_value = True
+
+        # First call - should succeed
+        mock_time.return_value = 0.0
+        config = {"assign_to_copilot": {"wait_seconds": 1, "button_delay": 1}}
+
+        result1 = assign_issue_to_copilot_automated("https://github.com/test/repo/issues/1", config)
+        assert result1 is True
+
+        # Second call immediately after - should fail due to cooldown
+        mock_time.return_value = 1.0  # Only 1 second passed
+        result2 = assign_issue_to_copilot_automated("https://github.com/test/repo/issues/2", config)
+        assert result2 is False
+
+        # Third call after cooldown - should succeed
+        mock_time.return_value = 61.0  # 61 seconds passed since first call
+        result3 = assign_issue_to_copilot_automated("https://github.com/test/repo/issues/3", config)
+        assert result3 is True
+
+        # Verify browser was only opened twice (first and third calls)
+        assert mock_webbrowser.open.call_count == 2
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_merge_respects_cooldown(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
+        """Test that merge_pr_automated respects cooldown"""
+        # Mock click function to succeed
+        mock_click.return_value = True
+
+        # First call - should succeed
+        mock_time.return_value = 0.0
+        config = {"phase3_merge": {"wait_seconds": 1, "button_delay": 1}}
+
+        result1 = merge_pr_automated("https://github.com/test/repo/pull/1", config)
+        assert result1 is True
+
+        # Second call immediately after - should fail due to cooldown
+        mock_time.return_value = 1.0  # Only 1 second passed
+        result2 = merge_pr_automated("https://github.com/test/repo/pull/2", config)
+        assert result2 is False
+
+        # Third call after cooldown - should succeed
+        mock_time.return_value = 61.0  # 61 seconds passed since first call
+        result3 = merge_pr_automated("https://github.com/test/repo/pull/3", config)
+        assert result3 is True
+
+        # Verify browser was only opened twice (first and third calls)
+        assert mock_webbrowser.open.call_count == 2
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_cooldown_applies_across_assign_and_merge(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
+        """Test that cooldown is shared between assign and merge operations"""
+        # Mock click function to succeed
+        mock_click.return_value = True
+
+        # First call - assign (should succeed)
+        mock_time.return_value = 0.0
+        config = {"assign_to_copilot": {"wait_seconds": 1}, "phase3_merge": {"wait_seconds": 1}}
+
+        result1 = assign_issue_to_copilot_automated("https://github.com/test/repo/issues/1", config)
+        assert result1 is True
+
+        # Second call - merge immediately after (should fail due to cooldown)
+        mock_time.return_value = 1.0  # Only 1 second passed
+        result2 = merge_pr_automated("https://github.com/test/repo/pull/1", config)
+        assert result2 is False
+
+        # Third call - merge after cooldown (should succeed)
+        mock_time.return_value = 61.0  # 61 seconds passed since first call
+        result3 = merge_pr_automated("https://github.com/test/repo/pull/2", config)
+        assert result3 is True
+
+        # Verify browser was only opened twice
+        assert mock_webbrowser.open.call_count == 2
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_can_open_browser_when_no_previous_open(self, mock_time):
+        """Test that _can_open_browser returns True when no previous browser was opened"""
+        from src.gh_pr_phase_monitor.browser_automation import _can_open_browser
+
+        result = _can_open_browser()
+        assert result is True
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_can_open_browser_respects_cooldown(self, mock_time):
+        """Test that _can_open_browser respects the 60-second cooldown"""
+        from src.gh_pr_phase_monitor.browser_automation import _can_open_browser, _record_browser_open
+
+        # Record a browser open at time 0
+        mock_time.return_value = 0.0
+        _record_browser_open()
+
+        # Check at time 30 - should not be able to open
+        mock_time.return_value = 30.0
+        assert _can_open_browser() is False
+
+        # Check at time 59 - still should not be able to open
+        mock_time.return_value = 59.0
+        assert _can_open_browser() is False
+
+        # Check at time 60 - should be able to open
+        mock_time.return_value = 60.0
+        assert _can_open_browser() is True
+
+        # Check at time 61 - should be able to open
+        mock_time.return_value = 61.0
+        assert _can_open_browser() is True
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_get_remaining_cooldown(self, mock_time):
+        """Test that _get_remaining_cooldown returns correct remaining time"""
+        from src.gh_pr_phase_monitor.browser_automation import _get_remaining_cooldown, _record_browser_open
+
+        # When no browser has been opened, remaining should be 0
+        remaining = _get_remaining_cooldown()
+        assert remaining == 0.0
+
+        # Record a browser open at time 0
+        mock_time.return_value = 0.0
+        _record_browser_open()
+
+        # At time 30, remaining should be 30
+        mock_time.return_value = 30.0
+        remaining = _get_remaining_cooldown()
+        assert remaining == 30.0
+
+        # At time 61, remaining should be 0
+        mock_time.return_value = 61.0
+        remaining = _get_remaining_cooldown()
+        assert remaining == 0.0

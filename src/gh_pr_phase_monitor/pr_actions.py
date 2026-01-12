@@ -7,7 +7,12 @@ import webbrowser
 from pathlib import Path
 from typing import Any, Dict, Set, Tuple
 
-from .browser_automation import merge_pr_automated
+from .browser_automation import (
+    _can_open_browser,
+    _get_remaining_cooldown,
+    _record_browser_open,
+    merge_pr_automated,
+)
 from .colors import colorize_phase
 from .comment_manager import (
     post_phase2_comment,
@@ -76,13 +81,31 @@ def merge_pr(pr_url: str, repo_dir: Path = None) -> bool:
         return False
 
 
-def open_browser(url: str) -> None:
+def open_browser(url: str) -> bool:
     """Open URL in browser
+
+    Note: To prevent issues with opening multiple pages simultaneously, this function
+    will only open a browser if at least 60 seconds have passed since the last browser
+    was opened. If the cooldown has not elapsed, the function returns False and the
+    operation will be retried in the next monitoring iteration.
 
     Args:
         url: URL to open in browser
+
+    Returns:
+        True if browser was opened, False if cooldown prevented opening
     """
+    # Check if enough time has passed since the last browser open
+    if not _can_open_browser():
+        remaining = _get_remaining_cooldown()
+        print(f"    ⏳ Browser cooldown in effect. Please wait {int(remaining)} more seconds before opening next page.")
+        print("       This prevents issues with opening multiple pages simultaneously.")
+        print("       Will retry in the next monitoring iteration.")
+        return False
+
     webbrowser.open(url)
+    _record_browser_open()
+    return True
 
 
 def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = None) -> None:
@@ -158,8 +181,9 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         browser_key = (url, phase)
         if browser_key not in _browser_opened:
             print("    Opening browser...")
-            open_browser(url)
-            _browser_opened.add(browser_key)
+            if open_browser(url):
+                _browser_opened.add(browser_key)
+            # If cooldown prevented opening, will retry in next iteration
         else:
             print("    Browser already opened for this PR, skipping")
 
