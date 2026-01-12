@@ -13,9 +13,9 @@ class TestResolveExecutionConfigForRepo:
     def test_no_rulesets_defaults_to_false(self):
         """When no rulesets are defined, all flags default to false"""
         config = {}
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
         assert result["enable_execution_phase3_send_ntfy"] is False
@@ -26,9 +26,9 @@ class TestResolveExecutionConfigForRepo:
         config = {
             "rulesets": [],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
         assert result["enable_execution_phase3_send_ntfy"] is False
@@ -42,9 +42,9 @@ class TestResolveExecutionConfigForRepo:
             "enable_execution_phase3_send_ntfy": True,
             "enable_execution_phase3_to_merge": True,
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         # All should be False because global flags are ignored
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
@@ -64,12 +64,12 @@ class TestResolveExecutionConfigForRepo:
                 }
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner1", "repo1")
         assert result["enable_execution_phase1_to_phase2"] is True
         assert result["enable_execution_phase2_to_phase3"] is True
         assert result["enable_execution_phase3_send_ntfy"] is True
-        
+
         result = resolve_execution_config_for_repo(config, "owner2", "repo2")
         assert result["enable_execution_phase1_to_phase2"] is True
         assert result["enable_execution_phase2_to_phase3"] is True
@@ -85,10 +85,10 @@ class TestResolveExecutionConfigForRepo:
                 }
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         config["rulesets"][0]["repositories"] = ["All"]
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         assert result["enable_execution_phase1_to_phase2"] is True
@@ -104,15 +104,15 @@ class TestResolveExecutionConfigForRepo:
                 }
             ],
         }
-        
+
         # Should match (matches any owner with this repo name)
         result = resolve_execution_config_for_repo(config, "owner1", "repo1")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         # Should match (same repo name, different owner)
         result = resolve_execution_config_for_repo(config, "owner2", "repo1")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         # Should not match (different repo name)
         result = resolve_execution_config_for_repo(config, "owner2", "repo2")
         assert result["enable_execution_phase1_to_phase2"] is False
@@ -127,14 +127,14 @@ class TestResolveExecutionConfigForRepo:
                 }
             ],
         }
-        
+
         # Should match with any owner
         result = resolve_execution_config_for_repo(config, "owner1", "test-repo")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         result = resolve_execution_config_for_repo(config, "owner2", "test-repo")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         # Should not match different repo name
         result = resolve_execution_config_for_repo(config, "owner1", "other-repo")
         assert result["enable_execution_phase1_to_phase2"] is False
@@ -149,16 +149,16 @@ class TestResolveExecutionConfigForRepo:
                 }
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner1", "repo1")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         result = resolve_execution_config_for_repo(config, "owner2", "repo2")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         result = resolve_execution_config_for_repo(config, "any-owner", "repo3")
         assert result["enable_execution_phase1_to_phase2"] is True
-        
+
         result = resolve_execution_config_for_repo(config, "owner3", "repo4")
         assert result["enable_execution_phase1_to_phase2"] is False
 
@@ -182,13 +182,13 @@ class TestResolveExecutionConfigForRepo:
                 },
             ],
         }
-        
+
         # test-repo should be disabled (second ruleset overrides first)
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
         assert result["enable_execution_phase3_send_ntfy"] is False
-        
+
         # other repos should still be enabled (only first ruleset applies)
         result = resolve_execution_config_for_repo(config, "owner", "other-repo")
         assert result["enable_execution_phase1_to_phase2"] is True
@@ -211,7 +211,7 @@ class TestResolveExecutionConfigForRepo:
                 },
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
         # phase1 and phase3 should remain True from first ruleset
         assert result["enable_execution_phase1_to_phase2"] is True
@@ -223,9 +223,9 @@ class TestResolveExecutionConfigForRepo:
     def test_defaults_to_false_when_no_config(self):
         """When no configuration is provided, default to False"""
         config = {}
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
         assert result["enable_execution_phase3_send_ntfy"] is False
@@ -240,7 +240,7 @@ class TestResolveExecutionConfigForRepo:
                 None,  # Null value
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         # Should default to False when rulesets are invalid
         assert result["enable_execution_phase1_to_phase2"] is False
@@ -250,7 +250,7 @@ class TestResolveExecutionConfigForRepo:
         config = {
             "rulesets": "not_a_list",
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
         assert result["enable_execution_phase1_to_phase2"] is False
 
@@ -282,25 +282,25 @@ class TestResolveExecutionConfigForRepo:
                 },
             ],
         }
-        
+
         # test-repo1: phase1=False (override), phase2=True, phase3=False
         result = resolve_execution_config_for_repo(config, "owner", "test-repo1")
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is True
         assert result["enable_execution_phase3_send_ntfy"] is False
-        
+
         # test-repo2: phase1=True (from all), phase2=True, phase3=False
         result = resolve_execution_config_for_repo(config, "owner", "test-repo2")
         assert result["enable_execution_phase1_to_phase2"] is True
         assert result["enable_execution_phase2_to_phase3"] is True
         assert result["enable_execution_phase3_send_ntfy"] is False
-        
+
         # special-repo: all True
         result = resolve_execution_config_for_repo(config, "owner", "special-repo")
         assert result["enable_execution_phase1_to_phase2"] is True
         assert result["enable_execution_phase2_to_phase3"] is True
         assert result["enable_execution_phase3_send_ntfy"] is True
-        
+
         # other-repo: only phase1=True (from all)
         result = resolve_execution_config_for_repo(config, "owner", "other-repo")
         assert result["enable_execution_phase1_to_phase2"] is True
@@ -317,10 +317,10 @@ class TestBooleanValidation:
             "enable_execution_phase1_to_phase2": "true",  # String - would be invalid if checked
             "enable_execution_phase2_to_phase3": 1,  # Integer - would be invalid if checked
         }
-        
+
         # Should not raise an error because global flags are ignored
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         # All should be False (default) because global flags are ignored
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is False
@@ -335,10 +335,10 @@ class TestBooleanValidation:
                 }
             ],
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             resolve_execution_config_for_repo(config, "owner", "test-repo")
-        
+
         assert "must be a boolean" in str(exc_info.value)
         assert "enable_execution_phase1_to_phase2" in str(exc_info.value)
 
@@ -352,10 +352,10 @@ class TestBooleanValidation:
                 }
             ],
         }
-        
+
         with pytest.raises(ValueError) as exc_info:
             resolve_execution_config_for_repo(config, "owner", "test-repo")
-        
+
         assert "must be a boolean" in str(exc_info.value)
         assert "enable_execution_phase3_send_ntfy" in str(exc_info.value)
 
@@ -371,10 +371,10 @@ class TestBooleanValidation:
                 }
             ],
         }
-        
+
         # Should not raise any exception
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
-        
+
         assert result["enable_execution_phase1_to_phase2"] is False
         assert result["enable_execution_phase2_to_phase3"] is True
         assert result["enable_execution_phase3_send_ntfy"] is True
@@ -393,7 +393,7 @@ class TestBooleanValidation:
                 },
             ],
         }
-        
+
         # Should not raise error because first ruleset doesn't match
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
         assert result["enable_execution_phase1_to_phase2"] is True

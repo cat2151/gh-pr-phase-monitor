@@ -108,10 +108,10 @@ class TestProcessPRWithRulesets:
 
         with patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready:
             mock_ready.return_value = True
-            
+
             process_pr(pr1, config)
             assert mock_ready.call_count == 1
-            
+
             process_pr(pr2, config)
             assert mock_ready.call_count == 2
 
@@ -195,9 +195,10 @@ class TestProcessPRWithRulesets:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             mock_notify.return_value = True
             process_pr(pr, config)
             mock_notify.assert_called_once()
@@ -267,11 +268,11 @@ class TestProcessPRWithRulesets:
 
         with patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready:
             mock_ready.return_value = True
-            
+
             # enabled-repo should execute
             process_pr(pr_enabled, config)
             assert mock_ready.call_count == 1
-            
+
             # disabled-repo should not execute
             process_pr(pr_disabled, config)
             assert mock_ready.call_count == 1  # Still 1, not incremented

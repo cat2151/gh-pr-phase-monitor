@@ -38,9 +38,7 @@ class TestPostPhase3Comment:
         comment_text = "Merge comment"
 
         with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = subprocess.CalledProcessError(
-                1, "gh", stderr="Error: Failed to post comment"
-            )
+            mock_run.side_effect = subprocess.CalledProcessError(1, "gh", stderr="Error: Failed to post comment")
             result = post_phase3_comment(pr, comment_text, None)
 
             assert result is False

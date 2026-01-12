@@ -121,8 +121,7 @@ def is_valid_topic(topic: str) -> bool:
 
 
 def send_ntfy_notification(
-    topic: str, message: str, title: Optional[str] = None, priority: Optional[int] = None,
-    actions: Optional[str] = None
+    topic: str, message: str, title: Optional[str] = None, priority: Optional[int] = None, actions: Optional[str] = None
 ) -> bool:
     """Send a notification via ntfy.sh
 
@@ -162,9 +161,7 @@ def send_ntfy_notification(
 
     try:
         # Create request with message as body
-        req = urllib.request.Request(
-            url, data=message.encode("utf-8"), headers=headers, method="POST"
-        )
+        req = urllib.request.Request(url, data=message.encode("utf-8"), headers=headers, method="POST")
 
         # Send request
         with urllib.request.urlopen(req, timeout=10) as response:

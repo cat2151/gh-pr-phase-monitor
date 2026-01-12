@@ -15,6 +15,7 @@ try:
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support import expected_conditions as EC
     from selenium.webdriver.support.ui import WebDriverWait
+
     SELENIUM_AVAILABLE = True
 except ImportError:
     SELENIUM_AVAILABLE = False
@@ -23,12 +24,15 @@ except ImportError:
 try:
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
     from playwright.sync_api import sync_playwright
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
+
     # Define a placeholder exception class when Playwright is not available
     class PlaywrightTimeoutError(Exception):  # type: ignore
         """Placeholder for when Playwright is not installed"""
+
         pass
 
 
@@ -70,10 +74,7 @@ def _validate_wait_seconds(config: Dict[str, Any]) -> int:
     return wait_seconds
 
 
-def assign_issue_to_copilot_automated(
-    issue_url: str,
-    config: Optional[Dict[str, Any]] = None
-) -> bool:
+def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str, Any]] = None) -> bool:
     """Automatically assign an issue to Copilot by clicking buttons in browser
 
     This function uses Selenium WebDriver or Playwright to:
@@ -104,10 +105,7 @@ def assign_issue_to_copilot_automated(
         return _assign_with_selenium(issue_url, assign_config)
 
 
-def merge_pr_automated(
-    pr_url: str,
-    config: Optional[Dict[str, Any]] = None
-) -> bool:
+def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> bool:
     """Automatically merge a PR by clicking the merge button in browser
 
     This function uses Selenium WebDriver or Playwright to:
@@ -138,10 +136,7 @@ def merge_pr_automated(
         return _merge_pr_with_selenium(pr_url, merge_config)
 
 
-def _assign_with_selenium(
-    issue_url: str,
-    assign_config: Dict[str, Any]
-) -> bool:
+def _assign_with_selenium(issue_url: str, assign_config: Dict[str, Any]) -> bool:
     """Assign issue to Copilot using Selenium WebDriver
 
     Args:
@@ -216,10 +211,7 @@ def _assign_with_selenium(
                 pass  # Ignore errors when closing
 
 
-def _assign_with_playwright(
-    issue_url: str,
-    assign_config: Dict[str, Any]
-) -> bool:
+def _assign_with_playwright(issue_url: str, assign_config: Dict[str, Any]) -> bool:
     """Assign issue to Copilot using Playwright
 
     Args:
@@ -367,9 +359,7 @@ def _click_button_selenium(driver: "webdriver.Remote", button_text: str, timeout
 
         for by, selector in selectors:
             try:
-                button = wait.until(
-                    EC.element_to_be_clickable((by, selector))
-                )
+                button = wait.until(EC.element_to_be_clickable((by, selector)))
                 button.click()
                 return True
             except TimeoutException:
@@ -424,10 +414,7 @@ def _click_button_playwright(page, button_text: str, timeout: int = 10000) -> bo
         return False
 
 
-def _merge_pr_with_selenium(
-    pr_url: str,
-    merge_config: Dict[str, Any]
-) -> bool:
+def _merge_pr_with_selenium(pr_url: str, merge_config: Dict[str, Any]) -> bool:
     """Merge PR using Selenium WebDriver
 
     Args:
@@ -513,10 +500,7 @@ def _merge_pr_with_selenium(
                 pass  # Ignore errors when closing
 
 
-def _merge_pr_with_playwright(
-    pr_url: str,
-    merge_config: Dict[str, Any]
-) -> bool:
+def _merge_pr_with_playwright(pr_url: str, merge_config: Dict[str, Any]) -> bool:
     """Merge PR using Playwright
 
     Args:

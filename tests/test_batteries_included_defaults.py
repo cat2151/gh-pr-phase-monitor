@@ -4,10 +4,10 @@ Tests that phase3_merge and assign_to_copilot work with defaults when TOML secti
 """
 
 from src.gh_pr_phase_monitor.config import (
-    get_phase3_merge_config,
-    get_assign_to_copilot_config,
-    DEFAULT_PHASE3_MERGE_CONFIG,
     DEFAULT_ASSIGN_TO_COPILOT_CONFIG,
+    DEFAULT_PHASE3_MERGE_CONFIG,
+    get_assign_to_copilot_config,
+    get_phase3_merge_config,
 )
 
 
@@ -18,7 +18,7 @@ class TestPhase3MergeDefaults:
         """When config has no phase3_merge section, return defaults"""
         config = {}
         result = get_phase3_merge_config(config)
-        
+
         assert result == DEFAULT_PHASE3_MERGE_CONFIG
         assert result["comment"] == "All checks passed. Merging PR."
         assert result["automated"] is False
@@ -36,11 +36,11 @@ class TestPhase3MergeDefaults:
             }
         }
         result = get_phase3_merge_config(config)
-        
+
         # User values should override defaults
         assert result["comment"] == "Custom merge comment"
         assert result["automated"] is True
-        
+
         # Missing values should use defaults
         assert result["automation_backend"] == "playwright"
         assert result["wait_seconds"] == 10
@@ -60,7 +60,7 @@ class TestPhase3MergeDefaults:
             }
         }
         result = get_phase3_merge_config(config)
-        
+
         # All values should be from user config
         assert result["comment"] == "Custom comment"
         assert result["automated"] is True
@@ -71,11 +71,9 @@ class TestPhase3MergeDefaults:
 
     def test_invalid_config_section_returns_defaults(self):
         """When phase3_merge is not a dict, return defaults"""
-        config = {
-            "phase3_merge": "not a dict"
-        }
+        config = {"phase3_merge": "not a dict"}
         result = get_phase3_merge_config(config)
-        
+
         assert result == DEFAULT_PHASE3_MERGE_CONFIG
 
 
@@ -86,9 +84,8 @@ class TestAssignToCopilotDefaults:
         """When config has no assign_to_copilot section, return defaults"""
         config = {}
         result = get_assign_to_copilot_config(config)
-        
+
         assert result == DEFAULT_ASSIGN_TO_COPILOT_CONFIG
-        assert result["assign_lowest_number_issue"] is False
         assert result["automated"] is False
         assert result["automation_backend"] == "playwright"
         assert result["wait_seconds"] == 10
@@ -99,18 +96,16 @@ class TestAssignToCopilotDefaults:
         """When config has partial assign_to_copilot section, merge with defaults"""
         config = {
             "assign_to_copilot": {
-                "assign_lowest_number_issue": True,
                 "automated": True,
                 "browser": "firefox",
             }
         }
         result = get_assign_to_copilot_config(config)
-        
+
         # User values should override defaults
-        assert result["assign_lowest_number_issue"] is True
         assert result["automated"] is True
         assert result["browser"] == "firefox"
-        
+
         # Missing values should use defaults
         assert result["automation_backend"] == "playwright"
         assert result["wait_seconds"] == 10
@@ -120,7 +115,6 @@ class TestAssignToCopilotDefaults:
         """When config has full assign_to_copilot section, use all user values"""
         config = {
             "assign_to_copilot": {
-                "assign_lowest_number_issue": True,
                 "automated": True,
                 "automation_backend": "selenium",
                 "wait_seconds": 15,
@@ -129,9 +123,8 @@ class TestAssignToCopilotDefaults:
             }
         }
         result = get_assign_to_copilot_config(config)
-        
+
         # All values should be from user config
-        assert result["assign_lowest_number_issue"] is True
         assert result["automated"] is True
         assert result["automation_backend"] == "selenium"
         assert result["wait_seconds"] == 15
@@ -140,11 +133,9 @@ class TestAssignToCopilotDefaults:
 
     def test_invalid_config_section_returns_defaults(self):
         """When assign_to_copilot is not a dict, return defaults"""
-        config = {
-            "assign_to_copilot": "not a dict"
-        }
+        config = {"assign_to_copilot": "not a dict"}
         result = get_assign_to_copilot_config(config)
-        
+
         assert result == DEFAULT_ASSIGN_TO_COPILOT_CONFIG
 
 
@@ -158,9 +149,8 @@ class TestDefaultConstantsAreSensible:
         assert DEFAULT_PHASE3_MERGE_CONFIG["comment"] != ""
 
     def test_assign_to_copilot_defaults_are_safe(self):
-        """assign_to_copilot defaults should be safe (not automated, not lowest number)"""
+        """assign_to_copilot defaults should be safe (not automated)"""
         assert DEFAULT_ASSIGN_TO_COPILOT_CONFIG["automated"] is False
-        assert DEFAULT_ASSIGN_TO_COPILOT_CONFIG["assign_lowest_number_issue"] is False
         assert DEFAULT_ASSIGN_TO_COPILOT_CONFIG["wait_seconds"] >= 10
 
     def test_both_defaults_use_playwright(self):

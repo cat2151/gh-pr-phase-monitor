@@ -14,7 +14,9 @@ REPOSITORIES_BATCH_SIZE = 10
 ISSUES_PER_REPO = 50
 
 
-def get_issues_from_repositories(repos: List[Dict[str, Any]], limit: int = 10, labels: Optional[List[str]] = None, sort_by_number: bool = False) -> List[Dict[str, Any]]:
+def get_issues_from_repositories(
+    repos: List[Dict[str, Any]], limit: int = 10, labels: Optional[List[str]] = None, sort_by_number: bool = False
+) -> List[Dict[str, Any]]:
     """Get issues from multiple repositories, sorted by timestamp descending or by issue number ascending
 
     Args:

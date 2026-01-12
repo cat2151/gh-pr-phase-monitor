@@ -29,9 +29,10 @@ class TestProcessPR:
         }
         config = {"enable_execution_phase1_to_phase2": True}
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser, patch(
-            "src.gh_pr_phase_monitor.pr_actions.mark_pr_ready"
-        ) as mock_ready:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser,
+            patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready,
+        ):
             mock_ready.return_value = True
             process_pr(pr, config)
             # Browser should not be called for phase1
@@ -55,9 +56,10 @@ class TestProcessPR:
         }
         config = {"enable_execution_phase2_to_phase3": True}
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser, patch(
-            "src.gh_pr_phase_monitor.pr_actions.post_phase2_comment"
-        ) as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser") as mock_browser,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase2_comment") as mock_comment,
+        ):
             mock_comment.return_value = True
             process_pr(pr, config)
             # Browser should not be called for phase2
@@ -154,15 +156,14 @@ class TestPhase3Notifications:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             mock_notify.return_value = True
             process_pr(pr, config)
             # Notification should be sent
-            mock_notify.assert_called_once_with(
-                config, "https://github.com/test-owner/test-repo/pull/1", "Test PR"
-            )
+            mock_notify.assert_called_once_with(config, "https://github.com/test-owner/test-repo/pull/1", "Test PR")
 
     def test_notification_not_sent_when_disabled(self):
         """Notification should not be sent when disabled in config"""
@@ -178,9 +179,10 @@ class TestPhase3Notifications:
         }
         config = {"ntfy": {"enabled": False, "topic": "test-topic"}}
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             process_pr(pr, config)
             # Notification should not be sent
             mock_notify.assert_not_called()
@@ -199,9 +201,10 @@ class TestPhase3Notifications:
         }
         config = {}
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             process_pr(pr, config)
             # Notification should not be sent
             mock_notify.assert_not_called()
@@ -228,9 +231,10 @@ class TestPhase3Notifications:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             mock_notify.return_value = True
             # First call should send notification
             process_pr(pr, config)
@@ -260,9 +264,11 @@ class TestPhase3Notifications:
             "enable_execution_phase1_to_phase2": True,
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify, patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+            patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready,
+        ):
             mock_ready.return_value = True
             process_pr(pr, config)
             # Notification should not be sent for phase1
@@ -289,9 +295,11 @@ class TestPhase3Notifications:
             "enable_execution_phase2_to_phase3": True,
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify, patch("src.gh_pr_phase_monitor.pr_actions.post_phase2_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase2_comment") as mock_comment,
+        ):
             mock_comment.return_value = True
             process_pr(pr, config)
             # Notification should not be sent for phase2
@@ -421,9 +429,10 @@ class TestDryRunMode:
             # enable_execution_phase3_send_ntfy is not set, so defaults to false
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             process_pr(pr, config)
             # send_phase3_notification should not be called in dry-run mode
             mock_notify.assert_not_called()
@@ -450,15 +459,14 @@ class TestDryRunMode:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             mock_notify.return_value = True
             process_pr(pr, config)
             # send_phase3_notification should be called when execution is enabled
-            mock_notify.assert_called_once_with(
-                config, "https://github.com/test-owner/test-repo/pull/1", "Test PR"
-            )
+            mock_notify.assert_called_once_with(config, "https://github.com/test-owner/test-repo/pull/1", "Test PR")
 
     def test_phase3_notification_can_be_sent_after_dry_run(self):
         """Notification should be sent when execution is enabled, even after processing in dry-run mode"""
@@ -484,9 +492,10 @@ class TestDryRunMode:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             process_pr(pr, config_dry)
             # Notification should not be sent in dry-run mode
             mock_notify.assert_not_called()
@@ -502,13 +511,13 @@ class TestDryRunMode:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.send_phase3_notification"
-        ) as mock_notify:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.send_phase3_notification") as mock_notify,
+        ):
             mock_notify.return_value = True
             process_pr(pr, config_exec)
             # Notification should be sent when execution is enabled, even after dry-run
             mock_notify.assert_called_once_with(
                 config_exec, "https://github.com/test-owner/test-repo/pull/2", "Test PR"
             )
-

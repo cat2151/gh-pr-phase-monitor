@@ -347,7 +347,7 @@ class TestGetIssuesFromRepositories:
                                 "updatedAt": "2024-01-20T00:00:00Z",
                                 "author": {"login": "author3"},
                                 "labels": {"nodes": []},
-                            }
+                            },
                         ]
                     },
                 }
@@ -408,7 +408,7 @@ class TestGetIssuesFromRepositories:
                                 "updatedAt": "2024-01-20T00:00:00Z",
                                 "author": {"login": "author3"},
                                 "labels": {"nodes": []},
-                            }
+                            },
                         ]
                     },
                 }
@@ -501,22 +501,13 @@ class TestAssignIssueToCopilot:
             "number": 123,
             "url": "https://github.com/test-owner/test-repo/issues/123",
         }
-        config = {
-            "assign_to_copilot": {
-                "automated": True,
-                "wait_seconds": 5,
-                "browser": "edge"
-            }
-        }
+        config = {"assign_to_copilot": {"automated": True, "wait_seconds": 5, "browser": "edge"}}
 
         result = assign_issue_to_copilot(issue, config)
 
         assert result is True
         mock_selenium_available.assert_called_once()
-        mock_automated_func.assert_called_once_with(
-            "https://github.com/test-owner/test-repo/issues/123",
-            config
-        )
+        mock_automated_func.assert_called_once_with("https://github.com/test-owner/test-repo/issues/123", config)
 
     @patch("webbrowser.open")
     @patch("src.gh_pr_phase_monitor.issue_fetcher.is_selenium_available")

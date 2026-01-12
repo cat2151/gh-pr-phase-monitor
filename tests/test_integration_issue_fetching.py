@@ -149,7 +149,9 @@ def test_integration_all_prs_llm_working():
             print(f"✓ Fetched {len(issues)} issues sorted by last update (descending)")
             print("\nTop issues:")
             for idx, issue in enumerate(issues, 1):
-                print(f"  {idx}. [{issue['repository']['owner']}/{issue['repository']['name']}] #{issue['number']}: {issue['title']}")
+                print(
+                    f"  {idx}. [{issue['repository']['owner']}/{issue['repository']['name']}] #{issue['number']}: {issue['title']}"
+                )
                 print(f"     Updated: {issue['updatedAt']}")
 
     print("\n✅ Integration test passed!")

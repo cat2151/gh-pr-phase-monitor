@@ -16,13 +16,13 @@ def test_print_config_basic():
         "no_change_timeout": "",
         "verbose": True,
     }
-    
+
     # Capture output
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     # Verify key sections are present
     assert "Configuration Settings:" in output
     assert "[Main Settings]" in output
@@ -45,12 +45,12 @@ def test_print_config_with_rulesets():
             }
         ],
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     assert "[Rulesets]" in output
     assert "Ruleset #1:" in output
     assert "Test Ruleset" in output
@@ -71,12 +71,12 @@ def test_print_config_with_ntfy():
             "priority": 4,
         },
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     assert "[ntfy.sh Notification Settings]" in output
     assert "enabled: True" in output
     assert "topic: test-topic" in output
@@ -100,12 +100,12 @@ def test_print_config_with_phase3_merge():
             "headless": False,
         },
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     assert "[Phase3 Merge Settings]" in output
     assert "comment: Merging PR" in output
     assert "automated: True" in output
@@ -127,12 +127,12 @@ def test_print_config_with_assign_to_copilot():
             "headless": True,
         },
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     assert "[Auto-assign to Copilot Settings]" in output
     assert "automated: True" in output
     assert "automation_backend: playwright" in output
@@ -146,12 +146,12 @@ def test_print_repo_execution_config():
         "enable_execution_phase3_send_ntfy": True,
         "enable_execution_phase3_to_merge": False,
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_repo_execution_config("owner", "repo", exec_config)
     output = f.getvalue()
-    
+
     assert "[Execution Config for repo]" in output
     assert "enable_execution_phase1_to_phase2: True" in output
     assert "enable_execution_phase2_to_phase3: False" in output
@@ -166,12 +166,12 @@ def test_print_config_no_rulesets():
         "verbose": True,
         "enable_execution_phase1_to_phase2": False,
     }
-    
+
     f = io.StringIO()
     with redirect_stdout(f):
         print_config(config)
     output = f.getvalue()
-    
+
     assert "[Rulesets]" in output
     assert "No rulesets configured" in output
 

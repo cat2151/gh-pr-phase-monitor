@@ -2,20 +2,20 @@
 Test to verify that elapsed time is displayed correctly for unchanged PR states
 
 This test ensures the new behavior requested in the issue:
-"If the display content is exactly the same as before, change the display content 
+"If the display content is exactly the same as before, change the display content
 to show something like '現在、検知してから3分20秒経過' (Currently, 3 minutes 20 seconds have elapsed since detection)"
 """
 
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.gh_pr_phase_monitor.main import (
+    _pr_state_times,
     display_status_summary,
     format_elapsed_time,
     wait_with_countdown,
-    _pr_state_times,
 )
-from src.gh_pr_phase_monitor.phase_detector import PHASE_LLM_WORKING, PHASE_1
+from src.gh_pr_phase_monitor.phase_detector import PHASE_1, PHASE_LLM_WORKING
 
 
 class TestElapsedTimeDisplay:
@@ -210,9 +210,7 @@ class TestWaitWithCountdown:
 
     def test_countdown_displays_remaining_time(self):
         """Test that countdown displays remaining time correctly (counting down from initial value to 0)"""
-        with patch("builtins.print") as mock_print, \
-             patch("time.sleep") as mock_sleep, \
-             patch("time.time") as mock_time:
+        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep, patch("time.time") as mock_time:
             # Mock time.time to simulate passage of time
             mock_time.side_effect = [0, 0, 1, 2, 3, 3]  # start, loop checks
             wait_with_countdown(3, "3s")
@@ -233,16 +231,15 @@ class TestWaitWithCountdown:
 
     def test_countdown_uses_carriage_return_for_updates(self):
         """Test that countdown uses ANSI escape sequences (carriage return) for in-place updates"""
-        with patch("builtins.print") as mock_print, \
-             patch("time.sleep") as mock_sleep, \
-             patch("time.time") as mock_time:
+        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep, patch("time.time") as mock_time:
             # Mock time.time to simulate passage of time
             mock_time.side_effect = [0, 0, 1, 2, 2]
             wait_with_countdown(2, "2s")
 
             # Check that carriage return is used in countdown lines
             countdown_calls = [
-                call for call in mock_print.call_args_list
+                call
+                for call in mock_print.call_args_list
                 if "Waiting" in str(call) and "until next check" not in str(call)
             ]
 
@@ -253,9 +250,7 @@ class TestWaitWithCountdown:
 
     def test_countdown_handles_different_intervals(self):
         """Test that countdown properly handles different time intervals"""
-        with patch("builtins.print") as mock_print, \
-             patch("time.sleep") as mock_sleep, \
-             patch("time.time") as mock_time:
+        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep, patch("time.time") as mock_time:
             # Mock time.time to simulate passage of time
             mock_time.side_effect = [0, 0, 1, 2, 3, 4, 5, 5]
             wait_with_countdown(5, "5s")
@@ -270,9 +265,7 @@ class TestWaitWithCountdown:
 
     def test_countdown_formats_time_correctly(self):
         """Test that countdown formats time with minutes and seconds"""
-        with patch("builtins.print") as mock_print, \
-             patch("time.sleep") as mock_sleep, \
-             patch("time.time") as mock_time:
+        with patch("builtins.print") as mock_print, patch("time.sleep") as mock_sleep, patch("time.time") as mock_time:
             # Mock time.time to simulate 90 seconds of elapsed time
             # We need enough values for 90 iterations + extra for checks
             times = [0] + [i for i in range(91) for _ in range(2)]  # start + pairs for each iteration

@@ -9,7 +9,7 @@ from .comment_manager import (
     has_copilot_apply_comment,
     post_phase2_comment,
 )
-from .config import get_config_mtime, load_config, parse_interval, get_phase3_merge_config, get_assign_to_copilot_config
+from .config import get_assign_to_copilot_config, get_config_mtime, get_phase3_merge_config, load_config, parse_interval
 from .github_client import (
     get_current_user,
     get_existing_comments,

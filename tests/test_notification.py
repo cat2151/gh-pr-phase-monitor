@@ -87,7 +87,10 @@ class TestFormatNotificationMessage:
         template = "Check {url} or visit {url} again"
         url = "https://github.com/owner/repo/pull/456"
         result = format_notification_message(template, url)
-        assert result == "Check https://github.com/owner/repo/pull/456 or visit https://github.com/owner/repo/pull/456 again"
+        assert (
+            result
+            == "Check https://github.com/owner/repo/pull/456 or visit https://github.com/owner/repo/pull/456 again"
+        )
 
     def test_no_placeholder(self):
         """Test template without placeholder"""
@@ -247,11 +250,7 @@ class TestSendNtfyNotification:
         mock_response.status = 200
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
-        result = send_ntfy_notification(
-            "test-topic",
-            "Test message",
-            actions="view,Open URL,https://example.com"
-        )
+        result = send_ntfy_notification("test-topic", "Test message", actions="view,Open URL,https://example.com")
         assert result is True
 
         # Verify the request was made with Actions header
@@ -268,11 +267,7 @@ class TestSendNtfyNotification:
         mock_urlopen.return_value.__enter__.return_value = mock_response
 
         # Test newline in actions
-        result = send_ntfy_notification(
-            "test-topic",
-            "Test message",
-            actions="view,Open\nURL,https://example.com"
-        )
+        result = send_ntfy_notification("test-topic", "Test message", actions="view,Open\nURL,https://example.com")
         assert result is True
 
         # Verify the request was made with sanitized actions
@@ -312,9 +307,7 @@ class TestSendPhase3Notification:
                 "message": "PR ready: {url}",
             }
         }
-        result = send_phase3_notification(
-            config, "https://github.com/owner/repo/pull/1", "Test PR"
-        )
+        result = send_phase3_notification(config, "https://github.com/owner/repo/pull/1", "Test PR")
         assert result is True
         mock_send.assert_called_once()
 
@@ -323,9 +316,7 @@ class TestSendPhase3Notification:
         """Test with default message template"""
         mock_send.return_value = True
         config = {"ntfy": {"enabled": True, "topic": "test-topic"}}
-        result = send_phase3_notification(
-            config, "https://github.com/owner/repo/pull/1", "Test PR"
-        )
+        result = send_phase3_notification(config, "https://github.com/owner/repo/pull/1", "Test PR")
         assert result is True
         # Verify the default template was used
         call_args = mock_send.call_args
@@ -352,9 +343,7 @@ class TestSendPhase3Notification:
                 "priority": 5,
             }
         }
-        result = send_phase3_notification(
-            config, "https://github.com/owner/repo/pull/1", "Test PR"
-        )
+        result = send_phase3_notification(config, "https://github.com/owner/repo/pull/1", "Test PR")
         assert result is True
         # Verify priority 5 was passed
         call_args = mock_send.call_args
@@ -371,9 +360,7 @@ class TestSendPhase3Notification:
                 "message": "PR ready: {url}",
             }
         }
-        result = send_phase3_notification(
-            config, "https://github.com/owner/repo/pull/1", "Test PR"
-        )
+        result = send_phase3_notification(config, "https://github.com/owner/repo/pull/1", "Test PR")
         assert result is True
         # Verify default priority 4 was used
         call_args = mock_send.call_args

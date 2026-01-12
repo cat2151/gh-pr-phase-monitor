@@ -8,7 +8,6 @@ from typing import Any, Dict
 
 import tomli
 
-
 # Default configuration for phase3_merge feature (batteries included)
 DEFAULT_PHASE3_MERGE_CONFIG: Dict[str, Any] = {
     "comment": "All checks passed. Merging PR.",
@@ -331,9 +330,7 @@ def resolve_execution_config_for_repo(config: Dict[str, Any], repo_owner: str, r
                     ruleset["assign_good_first_old"], "assign_good_first_old"
                 )
             if "assign_old" in ruleset:
-                result["assign_old"] = _validate_boolean_flag(
-                    ruleset["assign_old"], "assign_old"
-                )
+                result["assign_old"] = _validate_boolean_flag(ruleset["assign_old"], "assign_old")
 
     return result
 

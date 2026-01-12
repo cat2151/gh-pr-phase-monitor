@@ -140,12 +140,14 @@ def get_all_repositories() -> List[Dict[str, Any]]:
         for repo in nodes:
             pr_count = repo.get("pullRequests", {}).get("totalCount", 0)
             issue_count = repo.get("issues", {}).get("totalCount", 0)
-            all_repos.append({
-                "name": repo.get("name"),
-                "owner": repo.get("owner", {}).get("login"),
-                "openPRCount": pr_count,
-                "openIssueCount": issue_count
-            })
+            all_repos.append(
+                {
+                    "name": repo.get("name"),
+                    "owner": repo.get("owner", {}).get("login"),
+                    "openPRCount": pr_count,
+                    "openIssueCount": issue_count,
+                }
+            )
 
         has_next_page = page_info.get("hasNextPage", False)
         end_cursor = page_info.get("endCursor")
@@ -163,9 +165,6 @@ def get_repositories_with_no_prs_and_open_issues() -> List[Dict[str, Any]]:
     all_repos = get_all_repositories()
 
     # Filter repositories: no open PRs AND has open issues
-    filtered_repos = [
-        repo for repo in all_repos
-        if repo["openPRCount"] == 0 and repo["openIssueCount"] > 0
-    ]
+    filtered_repos = [repo for repo in all_repos if repo["openPRCount"] == 0 and repo["openIssueCount"] > 0]
 
     return filtered_repos
