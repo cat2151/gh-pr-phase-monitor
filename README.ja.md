@@ -173,7 +173,6 @@ cat-github-watcher/
    ```
    
    Playwrightは chromium、firefox、webkit ブラウザをサポートします。
-   ```
 
 ### 実行
 
