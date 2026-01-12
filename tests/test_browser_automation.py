@@ -51,7 +51,8 @@ class TestAssignIssueToCopilotAutomated:
         config = {
             "assign_to_copilot": {
                 "wait_seconds": "invalid",
-                "browser": "edge"
+                "browser": "edge",
+                "automation_backend": "selenium"
             }
         }
 
@@ -73,7 +74,8 @@ class TestAssignIssueToCopilotAutomated:
         config = {
             "assign_to_copilot": {
                 "wait_seconds": -5,
-                "browser": "edge"
+                "browser": "edge",
+                "automation_backend": "selenium"
             }
         }
 
@@ -95,7 +97,8 @@ class TestAssignIssueToCopilotAutomated:
         config = {
             "assign_to_copilot": {
                 "wait_seconds": 5,
-                "browser": "edge"
+                "browser": "edge",
+                "automation_backend": "selenium"
             }
         }
 
@@ -116,7 +119,8 @@ class TestAssignIssueToCopilotAutomated:
         config = {
             "assign_to_copilot": {
                 "wait_seconds": 5.7,
-                "browser": "edge"
+                "browser": "edge",
+                "automation_backend": "selenium"
             }
         }
 
@@ -177,39 +181,52 @@ class TestPlaywrightBackend:
             config
         )
         
-        # Should attempt to use Playwright
-        assert result is False
+        # Should attempt to use Playwright and succeed (buttons were found and clicked in mock)
+        assert result is True
         mock_pw_instance.chromium.launch.assert_called_once()
 
-    def test_defaults_to_selenium_backend(self):
-        """Test that Selenium is used by default when backend not specified"""
+    def test_defaults_to_playwright_backend(self):
+        """Test that Playwright is used by default when backend not specified"""
         config = {
             "assign_to_copilot": {
-                "browser": "edge"
+                "browser": "chromium"
             }
         }
         
-        with patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", True):
-            with patch("src.gh_pr_phase_monitor.browser_automation._create_browser_driver") as mock_driver:
-                mock_driver.return_value = None
+        # Setup mock for Playwright
+        with patch("src.gh_pr_phase_monitor.browser_automation.PLAYWRIGHT_AVAILABLE", True):
+            with patch("src.gh_pr_phase_monitor.browser_automation.sync_playwright") as mock_playwright:
+                mock_pw_instance = MagicMock()
+                mock_browser = MagicMock()
+                mock_context = MagicMock()
+                mock_page = MagicMock()
+                
+                mock_playwright.return_value.__enter__ = MagicMock(return_value=mock_pw_instance)
+                mock_playwright.return_value.__exit__ = MagicMock(return_value=False)
+                mock_pw_instance.chromium.launch.return_value = mock_browser
+                mock_browser.new_context.return_value = mock_context
+                mock_context.new_page.return_value = mock_page
+                mock_page.click.side_effect = Exception("Button not found")
+                
                 assign_issue_to_copilot_automated(
                     "https://github.com/test/repo/issues/1",
                     config
                 )
                 
-                # Should use Selenium backend (default)
-                mock_driver.assert_called_once()
+                # Should use Playwright backend (default)
+                mock_pw_instance.chromium.launch.assert_called_once()
 
 
 class TestMergePrAutomated:
     """Tests for merge_pr_automated function"""
 
     @patch("src.gh_pr_phase_monitor.browser_automation.SELENIUM_AVAILABLE", False)
+    @patch("src.gh_pr_phase_monitor.browser_automation.PLAYWRIGHT_AVAILABLE", False)
     def test_returns_false_when_selenium_unavailable(self):
-        """Test that function returns False when Selenium is not available"""
+        """Test that function returns False when Selenium is not available and Selenium is requested"""
         result = merge_pr_automated(
             "https://github.com/test/repo/pull/1",
-            {}
+            {"phase3_merge": {"automation_backend": "selenium"}}
         )
         assert result is False
 
@@ -229,7 +246,8 @@ class TestMergePrAutomated:
             "phase3_merge": {
                 "wait_seconds": 1,
                 "browser": "edge",
-                "headless": False
+                "headless": False,
+                "automation_backend": "selenium"
             }
         }
         
@@ -269,7 +287,8 @@ class TestMergePrAutomated:
             "phase3_merge": {
                 "wait_seconds": 1,
                 "browser": "edge",
-                "headless": False
+                "headless": False,
+                "automation_backend": "selenium"
             }
         }
         
