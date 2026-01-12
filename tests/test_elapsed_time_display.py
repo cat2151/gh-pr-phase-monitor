@@ -208,8 +208,8 @@ class TestElapsedTimeDisplay:
 class TestWaitWithCountdown:
     """Test the wait_with_countdown functionality"""
 
-    def test_countdown_displays_elapsed_time(self):
-        """Test that countdown displays correctly with elapsed time formatting"""
+    def test_countdown_displays_remaining_time(self):
+        """Test that countdown displays remaining time correctly (counting down from initial value to 0)"""
         with patch("builtins.print") as mock_print, \
              patch("time.sleep") as mock_sleep, \
              patch("time.time") as mock_time:
