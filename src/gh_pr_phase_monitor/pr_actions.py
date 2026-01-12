@@ -232,8 +232,6 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
                 # Only mark as merged if the merge was successful
                 if merge_success:
                     _merged_prs.add(merge_key)
-        else:
-            print("    [DRY-RUN] Would merge PR (enable_execution_phase3_to_merge=false)")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:
