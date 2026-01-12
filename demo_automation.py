@@ -6,7 +6,7 @@ This script demonstrates the browser automation functionality
 without requiring a full GitHub environment setup.
 """
 
-from src.gh_pr_phase_monitor.browser_automation import is_playwright_available, is_selenium_available
+from src.gh_pr_phase_monitor.browser_automation import is_pyautogui_available
 
 
 def main():
@@ -15,31 +15,19 @@ def main():
     print("=" * 60)
     print()
 
-    # Check if Selenium is available
-    print("1. Checking automation backends...")
+    # Check if PyAutoGUI is available
+    print("1. Checking automation backend...")
     print()
 
-    selenium_status = is_selenium_available()
-    playwright_status = is_playwright_available()
+    pyautogui_status = is_pyautogui_available()
 
-    if selenium_status:
-        print("   ✓ Selenium is installed and available")
+    if pyautogui_status:
+        print("   ✓ PyAutoGUI is installed and available")
     else:
-        print("   ✗ Selenium is NOT installed")
-        print("   → Install with: pip install selenium webdriver-manager")
-
-    print()
-
-    if playwright_status:
-        print("   ✓ Playwright is installed and available")
-    else:
-        print("   ✗ Playwright is NOT installed")
-        print("   → Install with: pip install playwright && playwright install")
-
-    if not selenium_status and not playwright_status:
+        print("   ✗ PyAutoGUI is NOT installed")
+        print("   → Install with: pip install pyautogui pillow")
         print()
-        print("   ⚠ No automation backends are available.")
-        print("   → Install at least one to use browser automation.")
+        print("   ⚠ PyAutoGUI is required for browser automation.")
         return
 
     print()
@@ -49,62 +37,70 @@ def main():
     print("-" * 60)
     print("""
 [assign_to_copilot]
-enabled = true                    # Enable the feature
-automated = true                  # Enable browser automation
-automation_backend = "selenium"   # Backend: "selenium" or "playwright"
 wait_seconds = 10                 # Wait time before clicking buttons
-browser = "edge"                  # For Selenium: "edge", "chrome", "firefox"
-                                   # For Playwright: "chromium", "firefox", "webkit"
-headless = false                  # Run in headless mode (no visible window)
+screenshot_dir = "screenshots"    # Directory containing button screenshots
+
+[phase3_merge]
+automated = true                  # Enable browser automation for merge
+wait_seconds = 10                 # Wait time before clicking buttons
+screenshot_dir = "screenshots"    # Directory containing button screenshots
     """)
     print("-" * 60)
     print()
     print("3. How it works:")
-    print("   → Opens the GitHub issue URL in a browser")
+    print("   → Opens the GitHub issue/PR URL in a browser")
     print("   → Waits for the configured time (default: 10 seconds)")
-    print("   → Automatically clicks 'Assign to Copilot' button")
-    print("   → Automatically clicks 'Assign' button")
+    print("   → Uses image recognition to find and click buttons")
+    print("   → Requires you to provide screenshots of the buttons")
     print()
-    print("4. Requirements:")
+    print("4. Required screenshots:")
     print()
-    print("   Selenium Backend:")
-    print("   → Install: pip install selenium webdriver-manager")
-    print("   → Browser driver (automatically downloaded):")
-    print("     - Edge: Pre-installed on Windows 10/11")
-    print("     - Chrome: ChromeDriver (auto-downloaded)")
-    print("     - Firefox: GeckoDriver (auto-downloaded)")
+    print("   For issue assignment (assign_to_copilot):")
+    print("   → assign_to_copilot.png - Screenshot of 'Assign to Copilot' button")
+    print("   → assign.png - Screenshot of 'Assign' button")
     print()
-    print("   Playwright Backend:")
-    print("   → Install: pip install playwright")
-    print("   → Run: playwright install")
-    print("   → Supported browsers:")
-    print("     - Chromium (includes Chrome/Edge-like browsers)")
-    print("     - Firefox")
-    print("     - WebKit (Safari-like)")
+    print("   For PR merge (phase3_merge):")
+    print("   → merge_pull_request.png - Screenshot of 'Merge pull request' button")
+    print("   → confirm_merge.png - Screenshot of 'Confirm merge' button")
+    print("   → delete_branch.png - Screenshot of 'Delete branch' button (optional)")
     print()
-    print("5. Backend Comparison:")
+    print("5. How to capture button screenshots:")
     print()
-    print("   Selenium:")
-    print("   ✓ Industry standard, mature and stable")
-    print("   ✓ Extensive documentation and community support")
-    print("   ✓ Works with real browser installations")
-    print("   ✗ Requires separate driver management")
+    print("   a. Open a GitHub issue or PR in your browser")
+    print("   b. Find the button you want to automate")
+    print("   c. Take a screenshot of JUST the button (not the whole screen)")
+    print("   d. Save it as a PNG file in the screenshots directory")
+    print("   e. Use the exact filenames listed above")
     print()
-    print("   Playwright:")
-    print("   ✓ Modern, fast and reliable")
-    print("   ✓ Built-in browser management")
-    print("   ✓ Better API design and error handling")
-    print("   ✓ Auto-waits for elements")
-    print("   ✗ Newer, smaller community")
+    print("   Tips:")
+    print("   - Screenshot should include only the button with a small margin")
+    print("   - Use your OS's screenshot tool (Windows: Snipping Tool, Mac: Cmd+Shift+4)")
+    print("   - Make sure the button is clearly visible and not obscured")
     print()
-    print("6. Usage:")
-    print("   When the tool finds a 'good first issue', it will:")
-    print("   - In manual mode: Open browser and wait for you to click")
-    print("   - In automated mode: Open browser and click automatically")
+    print("6. Installation:")
+    print()
+    print("   Install PyAutoGUI:")
+    print("   → pip install -r requirements-automation.txt")
+    print()
+    print("   Or manually:")
+    print("   → pip install pyautogui pillow")
+    print()
+    print("7. Usage:")
+    print("   When the tool finds a 'good first issue' or a PR ready to merge:")
+    print("   - Opens the URL in your browser")
+    print("   - Waits for the configured time")
+    print("   - Automatically clicks the buttons using image recognition")
     print()
     print("=" * 60)
     print("Demo complete!")
     print("=" * 60)
+    print()
+    print("Next steps:")
+    print("1. Create a 'screenshots' directory")
+    print("2. Capture button screenshots as described above")
+    print("3. Configure your config.toml")
+    print("4. Run cat-github-watcher.py")
+    print()
 
 
 if __name__ == "__main__":

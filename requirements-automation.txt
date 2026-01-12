@@ -1,9 +1,6 @@
 # Optional dependencies for browser automation
 # Install with: pip install -r requirements-automation.txt
 
-# Selenium backend
-selenium>=4.0.0
-webdriver-manager>=4.0.0
-
-# Playwright backend
-playwright>=1.40.0
+# PyAutoGUI for image-based button clicking
+pyautogui>=0.9.54
+pillow>=10.0.0  # Required for screenshot comparison

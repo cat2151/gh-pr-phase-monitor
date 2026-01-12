@@ -5,7 +5,7 @@ Issue fetching module for GitHub issues
 import json
 from typing import Any, Dict, List, Optional
 
-from .browser_automation import assign_issue_to_copilot_automated, is_playwright_available, is_selenium_available
+from .browser_automation import assign_issue_to_copilot_automated, is_pyautogui_available
 from .graphql_client import execute_graphql_query
 
 # GraphQL pagination constants
@@ -183,11 +183,10 @@ def assign_issue_to_copilot(issue: Dict[str, Any], config: Optional[Dict[str, An
     # Always use automated assignment
     print(f"  → Attempting automated assignment for issue #{issue_number}: {owner}/{repo_name}")
 
-    if not is_selenium_available() and not is_playwright_available():
-        print("  ✗ Neither Selenium nor Playwright is available")
-        print("  → To enable automation, install one of:")
-        print("     - Selenium: pip install selenium webdriver-manager")
-        print("     - Playwright: pip install playwright && playwright install")
+    if not is_pyautogui_available():
+        print("  ✗ PyAutoGUI is not available")
+        print("  → To enable automation, install PyAutoGUI:")
+        print("     pip install pyautogui pillow")
         return False
 
     # Use automated browser automation
