@@ -158,7 +158,7 @@ def _assign_with_selenium(
     # Validate and get wait_seconds
     wait_seconds = _validate_wait_seconds(assign_config)
 
-    browser_type = assign_config.get("browser", "edge").lower()
+    browser_type = assign_config.get("browser", "chrome").lower()
     headless = assign_config.get("headless", False)
 
     driver = None
@@ -444,7 +444,7 @@ def _merge_pr_with_selenium(
     # Validate and get wait_seconds
     wait_seconds = _validate_wait_seconds(merge_config)
 
-    browser_type = merge_config.get("browser", "edge").lower()
+    browser_type = merge_config.get("browser", "chrome").lower()
     headless = merge_config.get("headless", False)
 
     driver = None
