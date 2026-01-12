@@ -107,7 +107,6 @@ def test_print_config_with_phase3_merge():
     output = f.getvalue()
     
     assert "[Phase3 Merge Settings]" in output
-    assert "enabled: True" in output
     assert "comment: Merging PR" in output
     assert "automated: True" in output
     assert "automation_backend: selenium" in output
@@ -135,7 +134,6 @@ def test_print_config_with_assign_to_copilot():
     output = f.getvalue()
     
     assert "[Auto-assign to Copilot Settings]" in output
-    assert "enabled: True" in output
     assert "automated: True" in output
     assert "automation_backend: playwright" in output
 
@@ -214,5 +212,4 @@ def test_print_config_with_assign_lowest_number_issue():
     output = f.getvalue()
 
     assert "[Auto-assign to Copilot Settings]" in output
-    assert "enabled: True" in output
     assert "assign_lowest_number_issue: True" in output

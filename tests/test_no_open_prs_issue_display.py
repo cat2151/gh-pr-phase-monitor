@@ -64,8 +64,16 @@ def test_display_issues_when_no_repos_with_prs():
 
                 mock_assign.return_value = True
 
-                # Create config with assign_to_copilot enabled
-                config = {"assign_to_copilot": {"enabled": True}}
+                # Create config with assign_to_copilot enabled via rulesets
+                config = {
+                    "assign_to_copilot": {},  # Empty section provides defaults
+                    "rulesets": [
+                        {
+                            "repositories": ["test-repo"],
+                            "enable_assign_to_copilot": True,  # Enable for this repo
+                        }
+                    ],
+                }
 
                 # Call the function with config
                 display_issues_from_repos_without_prs(config)
@@ -137,9 +145,21 @@ def test_display_issues_with_assign_disabled():
                     }
                 ]
 
-                # Mock good first issue response - but it should never be called
+                # Mock issue responses
                 mock_get_issues.side_effect = [
-                    # Only the second call (top 10 issues) should be made
+                    # First call: good first issue (will be fetched but not assigned)
+                    [
+                        {
+                            "title": "Good first issue",
+                            "url": "https://github.com/testuser/test-repo/issues/1",
+                            "number": 1,
+                            "updatedAt": "2024-01-01T00:00:00Z",
+                            "author": {"login": "contributor1"},
+                            "repository": {"owner": "testuser", "name": "test-repo"},
+                            "labels": ["good first issue"],
+                        }
+                    ],
+                    # Second call: top 10 issues
                     [
                         {
                             "title": "Issue 1",
@@ -152,8 +172,8 @@ def test_display_issues_with_assign_disabled():
                     ],
                 ]
 
-                # Create config with assign_to_copilot disabled (or missing)
-                config = {"assign_to_copilot": {"enabled": False}}
+                # Create config without rulesets enabling assign_to_copilot
+                config = {"assign_to_copilot": {}}  # Feature available but not enabled per-repo
 
                 # Call the function with config
                 display_issues_from_repos_without_prs(config)
@@ -161,10 +181,11 @@ def test_display_issues_with_assign_disabled():
                 # Verify that the function fetched repos without PRs
                 mock_get_repos.assert_called_once()
 
-                # Verify that only one issue fetch was made (top 10, not good first issue)
-                assert mock_get_issues.call_count == 1
+                # Verify that issues were fetched twice (good first issue + top 10)
+                # With batteries-included, good first issue is always checked
+                assert mock_get_issues.call_count == 2
 
-                # Verify assignment was NOT attempted
+                # Verify assignment was NOT attempted (no ruleset enabling it)
                 mock_assign.assert_not_called()
 
 
@@ -184,20 +205,35 @@ def test_display_issues_with_custom_limit():
             ]
 
             # Mock issue response
-            mock_get_issues.return_value = [
-                {
-                    "title": f"Issue {i}",
-                    "url": f"https://github.com/testuser/test-repo/issues/{i}",
-                    "number": i,
-                    "updatedAt": f"2024-01-{i:02d}T00:00:00Z",
-                    "author": {"login": "contributor1"},
-                    "repository": {"owner": "testuser", "name": "test-repo"},
-                }
-                for i in range(1, 6)
+            mock_get_issues.side_effect = [
+                # First call: good first issue
+                [
+                    {
+                        "title": "Good first issue",
+                        "url": "https://github.com/testuser/test-repo/issues/1",
+                        "number": 1,
+                        "updatedAt": "2024-01-01T00:00:00Z",
+                        "author": {"login": "contributor1"},
+                        "repository": {"owner": "testuser", "name": "test-repo"},
+                        "labels": ["good first issue"],
+                    }
+                ],
+                # Second call: top N issues with custom limit
+                [
+                    {
+                        "title": f"Issue {i}",
+                        "url": f"https://github.com/testuser/test-repo/issues/{i}",
+                        "number": i,
+                        "updatedAt": f"2024-01-{i:02d}T00:00:00Z",
+                        "author": {"login": "contributor1"},
+                        "repository": {"owner": "testuser", "name": "test-repo"},
+                    }
+                    for i in range(1, 6)
+                ],
             ]
 
             # Create config with custom issue_display_limit
-            config = {"assign_to_copilot": {"enabled": False}, "issue_display_limit": 5}
+            config = {"assign_to_copilot": {}, "issue_display_limit": 5}
 
             # Call the function with config
             display_issues_from_repos_without_prs(config)
@@ -205,10 +241,11 @@ def test_display_issues_with_custom_limit():
             # Verify that the function fetched repos without PRs
             mock_get_repos.assert_called_once()
 
-            # Verify that issues were fetched with the custom limit
-            mock_get_issues.assert_called_once()
-            call_args = mock_get_issues.call_args
-            assert call_args[1]["limit"] == 5
+            # Verify that issues were fetched twice (good first issue + top N)
+            assert mock_get_issues.call_count == 2
+            # Check the second call (top N issues) used the custom limit
+            second_call = mock_get_issues.call_args_list[1]
+            assert second_call[1]["limit"] == 5
 
 
 def test_display_issues_with_none_config():
@@ -227,16 +264,31 @@ def test_display_issues_with_none_config():
             ]
 
             # Mock issue response
-            mock_get_issues.return_value = [
-                {
-                    "title": f"Issue {i}",
-                    "url": f"https://github.com/testuser/test-repo/issues/{i}",
-                    "number": i,
-                    "updatedAt": f"2024-01-{i:02d}T00:00:00Z",
-                    "author": {"login": "contributor1"},
-                    "repository": {"owner": "testuser", "name": "test-repo"},
-                }
-                for i in range(1, 11)
+            mock_get_issues.side_effect = [
+                # First call: good first issue
+                [
+                    {
+                        "title": "Good first issue",
+                        "url": "https://github.com/testuser/test-repo/issues/1",
+                        "number": 1,
+                        "updatedAt": "2024-01-01T00:00:00Z",
+                        "author": {"login": "contributor1"},
+                        "repository": {"owner": "testuser", "name": "test-repo"},
+                        "labels": ["good first issue"],
+                    }
+                ],
+                # Second call: top 10 issues
+                [
+                    {
+                        "title": f"Issue {i}",
+                        "url": f"https://github.com/testuser/test-repo/issues/{i}",
+                        "number": i,
+                        "updatedAt": f"2024-01-{i:02d}T00:00:00Z",
+                        "author": {"login": "contributor1"},
+                        "repository": {"owner": "testuser", "name": "test-repo"},
+                    }
+                    for i in range(1, 11)
+                ],
             ]
 
             # Call the function with None config - should use default limit of 10
@@ -245,10 +297,11 @@ def test_display_issues_with_none_config():
             # Verify that the function fetched repos without PRs
             mock_get_repos.assert_called_once()
 
-            # Verify that issues were fetched with the default limit of 10
-            mock_get_issues.assert_called_once()
-            call_args = mock_get_issues.call_args
-            assert call_args[1]["limit"] == 10
+            # Verify that issues were fetched twice (good first issue + top 10)
+            assert mock_get_issues.call_count == 2
+            # Check the second call used the default limit of 10
+            second_call = mock_get_issues.call_args_list[1]
+            assert second_call[1]["limit"] == 10
 
 
 def test_display_issues_with_assign_lowest_number():
@@ -305,12 +358,17 @@ def test_display_issues_with_assign_lowest_number():
 
                 mock_assign.return_value = True
 
-                # Create config with assign_to_copilot enabled and assign_lowest_number_issue enabled
+                # Create config with assign_to_copilot enabled via rulesets and assign_lowest_number_issue enabled
                 config = {
                     "assign_to_copilot": {
-                        "enabled": True,
                         "assign_lowest_number_issue": True
-                    }
+                    },
+                    "rulesets": [
+                        {
+                            "repositories": ["test-repo"],
+                            "enable_assign_to_copilot": True,  # Enable for this repo
+                        }
+                    ],
                 }
 
                 # Call the function with config

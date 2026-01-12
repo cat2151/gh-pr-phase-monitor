@@ -9,6 +9,27 @@ from typing import Any, Dict
 import tomli
 
 
+# Default configuration for phase3_merge feature (batteries included)
+DEFAULT_PHASE3_MERGE_CONFIG: Dict[str, Any] = {
+    "comment": "All checks passed. Merging PR.",
+    "automated": False,
+    "automation_backend": "playwright",
+    "wait_seconds": 10,
+    "browser": "chromium",
+    "headless": False,
+}
+
+# Default configuration for assign_to_copilot feature (batteries included)
+DEFAULT_ASSIGN_TO_COPILOT_CONFIG: Dict[str, Any] = {
+    "assign_lowest_number_issue": False,
+    "automated": False,
+    "automation_backend": "playwright",
+    "wait_seconds": 10,
+    "browser": "chromium",
+    "headless": False,
+}
+
+
 def parse_interval(interval_str: str) -> int:
     """Parse interval string like '1m', '30s', '2h' to seconds
 
@@ -71,6 +92,44 @@ def _validate_boolean_flag(value: Any, flag_name: str) -> bool:
             f"got {type(value).__name__}: {value}"
         )
     return value
+
+
+def get_phase3_merge_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get phase3_merge configuration with defaults applied
+    
+    Args:
+        config: Global configuration dictionary
+    
+    Returns:
+        phase3_merge configuration with defaults for missing keys
+    """
+    user_config = config.get("phase3_merge", {})
+    if not isinstance(user_config, dict):
+        user_config = {}
+    
+    # Merge user config with defaults, user config takes precedence
+    result = DEFAULT_PHASE3_MERGE_CONFIG.copy()
+    result.update(user_config)
+    return result
+
+
+def get_assign_to_copilot_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """Get assign_to_copilot configuration with defaults applied
+    
+    Args:
+        config: Global configuration dictionary
+    
+    Returns:
+        assign_to_copilot configuration with defaults for missing keys
+    """
+    user_config = config.get("assign_to_copilot", {})
+    if not isinstance(user_config, dict):
+        user_config = {}
+    
+    # Merge user config with defaults, user config takes precedence
+    result = DEFAULT_ASSIGN_TO_COPILOT_CONFIG.copy()
+    result.update(user_config)
+    return result
 
 
 def get_config_mtime(config_path: str = "config.toml") -> float:

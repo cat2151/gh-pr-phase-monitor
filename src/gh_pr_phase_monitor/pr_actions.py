@@ -13,7 +13,7 @@ from .comment_manager import (
     post_phase2_comment,
     post_phase3_comment,
 )
-from .config import resolve_execution_config_for_repo, print_repo_execution_config
+from .config import resolve_execution_config_for_repo, print_repo_execution_config, get_phase3_merge_config
 from .notifier import send_phase3_notification
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
@@ -192,8 +192,8 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         # Merge PR if configured and not already merged
         merge_key = url
         merge_execution_enabled = exec_config["enable_execution_phase3_to_merge"]
-        # Use global phase3_merge configuration
-        phase3_merge_config = config.get("phase3_merge", {}) if config else {}
+        # Use global phase3_merge configuration with defaults applied
+        phase3_merge_config = get_phase3_merge_config(config) if config else get_phase3_merge_config({})
         # Check if phase3_merge is enabled:
         # - Default is disabled for safety
         # - Must be explicitly enabled via ruleset's enable_phase3_merge flag
