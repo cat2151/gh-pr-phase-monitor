@@ -101,7 +101,7 @@ def wait_with_countdown(
 
         elapsed_str = format_elapsed_time(actual_elapsed)
         # Print countdown on same line using carriage return
-        print(f"\r待機中... 経過時間: {elapsed_str}     ", end="", flush=True)
+        print(f"\rWaiting {elapsed_str}     ", end="", flush=True)
 
         # Calculate remaining time
         remaining = interval_seconds - actual_elapsed
@@ -161,7 +161,7 @@ def wait_with_countdown(
     # Final update - show actual elapsed time
     actual_elapsed = time.time() - wait_start_time
     elapsed_str = format_elapsed_time(actual_elapsed)
-    print(f"\r待機中... 経過時間: {elapsed_str}     ", flush=True)
+    print(f"\rWaiting {elapsed_str}     ", flush=True)
     print()  # New line after countdown completes
 
     return current_config, current_interval_seconds, current_interval_str, current_mtime

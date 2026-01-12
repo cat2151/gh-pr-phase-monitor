@@ -223,10 +223,10 @@ class TestWaitWithCountdown:
             assert "Waiting 3s until next check" in output
 
             # Verify countdown messages were printed
-            assert "待機中... 経過時間: 0秒" in output
-            assert "待機中... 経過時間: 1秒" in output
-            assert "待機中... 経過時間: 2秒" in output
-            assert "待機中... 経過時間: 3秒" in output
+            assert "Waiting 0秒" in output
+            assert "Waiting 1秒" in output
+            assert "Waiting 2秒" in output
+            assert "Waiting 3秒" in output
 
             # Verify sleep was called correct number of times
             assert mock_sleep.call_count == 3
@@ -243,7 +243,7 @@ class TestWaitWithCountdown:
             # Check that carriage return is used in countdown lines
             countdown_calls = [
                 call for call in mock_print.call_args_list
-                if "待機中" in str(call)
+                if "Waiting" in str(call) and "until next check" not in str(call)
             ]
 
             # Verify carriage return usage
@@ -266,7 +266,7 @@ class TestWaitWithCountdown:
             # Verify final elapsed time
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
-            assert "待機中... 経過時間: 5秒" in output
+            assert "Waiting 5秒" in output
 
     def test_countdown_formats_time_correctly(self):
         """Test that countdown formats time with minutes and seconds"""
@@ -283,5 +283,5 @@ class TestWaitWithCountdown:
             output = " ".join(calls)
 
             # Verify that minutes are displayed correctly
-            assert "待機中... 経過時間: 1分29秒" in output
-            assert "待機中... 経過時間: 1分30秒" in output
+            assert "Waiting 1分29秒" in output
+            assert "Waiting 1分30秒" in output
