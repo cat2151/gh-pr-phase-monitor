@@ -18,7 +18,7 @@ class TestPhase3Merge:
         pr_actions._merged_prs.clear()
 
     def test_merge_not_attempted_when_disabled(self):
-        """Merge should not be attempted when disabled via enable_phase3_merge=false in ruleset"""
+        """Merge should not be attempted when disabled via enable_execution_phase3_to_merge=false"""
         pr = {
             "isDraft": False,
             "reviews": [
@@ -35,14 +35,15 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": False,
-                    "enable_phase3_merge": False,
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             process_pr(pr, config)
             # Merge should not be attempted
             mock_merge.assert_not_called()
@@ -69,14 +70,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge.return_value = True
             mock_comment.return_value = True
             process_pr(pr, config)
@@ -106,14 +109,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr_automated"
-        ) as mock_merge_auto, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr_automated") as mock_merge_auto,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge_auto.return_value = True
             mock_comment.return_value = True
             process_pr(pr, config)
@@ -154,14 +159,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge.return_value = True
             mock_comment.return_value = True
 
@@ -195,16 +202,17 @@ class TestPhase3Merge:
                     "repositories": ["test-repo"],
                     "enable_execution_phase1_to_phase2": True,
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment, patch(
-            "src.gh_pr_phase_monitor.pr_actions.mark_pr_ready"
-        ) as mock_ready:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+            patch("src.gh_pr_phase_monitor.pr_actions.mark_pr_ready") as mock_ready,
+        ):
             mock_ready.return_value = True
             process_pr(pr, config)
             # Merge should not be attempted for phase1
@@ -236,16 +244,17 @@ class TestPhase3Merge:
                     "repositories": ["test-repo"],
                     "enable_execution_phase2_to_phase3": True,
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment, patch(
-            "src.gh_pr_phase_monitor.pr_actions.post_phase2_comment"
-        ) as mock_phase2_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase2_comment") as mock_phase2_comment,
+        ):
             mock_phase2_comment.return_value = True
             process_pr(pr, config)
             # Merge should not be attempted for phase2
@@ -276,9 +285,11 @@ class TestPhase3Merge:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             process_pr(pr, config)
             # Merge should not be attempted in dry-run mode
             mock_merge.assert_not_called()
@@ -305,14 +316,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_comment.return_value = False  # Comment posting fails
             process_pr(pr, config)
             # Comment should be attempted
@@ -343,14 +356,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_comment.return_value = True
             mock_merge.return_value = False  # Merge fails
             process_pr(pr, config)
@@ -381,14 +396,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr_automated"
-        ) as mock_merge_auto, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr_automated") as mock_merge_auto,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_comment.return_value = True
             mock_merge_auto.return_value = False  # Merge fails
             process_pr(pr, config)
@@ -419,14 +436,16 @@ class TestPhase3Merge:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Explicitly enable
+                    # Explicitly enable
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_comment.return_value = True
             mock_merge.return_value = True  # Merge succeeds
             process_pr(pr, config)

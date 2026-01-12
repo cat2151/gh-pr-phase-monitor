@@ -110,7 +110,6 @@ The tool identifies the following four phases:
     # enable_execution_phase2_to_phase3 = false  # Set to true to post phase2 comments
     # enable_execution_phase3_send_ntfy = false  # Set to true to send ntfy notifications
     # enable_execution_phase3_to_merge = false   # Set to true to merge phase3 PRs
-    # enable_phase3_merge = false                # Set to true to enable auto-merge feature (uses global [phase3_merge] setting)
     # enable_assign_to_copilot = false           # Set to true to enable auto-assignment feature (uses global [assign_to_copilot] setting)
     
     # ntfy.sh notification settings (optional)
@@ -127,7 +126,7 @@ The tool identifies the following four phases:
     # Before merging, the comment defined below will be posted to the PR
     # After successful merge, the feature branch will be automatically deleted
     # IMPORTANT: For safety, this feature is disabled by default.
-    # You must explicitly enable it by specifying enable_phase3_merge = true in the rulesets for each repository.
+    # You must explicitly enable it by specifying enable_execution_phase3_to_merge = true in the rulesets for each repository.
     [phase3_merge]
     comment = "All checks passed. Merging PR."  # Comment to post before merging
     automated = false  # Set to true to click the merge button via browser automation
@@ -198,7 +197,7 @@ python3 -m src.gh_pr_phase_monitor.main [config.toml]
     -   **phase2**: Dry-run by default (if `enable_execution_phase2_to_phase3 = true` in rulesets, posts a comment requesting Copilot to apply changes).
     -   **phase3**: Opens the PR page in a browser.
         -   If `enable_execution_phase3_send_ntfy = true` in rulesets, also sends ntfy.sh notifications.
-        -   If `enable_execution_phase3_to_merge = true` and `enable_phase3_merge = true` in rulesets, automatically merges the PR (uses global `[phase3_merge]` setting).
+        -   If `enable_execution_phase3_to_merge = true` in rulesets, automatically merges the PR (uses global `[phase3_merge]` setting).
     -   **LLM working**: Waits (if all PRs are in this state, displays issues from repositories with no open PRs).
 5.  **Issue Auto-Assignment**: If all PRs are "LLM working" and there are repositories with no open PRs:
     -   If `enable_assign_to_copilot = true` in rulesets, the auto-assignment feature is enabled (uses global `[assign_to_copilot]` setting).
@@ -223,8 +222,7 @@ repositories = ["test-repo"]  # Or ["all"] for all repositories
 enable_execution_phase1_to_phase2 = true  # Mark Draft PRs as Ready
 enable_execution_phase2_to_phase3 = true  # Post Phase2 comment
 enable_execution_phase3_send_ntfy = true  # Send ntfy notification
-enable_execution_phase3_to_merge = true   # Merge Phase3 PRs (enable_phase3_merge also required)
-enable_phase3_merge = true                # Enable auto-merge feature (uses global [phase3_merge] setting)
+enable_execution_phase3_to_merge = true   # Merge Phase3 PRs 
 enable_assign_to_copilot = true           # Enable auto-assignment feature (uses global [assign_to_copilot] setting)
 ```
 
