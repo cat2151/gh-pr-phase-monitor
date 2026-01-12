@@ -88,25 +88,24 @@ def _validate_boolean_flag(value: Any, flag_name: str) -> bool:
     """
     if not isinstance(value, bool):
         raise ValueError(
-            f"Configuration flag '{flag_name}' must be a boolean (true/false), "
-            f"got {type(value).__name__}: {value}"
+            f"Configuration flag '{flag_name}' must be a boolean (true/false), got {type(value).__name__}: {value}"
         )
     return value
 
 
 def get_phase3_merge_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Get phase3_merge configuration with defaults applied
-    
+
     Args:
         config: Global configuration dictionary
-    
+
     Returns:
         phase3_merge configuration with defaults for missing keys
     """
     user_config = config.get("phase3_merge", {})
     if not isinstance(user_config, dict):
         user_config = {}
-    
+
     # Merge user config with defaults, user config takes precedence
     result = DEFAULT_PHASE3_MERGE_CONFIG.copy()
     result.update(user_config)
@@ -115,17 +114,17 @@ def get_phase3_merge_config(config: Dict[str, Any]) -> Dict[str, Any]:
 
 def get_assign_to_copilot_config(config: Dict[str, Any]) -> Dict[str, Any]:
     """Get assign_to_copilot configuration with defaults applied
-    
+
     Args:
         config: Global configuration dictionary
-    
+
     Returns:
         assign_to_copilot configuration with defaults for missing keys
     """
     user_config = config.get("assign_to_copilot", {})
     if not isinstance(user_config, dict):
         user_config = {}
-    
+
     # Merge user config with defaults, user config takes precedence
     result = DEFAULT_ASSIGN_TO_COPILOT_CONFIG.copy()
     result.update(user_config)
@@ -190,10 +189,18 @@ def print_config(config: Dict[str, Any]) -> None:
                 print(f"\n  Ruleset #{i}:")
                 print(f"    name: {ruleset.get('name', 'N/A')}")
                 print(f"    repositories: {ruleset.get('repositories', [])}")
-                print(f"    enable_execution_phase1_to_phase2: {ruleset.get('enable_execution_phase1_to_phase2', 'not set')}")
-                print(f"    enable_execution_phase2_to_phase3: {ruleset.get('enable_execution_phase2_to_phase3', 'not set')}")
-                print(f"    enable_execution_phase3_send_ntfy: {ruleset.get('enable_execution_phase3_send_ntfy', 'not set')}")
-                print(f"    enable_execution_phase3_to_merge: {ruleset.get('enable_execution_phase3_to_merge', 'not set')}")
+                print(
+                    f"    enable_execution_phase1_to_phase2: {ruleset.get('enable_execution_phase1_to_phase2', 'not set')}"
+                )
+                print(
+                    f"    enable_execution_phase2_to_phase3: {ruleset.get('enable_execution_phase2_to_phase3', 'not set')}"
+                )
+                print(
+                    f"    enable_execution_phase3_send_ntfy: {ruleset.get('enable_execution_phase3_send_ntfy', 'not set')}"
+                )
+                print(
+                    f"    enable_execution_phase3_to_merge: {ruleset.get('enable_execution_phase3_to_merge', 'not set')}"
+                )
     else:
         print("\n[Rulesets]")
         print("  No rulesets configured")
@@ -203,7 +210,7 @@ def print_config(config: Dict[str, Any]) -> None:
     if ntfy and isinstance(ntfy, dict):
         print("\n[ntfy.sh Notification Settings]")
         print(f"  enabled: {ntfy.get('enabled', False)}")
-        if ntfy.get('enabled', False):
+        if ntfy.get("enabled", False):
             print(f"  topic: {ntfy.get('topic', 'N/A')}")
             print(f"  message: {ntfy.get('message', 'N/A')}")
             print(f"  priority: {ntfy.get('priority', 4)}")
@@ -214,7 +221,7 @@ def print_config(config: Dict[str, Any]) -> None:
         print("\n[Phase3 Merge Settings]")
         print(f"  comment: {phase3_merge.get('comment', 'N/A')}")
         print(f"  automated: {phase3_merge.get('automated', False)}")
-        if phase3_merge.get('automated', False):
+        if phase3_merge.get("automated", False):
             print(f"  automation_backend: {phase3_merge.get('automation_backend', 'playwright')}")
             print(f"  wait_seconds: {phase3_merge.get('wait_seconds', 10)}")
             print(f"  browser: {phase3_merge.get('browser', 'chromium')}")
@@ -226,7 +233,7 @@ def print_config(config: Dict[str, Any]) -> None:
         print("\n[Auto-assign to Copilot Settings]")
         print(f"  assign_lowest_number_issue: {assign_to_copilot.get('assign_lowest_number_issue', False)}")
         print(f"  automated: {assign_to_copilot.get('automated', False)}")
-        if assign_to_copilot.get('automated', False):
+        if assign_to_copilot.get("automated", False):
             print(f"  automation_backend: {assign_to_copilot.get('automation_backend', 'playwright')}")
             print(f"  wait_seconds: {assign_to_copilot.get('wait_seconds', 10)}")
             print(f"  browser: {assign_to_copilot.get('browser', 'chromium')}")
@@ -235,9 +242,7 @@ def print_config(config: Dict[str, Any]) -> None:
     print("\n" + "=" * 50)
 
 
-def resolve_execution_config_for_repo(
-    config: Dict[str, Any], repo_owner: str, repo_name: str
-) -> Dict[str, Any]:
+def resolve_execution_config_for_repo(config: Dict[str, Any], repo_owner: str, repo_name: str) -> Dict[str, Any]:
     """Resolve execution configuration for a specific repository using rulesets
 
     This function applies rulesets in order, with later rulesets overriding earlier ones.
@@ -263,7 +268,6 @@ def resolve_execution_config_for_repo(
         "enable_execution_phase2_to_phase3": False,
         "enable_execution_phase3_send_ntfy": False,
         "enable_execution_phase3_to_merge": False,
-        "enable_phase3_merge": None,  # None means not set by rulesets, use global
         "enable_assign_to_copilot": None,  # None means not set by rulesets, use global
     }
 
@@ -313,12 +317,8 @@ def resolve_execution_config_for_repo(
                 result["enable_execution_phase3_to_merge"] = _validate_boolean_flag(
                     ruleset["enable_execution_phase3_to_merge"], "enable_execution_phase3_to_merge"
                 )
-            
-            # Apply simple on/off flags for phase3_merge and assign_to_copilot
-            if "enable_phase3_merge" in ruleset:
-                result["enable_phase3_merge"] = _validate_boolean_flag(
-                    ruleset["enable_phase3_merge"], "enable_phase3_merge"
-                )
+
+            # Apply simple on/off flag for assign_to_copilot
             if "enable_assign_to_copilot" in ruleset:
                 result["enable_assign_to_copilot"] = _validate_boolean_flag(
                     ruleset["enable_assign_to_copilot"], "enable_assign_to_copilot"
@@ -327,9 +327,7 @@ def resolve_execution_config_for_repo(
     return result
 
 
-def print_repo_execution_config(
-    repo_owner: str, repo_name: str, exec_config: Dict[str, Any]
-) -> None:
+def print_repo_execution_config(repo_owner: str, repo_name: str, exec_config: Dict[str, Any]) -> None:
     """Print execution configuration for a specific repository
 
     Args:
@@ -342,5 +340,4 @@ def print_repo_execution_config(
     print(f"      enable_execution_phase2_to_phase3: {exec_config.get('enable_execution_phase2_to_phase3', False)}")
     print(f"      enable_execution_phase3_send_ntfy: {exec_config.get('enable_execution_phase3_send_ntfy', False)}")
     print(f"      enable_execution_phase3_to_merge: {exec_config.get('enable_execution_phase3_to_merge', False)}")
-    print(f"      enable_phase3_merge: {exec_config.get('enable_phase3_merge', False)}")
     print(f"      enable_assign_to_copilot: {exec_config.get('enable_assign_to_copilot', False)}")

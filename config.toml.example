@@ -94,7 +94,6 @@ verbose = false
 # name = "Enable merge for specific repo"
 # repositories = ["test-repo"]
 # enable_execution_phase3_to_merge = true
-# enable_phase3_merge = true  # Explicitly enable - uses global [phase3_merge] settings
 #
 # [[rulesets]]
 # name = "Enable auto-assign for another repo"
@@ -116,7 +115,7 @@ all_phase3_message = "All PRs are now in phase3 (ready for review)"  # Message w
 # Automatically merge PRs when they reach phase3 (ready for review)
 # Before merging, a comment defined below will be posted to the PR
 # IMPORTANT: Feature is DISABLED by default for safety.
-# Must be explicitly enabled per repository using enable_phase3_merge in rulesets.
+# Must be explicitly enabled per repository using enable_execution_phase3_to_merge in rulesets.
 [phase3_merge]
 comment = "All checks passed. Merging PR."  # Comment to post before merging
 automated = false  # Set to true to use browser automation to click the merge button

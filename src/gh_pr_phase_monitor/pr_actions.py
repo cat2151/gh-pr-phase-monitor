@@ -13,7 +13,7 @@ from .comment_manager import (
     post_phase2_comment,
     post_phase3_comment,
 )
-from .config import resolve_execution_config_for_repo, print_repo_execution_config, get_phase3_merge_config
+from .config import get_phase3_merge_config, print_repo_execution_config, resolve_execution_config_for_repo
 from .notifier import send_phase3_notification
 from .phase_detector import PHASE_1, PHASE_2, PHASE_3, determine_phase
 
@@ -111,7 +111,7 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
     # Resolve execution config for this repository
     if config:
         exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
-        
+
         # Print execution config if verbose mode is enabled
         if config.get("verbose", False):
             print_repo_execution_config(repo_owner, repo_name, exec_config)
@@ -121,7 +121,6 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
             "enable_execution_phase2_to_phase3": False,
             "enable_execution_phase3_send_ntfy": False,
             "enable_execution_phase3_to_merge": False,
-            "enable_phase3_merge": None,
             "enable_assign_to_copilot": None,
         }
 
@@ -194,18 +193,8 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         merge_execution_enabled = exec_config["enable_execution_phase3_to_merge"]
         # Use global phase3_merge configuration with defaults applied
         phase3_merge_config = get_phase3_merge_config(config) if config else get_phase3_merge_config({})
-        # Check if phase3_merge is enabled:
-        # - Default is disabled for safety
-        # - Must be explicitly enabled via ruleset's enable_phase3_merge flag
-        enable_phase3_merge_flag = exec_config.get("enable_phase3_merge")
-        if enable_phase3_merge_flag is None:
-            # Not set by rulesets, default to disabled for safety
-            merge_configured = False
-        else:
-            # Ruleset explicitly sets it
-            merge_configured = enable_phase3_merge_flag
 
-        if merge_configured and merge_execution_enabled:
+        if merge_execution_enabled:
             if merge_key not in _merged_prs:
                 # Post comment before merging
                 merge_comment = phase3_merge_config.get("comment", "All checks passed. Merging PR.")
@@ -243,8 +232,6 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
                 # Only mark as merged if the merge was successful
                 if merge_success:
                     _merged_prs.add(merge_key)
-        elif merge_configured and not merge_execution_enabled:
-            print("    [DRY-RUN] Would merge PR (enable_execution_phase3_to_merge=false)")
 
 
 def process_repository(repo_dir: Path, config: Dict[str, Any] = None) -> None:

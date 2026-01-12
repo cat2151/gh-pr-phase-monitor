@@ -110,7 +110,6 @@ cat-github-watcher/
    # enable_execution_phase2_to_phase3 = false  # trueにするとphase2コメント投稿
    # enable_execution_phase3_send_ntfy = false  # trueにするとntfy通知送信
    # enable_execution_phase3_to_merge = false   # trueにするとphase3 PRをマージ
-   # enable_phase3_merge = false                # trueにすると自動マージ機能を有効化（グローバル[phase3_merge]設定を使用）
    # enable_assign_to_copilot = false           # trueにすると自動割り当て機能を有効化（グローバル[assign_to_copilot]設定を使用）
    
    # ntfy.sh通知設定（オプション）
@@ -127,7 +126,7 @@ cat-github-watcher/
    # マージ前に、以下で定義したコメントがPRに投稿されます
    # マージ成功後、自動的にfeature branchが削除されます
    # 重要: 安全のため、この機能はデフォルトで無効です
-   # リポジトリごとにrulesetsで enable_phase3_merge = true を指定して明示的に有効化する必要があります
+   # リポジトリごとにrulesetsで enable_execution_phase3_to_merge = true を指定して明示的に有効化する必要があります
    [phase3_merge]
    comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント
    automated = false  # trueにするとブラウザ自動操縦でマージボタンをクリック
@@ -198,7 +197,7 @@ python3 -m src.gh_pr_phase_monitor.main [config.toml]
    - **phase2**: デフォルトはDry-run（rulesetsで`enable_execution_phase2_to_phase3 = true`とするとCopilotに変更適用を依頼するコメントを投稿）
    - **phase3**: ブラウザでPRページを開く
      - rulesetsで`enable_execution_phase3_send_ntfy = true`とするとntfy.sh通知も送信
-     - rulesetsで`enable_execution_phase3_to_merge = true`かつ`enable_phase3_merge = true`とするとPRを自動マージ（グローバル`[phase3_merge]`設定を使用）
+     - rulesetsで`enable_execution_phase3_to_merge = true`とするとPRを自動マージ（グローバル`[phase3_merge]`設定を使用）
    - **LLM working**: 待機（全PRがこの状態の場合、オープンPRのないリポジトリのissueを表示）
 5. **Issue自動割り当て**: 全PRが「LLM working」かつオープンPRのないリポジトリがある場合：
    - rulesetsで`enable_assign_to_copilot = true`とすると自動割り当て機能が有効化（グローバル`[assign_to_copilot]`設定を使用）
@@ -223,8 +222,7 @@ repositories = ["test-repo"]  # または ["all"] で全リポジトリ
 enable_execution_phase1_to_phase2 = true  # Draft PRをReady化
 enable_execution_phase2_to_phase3 = true  # Phase2コメント投稿
 enable_execution_phase3_send_ntfy = true  # ntfy通知送信
-enable_execution_phase3_to_merge = true   # Phase3 PRをマージ（enable_phase3_mergeも必要）
-enable_phase3_merge = true                # 自動マージ機能を有効化（グローバル[phase3_merge]設定を使用）
+enable_execution_phase3_to_merge = true   # Phase3 PRをマージ
 enable_assign_to_copilot = true           # 自動割り当て機能を有効化（グローバル[assign_to_copilot]設定を使用）
 ```
 

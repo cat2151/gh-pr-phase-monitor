@@ -1,76 +1,8 @@
 """
-Tests for ruleset-based phase3_merge and assign_to_copilot on/off flags
+Tests for ruleset-based assign_to_copilot on/off flags
 """
 
 from src.gh_pr_phase_monitor.config import resolve_execution_config_for_repo
-
-
-class TestResolveExecutionConfigWithPhase3MergeFlag:
-    """Test phase3_merge on/off flag in rulesets"""
-
-    def test_phase3_merge_disabled_by_default(self):
-        """phase3_merge should be None by default (use global settings)"""
-        config = {}
-        
-        result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
-        assert result["enable_phase3_merge"] is None  # None means use global
-
-    def test_ruleset_enables_phase3_merge(self):
-        """Ruleset should enable phase3_merge for specific repository"""
-        config = {
-            "rulesets": [
-                {
-                    "name": "Enable merge for test-repo",
-                    "repositories": ["test-repo"],
-                    "enable_phase3_merge": True,
-                }
-            ],
-        }
-        
-        result = resolve_execution_config_for_repo(config, "owner", "test-repo")
-        assert result["enable_phase3_merge"] is True
-        
-        # Other repo should not be set (None means use global)
-        result = resolve_execution_config_for_repo(config, "owner", "other-repo")
-        assert result["enable_phase3_merge"] is None
-
-    def test_multiple_rulesets_phase3_merge_override(self):
-        """Later rulesets should override earlier ones for phase3_merge"""
-        config = {
-            "rulesets": [
-                {
-                    "repositories": ["all"],
-                    "enable_phase3_merge": True,
-                },
-                {
-                    "repositories": ["test-repo"],
-                    "enable_phase3_merge": False,
-                }
-            ],
-        }
-        
-        result = resolve_execution_config_for_repo(config, "owner", "test-repo")
-        assert result["enable_phase3_merge"] is False
-        
-        result = resolve_execution_config_for_repo(config, "owner", "other-repo")
-        assert result["enable_phase3_merge"] is True
-
-    def test_phase3_merge_flag_with_execution_flags(self):
-        """phase3_merge flag works alongside execution flags"""
-        config = {
-            "rulesets": [
-                {
-                    "repositories": ["test-repo"],
-                    "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,
-                }
-            ],
-        }
-        
-        result = resolve_execution_config_for_repo(config, "owner", "test-repo")
-        assert result["enable_execution_phase3_to_merge"] is True
-        assert result["enable_phase3_merge"] is True
 
 
 class TestResolveExecutionConfigWithAssignToCopilotFlag:
@@ -79,9 +11,9 @@ class TestResolveExecutionConfigWithAssignToCopilotFlag:
     def test_assign_to_copilot_disabled_by_default(self):
         """assign_to_copilot should be None by default (use global settings)"""
         config = {}
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "repo")
-        
+
         assert result["enable_assign_to_copilot"] is None  # None means use global
 
     def test_ruleset_enables_assign_to_copilot(self):
@@ -95,10 +27,10 @@ class TestResolveExecutionConfigWithAssignToCopilotFlag:
                 }
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
         assert result["enable_assign_to_copilot"] is True
-        
+
         # Other repo should not be set (None means use global)
         result = resolve_execution_config_for_repo(config, "owner", "other-repo")
         assert result["enable_assign_to_copilot"] is None
@@ -114,35 +46,35 @@ class TestResolveExecutionConfigWithAssignToCopilotFlag:
                 {
                     "repositories": ["test-repo"],
                     "enable_assign_to_copilot": False,
-                }
+                },
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
         assert result["enable_assign_to_copilot"] is False
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "other-repo")
         assert result["enable_assign_to_copilot"] is True
 
 
 class TestResolveExecutionConfigCombined:
-    """Test combined phase3_merge and assign_to_copilot flags"""
+    """Test combined execution flags and feature flags"""
 
-    def test_both_features_in_same_ruleset(self):
-        """Ruleset can enable both phase3_merge and assign_to_copilot"""
+    def test_execution_and_feature_flags_in_same_ruleset(self):
+        """Ruleset can set both execution flags and feature flags"""
         config = {
             "rulesets": [
                 {
                     "repositories": ["test-repo"],
-                    "enable_phase3_merge": True,
+                    "enable_execution_phase3_to_merge": True,
                     "enable_assign_to_copilot": True,
                 }
             ],
         }
-        
+
         result = resolve_execution_config_for_repo(config, "owner", "test-repo")
-        
-        assert result["enable_phase3_merge"] is True
+
+        assert result["enable_execution_phase3_to_merge"] is True
         assert result["enable_assign_to_copilot"] is True
 
     def test_different_repos_different_flags(self):
@@ -151,23 +83,23 @@ class TestResolveExecutionConfigCombined:
             "rulesets": [
                 {
                     "repositories": ["repo1"],
-                    "enable_phase3_merge": True,
+                    "enable_execution_phase3_to_merge": True,
                 },
                 {
                     "repositories": ["repo2"],
                     "enable_assign_to_copilot": True,
-                }
+                },
             ],
         }
-        
-        # repo1 should have merge enabled, assign not set (None)
+
+        # repo1 should have merge execution enabled, assign not set (None)
         result1 = resolve_execution_config_for_repo(config, "owner", "repo1")
-        assert result1["enable_phase3_merge"] is True
+        assert result1["enable_execution_phase3_to_merge"] is True
         assert result1["enable_assign_to_copilot"] is None  # Not set, use global
-        
-        # repo2 should have assign enabled, merge not set (None)
+
+        # repo2 should have assign enabled, merge execution disabled
         result2 = resolve_execution_config_for_repo(config, "owner", "repo2")
-        assert result2["enable_phase3_merge"] is None  # Not set, use global
+        assert result2["enable_execution_phase3_to_merge"] is False  # Default disabled
         assert result2["enable_assign_to_copilot"] is True
 
     def test_all_repos_then_specific_override(self):
@@ -176,37 +108,37 @@ class TestResolveExecutionConfigCombined:
             "rulesets": [
                 {
                     "repositories": ["all"],
-                    "enable_phase3_merge": True,
+                    "enable_execution_phase3_to_merge": True,
                     "enable_assign_to_copilot": True,
                 },
                 {
                     "repositories": ["special-repo"],
-                    "enable_phase3_merge": False,
-                }
+                    "enable_execution_phase3_to_merge": False,
+                },
             ],
         }
-        
+
         # Normal repo should have both enabled
         result1 = resolve_execution_config_for_repo(config, "owner", "normal-repo")
-        assert result1["enable_phase3_merge"] is True
+        assert result1["enable_execution_phase3_to_merge"] is True
         assert result1["enable_assign_to_copilot"] is True
-        
-        # Special repo should have merge disabled but assign enabled
+
+        # Special repo should have merge execution disabled but assign enabled
         result2 = resolve_execution_config_for_repo(config, "owner", "special-repo")
-        assert result2["enable_phase3_merge"] is False
+        assert result2["enable_execution_phase3_to_merge"] is False
         assert result2["enable_assign_to_copilot"] is True
 
-    def test_invalid_value_types_ignored(self):
-        """Invalid value types should be ignored"""
+    def test_invalid_value_types_raise_error(self):
+        """Invalid value types should raise ValueError"""
         config = {
             "rulesets": [
                 {
                     "repositories": ["test-repo"],
-                    "enable_phase3_merge": "true",  # String instead of boolean - should raise ValueError
+                    "enable_assign_to_copilot": "true",  # String instead of boolean - should raise ValueError
                 }
             ],
         }
-        
+
         # This should raise ValueError due to validation
         try:
             resolve_execution_config_for_repo(config, "owner", "test-repo")

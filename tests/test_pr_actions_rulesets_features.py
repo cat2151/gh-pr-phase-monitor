@@ -21,9 +21,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         """Ruleset should enable phase3_merge using global settings for specific repository"""
         pr = {
             "isDraft": False,
-            "reviews": [
-                {"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}
-            ],
+            "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
             "latestReviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
             "repository": {"name": "test-repo", "owner": "test-owner"},
             "title": "Test PR",
@@ -40,18 +38,19 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
                     "name": "Enable merge for test-repo",
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Enable using global settings
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge.return_value = True
             mock_comment.return_value = True
             process_pr(pr, config)
-            
+
             # Comment should use global comment
             mock_comment.assert_called_once_with(pr, "Global merge comment", None)
             # Merge should be attempted
@@ -84,32 +83,32 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
                 {
                     "repositories": ["repo1"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,
                 },
                 {
                     "repositories": ["repo2"],
-                    "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": False,  # Disabled for repo2
-                }
+                    "enable_execution_phase3_to_merge": False,  # Disabled for repo2
+                },
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge.return_value = True
             mock_comment.return_value = True
-            
+
             # Process PR 1 - should merge
             process_pr(pr1, config)
             assert mock_comment.call_count == 1
             assert mock_merge.call_count == 1
-            
+
             # Reset mocks
             mock_comment.reset_mock()
             mock_merge.reset_mock()
-            
-            # Process PR 2 - should not merge (enable_phase3_merge is False)
+
+            # Process PR 2 - should not merge (enable_execution_phase3_to_merge is False for repo2)
             process_pr(pr2, config)
             assert mock_comment.call_count == 0
             assert mock_merge.call_count == 0
@@ -134,23 +133,24 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr_automated"
-        ) as mock_merge_auto, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr_automated") as mock_merge_auto,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge_auto.return_value = True
             mock_comment.return_value = True
             process_pr(pr, config)
-            
+
             # Should use automated merge based on global setting
             mock_merge_auto.assert_called_once()
 
-    def test_no_merge_when_enable_phase3_merge_false(self):
-        """Merge should not happen when enable_phase3_merge is false"""
+    def test_no_merge_when_execution_disabled(self):
+        """Merge should not happen when enable_execution_phase3_to_merge is false in ruleset"""
         pr = {
             "isDraft": False,
             "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
@@ -167,15 +167,16 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "rulesets": [
                 {
                     "repositories": ["test-repo"],
-                    "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": False,  # Disabled for this repo
+                    "enable_execution_phase3_to_merge": False,  # Explicitly disabled for this repo
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             process_pr(pr, config)
             # Merge should not be attempted
             mock_merge.assert_not_called()
@@ -200,14 +201,15 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    "enable_phase3_merge": True,  # Enabled for repo
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
             mock_merge.return_value = True
             mock_comment.return_value = True
             process_pr(pr, config)
@@ -215,8 +217,8 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             mock_merge.assert_called_once()
             mock_comment.assert_called_once()
 
-    def test_no_merge_when_phase3_merge_config_missing(self):
-        """Merge should not happen when phase3_merge config section doesn't exist"""
+    def test_merge_uses_defaults_when_phase3_merge_config_missing(self):
+        """Merge should use default configuration when phase3_merge config section doesn't exist"""
         pr = {
             "isDraft": False,
             "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
@@ -226,7 +228,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             "url": "https://github.com/test-owner/test-repo/pull/1",
         }
         config = {
-            # No phase3_merge section
+            # No phase3_merge section - should use defaults
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
@@ -236,16 +238,23 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
+            mock_merge.return_value = True
+            mock_comment.return_value = True
             process_pr(pr, config)
-            # Merge should NOT be attempted when config section doesn't exist
-            mock_merge.assert_not_called()
-            mock_comment.assert_not_called()
+            # Merge SHOULD be attempted with default comment
+            mock_comment.assert_called_once()
+            # Check that default comment is used
+            call_args = mock_comment.call_args
+            assert call_args[0][1] == "All checks passed. Merging PR."  # Default comment
+            mock_merge.assert_called_once()
 
-    def test_no_merge_when_not_explicitly_enabled(self):
-        """Merge should not happen when phase3_merge config exists but not explicitly enabled via ruleset"""
+    def test_merge_with_explicit_config(self):
+        """Merge should use explicit configuration when provided"""
         pr = {
             "isDraft": False,
             "reviews": [{"author": {"login": "copilot-pull-request-reviewer"}, "state": "APPROVED"}],
@@ -256,22 +265,27 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
         }
         config = {
             "phase3_merge": {
-                "comment": "Merge comment",
+                "comment": "Custom merge comment",
             },
             "enable_execution_phase3_to_merge": False,
             "rulesets": [
                 {
                     "repositories": ["test-repo"],
                     "enable_execution_phase3_to_merge": True,
-                    # No enable_phase3_merge flag - should default to disabled
                 }
             ],
         }
 
-        with patch("src.gh_pr_phase_monitor.pr_actions.open_browser"), patch(
-            "src.gh_pr_phase_monitor.pr_actions.merge_pr"
-        ) as mock_merge, patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment:
+        with (
+            patch("src.gh_pr_phase_monitor.pr_actions.open_browser"),
+            patch("src.gh_pr_phase_monitor.pr_actions.merge_pr") as mock_merge,
+            patch("src.gh_pr_phase_monitor.pr_actions.post_phase3_comment") as mock_comment,
+        ):
+            mock_merge.return_value = True
+            mock_comment.return_value = True
             process_pr(pr, config)
-            # Merge should NOT be attempted - disabled by default for safety
-            mock_merge.assert_not_called()
-            mock_comment.assert_not_called()
+            # Merge SHOULD be attempted with custom comment
+            mock_comment.assert_called_once()
+            call_args = mock_comment.call_args
+            assert call_args[0][1] == "Custom merge comment"
+            mock_merge.assert_called_once()
