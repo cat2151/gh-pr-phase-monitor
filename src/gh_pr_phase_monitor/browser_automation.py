@@ -96,7 +96,7 @@ def assign_issue_to_copilot_automated(
     assign_config = config.get("assign_to_copilot", {})
 
     # Get automation backend (selenium or playwright)
-    backend = assign_config.get("automation_backend", "selenium").lower()
+    backend = assign_config.get("automation_backend", "playwright").lower()
 
     if backend == "playwright":
         return _assign_with_playwright(issue_url, assign_config)
@@ -130,7 +130,7 @@ def merge_pr_automated(
     merge_config = config.get("phase3_merge", {})
 
     # Get automation backend (selenium or playwright)
-    backend = merge_config.get("automation_backend", "selenium").lower()
+    backend = merge_config.get("automation_backend", "playwright").lower()
 
     if backend == "playwright":
         return _merge_pr_with_playwright(pr_url, merge_config)
@@ -158,7 +158,7 @@ def _assign_with_selenium(
     # Validate and get wait_seconds
     wait_seconds = _validate_wait_seconds(assign_config)
 
-    browser_type = assign_config.get("browser", "edge").lower()
+    browser_type = assign_config.get("browser", "chrome").lower()
     headless = assign_config.get("headless", False)
 
     driver = None
@@ -444,7 +444,7 @@ def _merge_pr_with_selenium(
     # Validate and get wait_seconds
     wait_seconds = _validate_wait_seconds(merge_config)
 
-    browser_type = merge_config.get("browser", "edge").lower()
+    browser_type = merge_config.get("browser", "chrome").lower()
     headless = merge_config.get("headless", False)
 
     driver = None
