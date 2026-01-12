@@ -382,16 +382,17 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                 print(f"    - {repo['name']}: {repo['openIssueCount']} open issue(s)")
 
             # Check if auto-assign feature is enabled in config
-            # We need to check per repository since it can be configured per ruleset
-            # Feature must be explicitly enabled via rulesets for safety
-            # With batteries-included approach, feature is always available with defaults
+            # With batteries-included approach:
+            # - Default configuration is always available (no TOML section needed)
+            # - But per-repository assignment requires explicit ruleset enablement
+            # - We check for "good first issue" or "lowest number" mode here
             assign_lowest_number = False
             if config:
                 assign_config = get_assign_to_copilot_config(config)
                 assign_lowest_number = assign_config.get("assign_lowest_number_issue", False)
 
-            # Always try to check for issues to assign
-            # Individual repositories must explicitly enable via rulesets
+            # Always try to check for issues to assign (batteries-included)
+            # Individual repositories must explicitly enable via rulesets for actual assignment
             # Check which mode to use: lowest number or good first issue
             if assign_lowest_number:
                 # Fetch and auto-assign the issue with the lowest number

@@ -188,9 +188,7 @@ class TestPlaywrightBackend:
     def test_defaults_to_playwright_backend(self):
         """Test that Playwright is used by default when backend not specified"""
         config = {
-            "assign_to_copilot": {
-                "browser": "chromium"
-            }
+            "assign_to_copilot": {}  # No settings - should use all defaults
         }
         
         # Setup mock for Playwright
@@ -213,7 +211,7 @@ class TestPlaywrightBackend:
                     config
                 )
                 
-                # Should use Playwright backend (default)
+                # Should use Playwright backend (default) and chromium browser (default)
                 mock_pw_instance.chromium.launch.assert_called_once()
 
 

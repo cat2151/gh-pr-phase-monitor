@@ -173,7 +173,7 @@ def test_display_issues_with_assign_disabled():
                 ]
 
                 # Create config without rulesets enabling assign_to_copilot
-                config = {"assign_to_copilot": {}}  # Feature available but not enabled per-repo
+                config = {"assign_to_copilot": {}}  # Defaults available, but no ruleset enables it
 
                 # Call the function with config
                 display_issues_from_repos_without_prs(config)
@@ -182,7 +182,8 @@ def test_display_issues_with_assign_disabled():
                 mock_get_repos.assert_called_once()
 
                 # Verify that issues were fetched twice (good first issue + top 10)
-                # With batteries-included, good first issue is always checked
+                # With batteries-included, good first issue is always checked,
+                # but assignment only happens if enabled via rulesets
                 assert mock_get_issues.call_count == 2
 
                 # Verify assignment was NOT attempted (no ruleset enabling it)
