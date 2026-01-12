@@ -52,6 +52,46 @@ def _validate_wait_seconds(config: Dict[str, Any]) -> int:
     return wait_seconds
 
 
+def _validate_confidence(config: Dict[str, Any]) -> float:
+    """Validate and get confidence from configuration
+
+    Args:
+        config: Configuration dict with confidence setting
+
+    Returns:
+        Validated confidence value (defaults to 0.8 if invalid)
+    """
+    try:
+        confidence = float(config.get("confidence", 0.8))
+        if not 0.0 <= confidence <= 1.0:
+            print("  ⚠ confidence must be between 0.0 and 1.0, using default: 0.8")
+            confidence = 0.8
+    except (ValueError, TypeError):
+        print("  ⚠ Invalid confidence value in config, using default: 0.8")
+        confidence = 0.8
+    return confidence
+
+
+def _validate_button_delay(config: Dict[str, Any]) -> float:
+    """Validate and get button_delay from configuration
+
+    Args:
+        config: Configuration dict with button_delay setting
+
+    Returns:
+        Validated button_delay value in seconds (defaults to 2.0 if invalid)
+    """
+    try:
+        button_delay = float(config.get("button_delay", 2.0))
+        if button_delay < 0:
+            print("  ⚠ button_delay must be positive, using default: 2.0")
+            button_delay = 2.0
+    except (ValueError, TypeError):
+        print("  ⚠ Invalid button_delay value in config, using default: 2.0")
+        button_delay = 2.0
+    return button_delay
+
+
 def _get_screenshot_path(button_name: str, config: Dict[str, Any]) -> Optional[Path]:
     """Get the path to the button screenshot image
 
@@ -75,18 +115,22 @@ def _get_screenshot_path(button_name: str, config: Dict[str, Any]) -> Optional[P
     return None
 
 
-def _click_button_with_image(button_name: str, config: Dict[str, Any], confidence: float = 0.8) -> bool:
+def _click_button_with_image(button_name: str, config: Dict[str, Any]) -> bool:
     """Find and click a button using image recognition
 
     Args:
         button_name: Name of the button screenshot file (without extension)
-        config: Configuration dict with screenshot settings
-        confidence: Confidence level for image matching (0.0 to 1.0)
+        config: Configuration dict with screenshot settings (including optional confidence)
 
     Returns:
         True if button was found and clicked, False otherwise
+
+    Note:
+        Uses image recognition to find and click buttons on screen. The first matching
+        button found on the entire screen will be clicked. Ensure the correct GitHub
+        browser window/tab is focused and visible before running this function.
     """
-    if not PYAUTOGUI_AVAILABLE:
+    if not PYAUTOGUI_AVAILABLE or pyautogui is None:
         print("  ✗ PyAutoGUI is not available")
         return False
 
@@ -97,22 +141,33 @@ def _click_button_with_image(button_name: str, config: Dict[str, Any], confidenc
         print("     See README.ja.md for instructions")
         return False
 
+    # Get confidence from config
+    confidence = _validate_confidence(config)
+
     try:
         print(f"  → Looking for button using screenshot: {screenshot_path}")
+        print(
+            "  ⚠ Make sure the correct GitHub browser window/tab is focused "
+            "because the first matching button on the entire screen will be clicked."
+        )
         location = pyautogui.locateOnScreen(str(screenshot_path), confidence=confidence)
 
         if location is None:
             print(f"  ✗ Could not find button '{button_name}' on screen")
+            print("     Ensure the button is visible and the screenshot matches the current display")
             return False
 
         # Click in the center of the found button
         center = pyautogui.center(location)
+        time.sleep(0.5)  # Brief pause before clicking
         pyautogui.click(center)
         print(f"  ✓ Clicked button '{button_name}' at position {center}")
         return True
 
     except Exception as e:
         print(f"  ✗ Error clicking button '{button_name}': {e}")
+        print("     This may occur if running in a headless environment, SSH session without display,")
+        print("     or if the screen is locked. PyAutoGUI requires an active display.")
         return False
 
 
@@ -120,10 +175,14 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     """Automatically assign an issue to Copilot by clicking buttons in browser
 
     This function uses PyAutoGUI with image recognition to:
-    1. Open the issue in a browser
+    1. Open the issue in a browser (requires an already-authenticated browser session)
     2. Wait for the configured time (default 10 seconds)
     3. Click the "Assign to Copilot" button (using screenshot)
     4. Click the "Assign" button (using screenshot)
+
+    Important: This function uses webbrowser.open() which opens the URL in your system's
+    default browser. You must be already logged into GitHub in that browser for the
+    automation to work. The function does not handle authentication.
 
     Required screenshots (must be provided by user):
     - assign_to_copilot.png: Screenshot of "Assign to Copilot" button
@@ -132,6 +191,11 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     Args:
         issue_url: The URL of the GitHub issue
         config: Optional configuration dict with automation settings
+                Supported keys in assign_to_copilot section:
+                - wait_seconds (int): Seconds to wait for page load (default: 10)
+                - button_delay (float): Seconds to wait between button clicks (default: 2.0)
+                - confidence (float): Image matching confidence 0.0-1.0 (default: 0.8)
+                - screenshot_dir (str): Directory containing screenshots (default: "screenshots")
 
     Returns:
         True if automation was successful, False otherwise
@@ -146,11 +210,22 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
 
     assign_config = config.get("assign_to_copilot", {})
 
-    # Validate and get wait_seconds
+    # Validate and get configuration values
     wait_seconds = _validate_wait_seconds(assign_config)
+    button_delay = _validate_button_delay(assign_config)
 
     print("  → [PyAutoGUI] Opening issue in browser...")
-    webbrowser.open(issue_url)
+    print("  ℹ Ensure you are already logged into GitHub in your default browser")
+    
+    try:
+        opened = webbrowser.open(issue_url)
+        if not opened:
+            print(f"  ✗ Browser did not open for issue URL '{issue_url}'")
+            print("     Please check your default browser settings")
+            return False
+    except Exception as e:
+        print(f"  ✗ Failed to open browser for issue URL '{issue_url}': {e}")
+        return False
 
     # Wait for the configured time
     print(f"  → Waiting {wait_seconds} seconds for page to load...")
@@ -164,8 +239,9 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
 
     print("  ✓ Clicked 'Assign to Copilot' button")
 
-    # Wait a bit for the assignment UI to appear
-    time.sleep(2)
+    # Wait for the assignment UI to appear
+    print(f"  → Waiting {button_delay} seconds for UI to respond...")
+    time.sleep(button_delay)
 
     # Click "Assign" button
     print("  → Looking for 'Assign' button...")
@@ -176,8 +252,8 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     print("  ✓ Clicked 'Assign' button")
     print("  ✓ [PyAutoGUI] Successfully automated issue assignment to Copilot")
 
-    # Wait a bit before finishing
-    time.sleep(2)
+    # Wait before finishing
+    time.sleep(button_delay)
 
     return True
 
@@ -186,11 +262,15 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
     """Automatically merge a PR by clicking the merge button in browser
 
     This function uses PyAutoGUI with image recognition to:
-    1. Open the PR in a browser
+    1. Open the PR in a browser (requires an already-authenticated browser session)
     2. Wait for the configured time (default 10 seconds)
     3. Click the "Merge pull request" button (using screenshot)
     4. Click the "Confirm merge" button (using screenshot)
     5. Click the "Delete branch" button (using screenshot)
+
+    Important: This function uses webbrowser.open() which opens the URL in your system's
+    default browser. You must be already logged into GitHub in that browser for the
+    automation to work. The function does not handle authentication.
 
     Required screenshots (must be provided by user):
     - merge_pull_request.png: Screenshot of "Merge pull request" button
@@ -200,6 +280,11 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
     Args:
         pr_url: The URL of the GitHub PR
         config: Optional configuration dict with automation settings
+                Supported keys in phase3_merge section:
+                - wait_seconds (int): Seconds to wait for page load (default: 10)
+                - button_delay (float): Seconds to wait between button clicks (default: 2.0)
+                - confidence (float): Image matching confidence 0.0-1.0 (default: 0.8)
+                - screenshot_dir (str): Directory containing screenshots (default: "screenshots")
 
     Returns:
         True if automation was successful, False otherwise
@@ -214,11 +299,22 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
 
     merge_config = config.get("phase3_merge", {})
 
-    # Validate and get wait_seconds
+    # Validate and get configuration values
     wait_seconds = _validate_wait_seconds(merge_config)
+    button_delay = _validate_button_delay(merge_config)
 
     print("  → [PyAutoGUI] Opening PR in browser...")
-    webbrowser.open(pr_url)
+    print("  ℹ Ensure you are already logged into GitHub in your default browser")
+    
+    try:
+        opened = webbrowser.open(pr_url)
+        if not opened:
+            print(f"  ✗ Browser did not open for PR URL '{pr_url}'")
+            print("     Please check your default browser settings")
+            return False
+    except Exception as e:
+        print(f"  ✗ Failed to open browser for PR URL '{pr_url}': {e}")
+        return False
 
     # Wait for the configured time
     print(f"  → Waiting {wait_seconds} seconds for page to load...")
@@ -232,8 +328,9 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
 
     print("  ✓ Clicked 'Merge pull request' button")
 
-    # Wait a bit for the confirmation UI to appear
-    time.sleep(2)
+    # Wait for the confirmation UI to appear
+    print(f"  → Waiting {button_delay} seconds for UI to respond...")
+    time.sleep(button_delay)
 
     # Click "Confirm merge" button
     print("  → Looking for 'Confirm merge' button...")
@@ -244,7 +341,8 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
     print("  ✓ Clicked 'Confirm merge' button")
 
     # Wait for merge to complete and delete branch button to appear
-    time.sleep(3)
+    print(f"  → Waiting {button_delay + 1.0} seconds for merge to complete...")
+    time.sleep(button_delay + 1.0)
 
     # Click "Delete branch" button (optional - don't fail if not found)
     print("  → Looking for 'Delete branch' button...")
@@ -255,7 +353,7 @@ def merge_pr_automated(pr_url: str, config: Optional[Dict[str, Any]] = None) -> 
 
     print("  ✓ [PyAutoGUI] Successfully automated PR merge")
 
-    # Wait a bit before finishing
-    time.sleep(2)
+    # Wait before finishing
+    time.sleep(button_delay)
 
     return True
