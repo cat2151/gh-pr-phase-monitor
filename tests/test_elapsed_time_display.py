@@ -222,11 +222,11 @@ class TestWaitWithCountdown:
             output = " ".join(calls)
             assert "Waiting 3s until next check" in output
 
-            # Verify countdown messages were printed
-            assert "Waiting 0秒" in output
-            assert "Waiting 1秒" in output
-            assert "Waiting 2秒" in output
+            # Verify countdown messages were printed (remaining time, counting down)
             assert "Waiting 3秒" in output
+            assert "Waiting 2秒" in output
+            assert "Waiting 1秒" in output
+            assert "Waiting 0秒" in output
 
             # Verify sleep was called correct number of times
             assert mock_sleep.call_count == 3
@@ -263,10 +263,10 @@ class TestWaitWithCountdown:
             # Verify sleep was called 5 times (once per second)
             assert mock_sleep.call_count == 5
 
-            # Verify final elapsed time
+            # Verify final countdown display (should show 0 remaining)
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
-            assert "Waiting 5秒" in output
+            assert "Waiting 0秒" in output
 
     def test_countdown_formats_time_correctly(self):
         """Test that countdown formats time with minutes and seconds"""
@@ -282,6 +282,8 @@ class TestWaitWithCountdown:
             calls = [str(call) for call in mock_print.call_args_list]
             output = " ".join(calls)
 
-            # Verify that minutes are displayed correctly
+            # Verify that minutes are displayed correctly (countdown from 90 seconds)
+            # At 89 seconds remaining: "Waiting 1分29秒"
+            # At 60 seconds remaining: "Waiting 1分0秒"
             assert "Waiting 1分29秒" in output
-            assert "Waiting 1分30秒" in output
+            assert "Waiting 1分0秒" in output

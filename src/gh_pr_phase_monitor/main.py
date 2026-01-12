@@ -99,12 +99,11 @@ def wait_with_countdown(
         if actual_elapsed >= interval_seconds:
             break
 
-        elapsed_str = format_elapsed_time(actual_elapsed)
-        # Print countdown on same line using carriage return
-        print(f"\rWaiting {elapsed_str}     ", end="", flush=True)
-
         # Calculate remaining time
         remaining = interval_seconds - actual_elapsed
+        remaining_str = format_elapsed_time(remaining)
+        # Print countdown on same line using carriage return
+        print(f"\rWaiting {remaining_str}     ", end="", flush=True)
         sleep_duration = min(1, remaining)
         time.sleep(sleep_duration)
 
@@ -158,10 +157,8 @@ def wait_with_countdown(
                 # File system errors (e.g., permission issues), ignore and continue
                 pass
 
-    # Final update - show actual elapsed time
-    actual_elapsed = time.time() - wait_start_time
-    elapsed_str = format_elapsed_time(actual_elapsed)
-    print(f"\rWaiting {elapsed_str}     ", flush=True)
+    # Final update - show countdown complete (0 remaining)
+    print(f"\rWaiting 0秒     ", flush=True)
     print()  # New line after countdown completes
 
     return current_config, current_interval_seconds, current_interval_str, current_mtime
