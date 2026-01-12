@@ -96,7 +96,7 @@ def assign_issue_to_copilot_automated(
     assign_config = config.get("assign_to_copilot", {})
 
     # Get automation backend (selenium or playwright)
-    backend = assign_config.get("automation_backend", "selenium").lower()
+    backend = assign_config.get("automation_backend", "playwright").lower()
 
     if backend == "playwright":
         return _assign_with_playwright(issue_url, assign_config)
@@ -130,7 +130,7 @@ def merge_pr_automated(
     merge_config = config.get("phase3_merge", {})
 
     # Get automation backend (selenium or playwright)
-    backend = merge_config.get("automation_backend", "selenium").lower()
+    backend = merge_config.get("automation_backend", "playwright").lower()
 
     if backend == "playwright":
         return _merge_pr_with_playwright(pr_url, merge_config)

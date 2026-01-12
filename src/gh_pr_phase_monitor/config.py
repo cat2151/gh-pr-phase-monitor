@@ -156,9 +156,9 @@ def print_config(config: Dict[str, Any]) -> None:
         print(f"  comment: {phase3_merge.get('comment', 'N/A')}")
         print(f"  automated: {phase3_merge.get('automated', False)}")
         if phase3_merge.get('automated', False):
-            print(f"  automation_backend: {phase3_merge.get('automation_backend', 'selenium')}")
+            print(f"  automation_backend: {phase3_merge.get('automation_backend', 'playwright')}")
             print(f"  wait_seconds: {phase3_merge.get('wait_seconds', 10)}")
-            print(f"  browser: {phase3_merge.get('browser', 'edge')}")
+            print(f"  browser: {phase3_merge.get('browser', 'chromium')}")
             print(f"  headless: {phase3_merge.get('headless', False)}")
 
     # Print assign_to_copilot settings
@@ -168,9 +168,9 @@ def print_config(config: Dict[str, Any]) -> None:
         print(f"  assign_lowest_number_issue: {assign_to_copilot.get('assign_lowest_number_issue', False)}")
         print(f"  automated: {assign_to_copilot.get('automated', False)}")
         if assign_to_copilot.get('automated', False):
-            print(f"  automation_backend: {assign_to_copilot.get('automation_backend', 'selenium')}")
+            print(f"  automation_backend: {assign_to_copilot.get('automation_backend', 'playwright')}")
             print(f"  wait_seconds: {assign_to_copilot.get('wait_seconds', 10)}")
-            print(f"  browser: {assign_to_copilot.get('browser', 'edge')}")
+            print(f"  browser: {assign_to_copilot.get('browser', 'chromium')}")
             print(f"  headless: {assign_to_copilot.get('headless', False)}")
 
     print("\n" + "=" * 50)
