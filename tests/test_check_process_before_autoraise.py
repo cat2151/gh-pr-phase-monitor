@@ -7,6 +7,7 @@ when cat-window-watcher process is running or not.
 import subprocess
 from unittest.mock import MagicMock, patch
 
+import src.gh_pr_phase_monitor.browser_automation as browser_automation
 from src.gh_pr_phase_monitor.config import (
     DEFAULT_CHECK_PROCESS_BEFORE_AUTORAISE,
     is_process_running,
@@ -182,9 +183,7 @@ class TestBrowserAutomationIntegration:
 
     def setup_method(self):
         """Reset browser cooldown state before each test"""
-        import src.gh_pr_phase_monitor.browser_automation as ba
-
-        ba._last_browser_open_time = None
+        browser_automation._last_browser_open_time = None
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
     @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
@@ -264,9 +263,7 @@ class TestOpenBrowserIntegration:
 
     def setup_method(self):
         """Reset browser cooldown state before each test"""
-        import src.gh_pr_phase_monitor.browser_automation as ba
-
-        ba._last_browser_open_time = None
+        browser_automation._last_browser_open_time = None
 
     @patch("src.gh_pr_phase_monitor.pr_actions.webbrowser")
     @patch("src.gh_pr_phase_monitor.browser_automation.is_process_running")
