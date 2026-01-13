@@ -17,25 +17,27 @@ class TestProcessDetection:
     """Test process detection functionality"""
 
     def test_is_process_running_returns_true_when_process_exists(self):
-        """Test that is_process_running returns True when process is in ps output"""
+        """Test that is_process_running returns True when process is found by pgrep"""
         with patch("subprocess.run") as mock_run:
-            # Mock ps aux output with cat-window-watcher process
+            # Mock pgrep output with cat-window-watcher process PID
             mock_result = MagicMock()
             mock_result.returncode = 0
-            mock_result.stdout = "user  1234  0.0  0.1  12345  6789 ?  S  10:00  0:01 python cat-window-watcher.py"
+            mock_result.stdout = "1234\n5678\n"
             mock_run.return_value = mock_result
 
             result = is_process_running("cat-window-watcher")
             assert result is True
             mock_run.assert_called_once()
+            # Verify pgrep was called
+            assert mock_run.call_args[0][0] == ["pgrep", "-f", "cat-window-watcher"]
 
     def test_is_process_running_returns_false_when_process_not_exists(self):
-        """Test that is_process_running returns False when process is not in ps output"""
+        """Test that is_process_running returns False when process is not found by pgrep"""
         with patch("subprocess.run") as mock_run:
-            # Mock ps aux output without cat-window-watcher process
+            # Mock pgrep output without any processes
             mock_result = MagicMock()
-            mock_result.returncode = 0
-            mock_result.stdout = "user  1234  0.0  0.1  12345  6789 ?  S  10:00  0:01 python other-script.py"
+            mock_result.returncode = 1  # pgrep returns 1 when no processes found
+            mock_result.stdout = ""
             mock_run.return_value = mock_result
 
             result = is_process_running("cat-window-watcher")
@@ -51,23 +53,58 @@ class TestProcessDetection:
             assert result is False
 
     def test_is_process_running_handles_file_not_found_error(self):
-        """Test that is_process_running handles FileNotFoundError gracefully"""
+        """Test that is_process_running falls back to ps aux when pgrep is not available"""
         with patch("subprocess.run") as mock_run:
-            mock_run.side_effect = FileNotFoundError("ps command not found")
+            # First call (pgrep) raises FileNotFoundError
+            # Second call (ps aux fallback) succeeds
+            def side_effect(cmd, **kwargs):
+                if cmd[0] == "pgrep":
+                    raise FileNotFoundError("pgrep command not found")
+                else:  # ps aux
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_result.stdout = (
+                        "user  1234  0.0  0.1  12345  6789 ?  S  10:00  0:01 python cat-window-watcher.py"
+                    )
+                    return mock_result
+
+            mock_run.side_effect = side_effect
 
             result = is_process_running("cat-window-watcher")
-            assert result is False
+            assert result is True
+            # Should have been called twice (pgrep then ps)
+            assert mock_run.call_count == 2
 
     def test_is_process_running_handles_nonzero_return_code(self):
-        """Test that is_process_running handles non-zero return codes"""
+        """Test that is_process_running handles non-zero return codes from pgrep"""
         with patch("subprocess.run") as mock_run:
             mock_result = MagicMock()
-            mock_result.returncode = 1
+            mock_result.returncode = 1  # pgrep returns 1 when no matches
             mock_result.stdout = ""
             mock_run.return_value = mock_result
 
             result = is_process_running("cat-window-watcher")
             assert result is False
+
+    def test_is_process_running_fallback_to_ps_when_pgrep_unavailable(self):
+        """Test complete fallback path when pgrep is not available"""
+        with patch("subprocess.run") as mock_run:
+            # First call (pgrep) raises FileNotFoundError
+            # Second call (ps aux) returns no matching process
+            def side_effect(cmd, **kwargs):
+                if cmd[0] == "pgrep":
+                    raise FileNotFoundError("pgrep not found")
+                else:  # ps aux
+                    mock_result = MagicMock()
+                    mock_result.returncode = 0
+                    mock_result.stdout = "user  1234  0.0  0.1  12345  6789 ?  S  10:00  0:01 python other-script.py"
+                    return mock_result
+
+            mock_run.side_effect = side_effect
+
+            result = is_process_running("cat-window-watcher")
+            assert result is False
+            assert mock_run.call_count == 2
 
 
 class TestAutoraiseBehavior:

@@ -90,9 +90,11 @@ def is_process_running(process_name: str) -> bool:
         True if the process is running, False otherwise
     """
     try:
-        # Use ps aux to list all processes and grep for the process name
+        # Use pgrep for more reliable process detection
+        # -f flag searches the full command line
+        # This is more reliable than parsing ps output
         result = subprocess.run(
-            ["ps", "aux"],
+            ["pgrep", "-f", process_name],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -100,14 +102,33 @@ def is_process_running(process_name: str) -> bool:
             check=False,
         )
 
-        # Check if process name is in the output
-        # Note: This will also match this script if it contains the process name in arguments
-        # We filter out grep itself and the current python process by checking the full command
-        if result.returncode == 0:
-            return process_name in result.stdout
+        # pgrep returns 0 if at least one process matches, 1 if no processes match
+        # It prints the PIDs of matching processes to stdout
+        if result.returncode == 0 and result.stdout.strip():
+            return True
         return False
-    except (subprocess.SubprocessError, FileNotFoundError):
-        # If ps command is not available or fails, assume process is not running
+    except FileNotFoundError:
+        # pgrep command not available, fallback to ps aux approach
+        try:
+            result = subprocess.run(
+                ["ps", "aux"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+
+            if result.returncode == 0:
+                # Check if process name appears in the output
+                # This is a simpler fallback when pgrep is not available
+                return process_name in result.stdout
+            return False
+        except (subprocess.SubprocessError, FileNotFoundError):
+            # If both commands fail, assume process is not running
+            return False
+    except subprocess.SubprocessError:
+        # If pgrep fails for any other reason, assume process is not running
         return False
 
 
