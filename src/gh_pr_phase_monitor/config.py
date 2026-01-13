@@ -27,6 +27,10 @@ DEFAULT_ASSIGN_TO_COPILOT_CONFIG: Dict[str, Any] = {
     "headless": False,
 }
 
+# Default maximum number of parallel PRs in "LLM working" state
+# When this limit is reached, auto-assignment of new issues is paused to avoid rate limits
+DEFAULT_MAX_LLM_WORKING_PARALLEL = 3
+
 
 def parse_interval(interval_str: str) -> int:
     """Parse interval string like '1m', '30s', '2h' to seconds
@@ -151,13 +155,26 @@ def load_config(config_path: str = "config.toml") -> Dict[str, Any]:
         config_path: Path to the TOML configuration file
 
     Returns:
-        Dictionary containing configuration data
+        Dictionary containing configuration data with validated settings
 
     Raises:
         FileNotFoundError: If the configuration file is not found
     """
     with open(config_path, "rb") as f:
-        return tomli.load(f)
+        config = tomli.load(f)
+    
+    # Validate max_llm_working_parallel setting
+    if "max_llm_working_parallel" in config:
+        value = config["max_llm_working_parallel"]
+        if not isinstance(value, int) or value < 1:
+            print(
+                f"Warning: max_llm_working_parallel must be a positive integer, "
+                f"got {type(value).__name__}: {value!r}. "
+                f"Using default value: {DEFAULT_MAX_LLM_WORKING_PARALLEL}"
+            )
+            config["max_llm_working_parallel"] = DEFAULT_MAX_LLM_WORKING_PARALLEL
+    
+    return config
 
 
 def print_config(config: Dict[str, Any]) -> None:
@@ -176,6 +193,7 @@ def print_config(config: Dict[str, Any]) -> None:
     print(f"  issue_display_limit: {config.get('issue_display_limit', 10)}")
     print(f"  no_change_timeout: {config.get('no_change_timeout', '30m')}")
     print(f"  reduced_frequency_interval: {config.get('reduced_frequency_interval', '1h')}")
+    print(f"  max_llm_working_parallel: {config.get('max_llm_working_parallel', DEFAULT_MAX_LLM_WORKING_PARALLEL)}")
     print(f"  verbose: {config.get('verbose', False)}")
 
     # Print rulesets
