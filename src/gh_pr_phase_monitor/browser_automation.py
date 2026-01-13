@@ -283,13 +283,13 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     Returns:
         True if automation was successful, False otherwise
     """
+    if not PYAUTOGUI_AVAILABLE:
+        print("  ✗ PyAutoGUI is not installed. Install with: pip install pyautogui pillow")
+        return False
+
     # Check if assignment has already been attempted for this issue
     if issue_url in _issue_assign_attempted:
         print("  ℹ Assignment already attempted for this issue, skipping")
-        return False
-
-    if not PYAUTOGUI_AVAILABLE:
-        print("  ✗ PyAutoGUI is not installed. Install with: pip install pyautogui pillow")
         return False
 
     # Check if enough time has passed since the last browser open
