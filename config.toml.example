@@ -29,6 +29,13 @@ no_change_timeout = "30m"
 # Default: "1h" (1 hour)
 reduced_frequency_interval = "1h"
 
+# Maximum number of parallel PRs in "LLM working" state
+# When there are too many PRs being worked on by Copilot simultaneously,
+# auto-assignment of new issues will be paused to avoid API rate limits.
+# This prevents automation from stopping due to rate limit errors.
+# Default: 3
+max_llm_working_parallel = 3
+
 # Verbose mode - Print detailed configuration information
 # When enabled, prints all settings at startup and per-repository settings during execution
 # This helps detect configuration mistakes

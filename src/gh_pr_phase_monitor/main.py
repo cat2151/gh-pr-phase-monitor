@@ -12,6 +12,7 @@ import tomli
 
 from .colors import colorize_phase
 from .config import (
+    DEFAULT_MAX_LLM_WORKING_PARALLEL,
     get_assign_to_copilot_config,
     get_config_mtime,
     load_config,
@@ -355,11 +356,12 @@ def _resolve_assign_to_copilot_config(issue: Dict[str, Any], config: Dict[str, A
         return {"assign_to_copilot": {}}
 
 
-def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None):
+def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = None, llm_working_count: int = 0):
     """Display issues from repositories with no open PRs
 
     Args:
         config: Configuration dictionary (optional)
+        llm_working_count: Number of PRs currently in "LLM working" state (default: 0)
     """
     print("Checking for repositories with no open PRs but with open issues...")
 
@@ -403,69 +405,92 @@ def display_issues_from_repos_without_prs(config: Optional[Dict[str, Any]] = Non
                             any_old = True
                             repos_with_old_enabled.append(repo)
 
-            # Always try to check for issues to assign (batteries-included)
-            # Individual repositories must explicitly enable via rulesets for actual assignment
-            # Priority: good first issue > old issue (both sorted by issue number ascending)
-            if any_good_first:
-                # Fetch and auto-assign the oldest "good first issue" (oldest by issue number)
-                # Only from repos with assign_good_first_old enabled
+            # Check if we should pause auto-assignment due to too many LLM working PRs
+            # Get max_llm_working_parallel setting from config (default: 3)
+            max_llm_working = DEFAULT_MAX_LLM_WORKING_PARALLEL
+            if config:
+                max_llm_working = config.get("max_llm_working_parallel", DEFAULT_MAX_LLM_WORKING_PARALLEL)
+
+            # Validate that max_llm_working is a positive integer
+            if not isinstance(max_llm_working, int) or max_llm_working < 1:
+                print(f"  Warning: Invalid max_llm_working_parallel setting: {max_llm_working}")
+                print(f"  Using default value: {DEFAULT_MAX_LLM_WORKING_PARALLEL}")
+                max_llm_working = DEFAULT_MAX_LLM_WORKING_PARALLEL
+
+            # Check if we should pause auto-assignment
+            should_pause_assignment = llm_working_count >= max_llm_working
+
+            if should_pause_assignment:
                 print(f"\n{'=' * 50}")
-                print("Checking for the oldest 'good first issue' to auto-assign to Copilot...")
+                print(f"LLM workingのPR数が最大並列数（{max_llm_working}）に達しています。")
+                print(f"現在のLLM working PR数: {llm_working_count}")
+                print("レートリミット回避のため、新しいissueの自動assignを保留します。")
                 print(f"{'=' * 50}")
+                # Skip assignment but continue to display issues
+            else:
+                # Always try to check for issues to assign (batteries-included)
+                # Individual repositories must explicitly enable via rulesets for actual assignment
+                # Priority: good first issue > old issue (both sorted by issue number ascending)
+                if any_good_first:
+                    # Fetch and auto-assign the oldest "good first issue" (oldest by issue number)
+                    # Only from repos with assign_good_first_old enabled
+                    print(f"\n{'=' * 50}")
+                    print("Checking for the oldest 'good first issue' to auto-assign to Copilot...")
+                    print(f"{'=' * 50}")
 
-                good_first_issues = get_issues_from_repositories(
-                    repos_with_good_first_enabled, limit=1, labels=["good first issue"], sort_by_number=True
-                )
+                    good_first_issues = get_issues_from_repositories(
+                        repos_with_good_first_enabled, limit=1, labels=["good first issue"], sort_by_number=True
+                    )
 
-                if good_first_issues:
-                    issue = good_first_issues[0]
-                    print("\n  Found oldest 'good first issue' (sorted by issue number, ascending):")
-                    print(f"  #{issue['number']}: {issue['title']}")
-                    print(f"     URL: {issue['url']}")
-                    # Safely join labels, ensuring they are all strings
-                    labels = issue.get("labels", [])
-                    label_str = ", ".join(str(label) for label in labels)
-                    print(f"     Labels: {label_str}")
-                    print("\n  Attempting to assign to Copilot...")
+                    if good_first_issues:
+                        issue = good_first_issues[0]
+                        print("\n  Found oldest 'good first issue' (sorted by issue number, ascending):")
+                        print(f"  #{issue['number']}: {issue['title']}")
+                        print(f"     URL: {issue['url']}")
+                        # Safely join labels, ensuring they are all strings
+                        labels = issue.get("labels", [])
+                        label_str = ", ".join(str(label) for label in labels)
+                        print(f"     Labels: {label_str}")
+                        print("\n  Attempting to assign to Copilot...")
 
-                    # Get repository-specific configuration
-                    temp_config = _resolve_assign_to_copilot_config(issue, config)
+                        # Get repository-specific configuration
+                        temp_config = _resolve_assign_to_copilot_config(issue, config)
 
-                    # Assign the issue to Copilot and check the result
-                    success = assign_issue_to_copilot(issue, temp_config)
-                    if not success:
-                        print("  Assignment failed - will retry on next iteration")
-                else:
-                    print("  No 'good first issue' issues found in repositories without open PRs")
-            elif any_old:
-                # Fetch and auto-assign the oldest issue (any issue)
-                # Only from repos with assign_old enabled
-                print(f"\n{'=' * 50}")
-                print("Checking for the oldest issue to auto-assign to Copilot...")
-                print(f"{'=' * 50}")
+                        # Assign the issue to Copilot and check the result
+                        success = assign_issue_to_copilot(issue, temp_config)
+                        if not success:
+                            print("  Assignment failed - will retry on next iteration")
+                    else:
+                        print("  No 'good first issue' issues found in repositories without open PRs")
+                elif any_old:
+                    # Fetch and auto-assign the oldest issue (any issue)
+                    # Only from repos with assign_old enabled
+                    print(f"\n{'=' * 50}")
+                    print("Checking for the oldest issue to auto-assign to Copilot...")
+                    print(f"{'=' * 50}")
 
-                oldest_issues = get_issues_from_repositories(repos_with_old_enabled, limit=1, sort_by_number=True)
+                    oldest_issues = get_issues_from_repositories(repos_with_old_enabled, limit=1, sort_by_number=True)
 
-                if oldest_issues:
-                    issue = oldest_issues[0]
-                    print("\n  Found oldest issue (sorted by issue number, ascending):")
-                    print(f"  #{issue['number']}: {issue['title']}")
-                    print(f"     URL: {issue['url']}")
-                    # Safely join labels, ensuring they are all strings
-                    labels = issue.get("labels", [])
-                    label_str = ", ".join(str(label) for label in labels)
-                    print(f"     Labels: {label_str}")
-                    print("\n  Attempting to assign to Copilot...")
+                    if oldest_issues:
+                        issue = oldest_issues[0]
+                        print("\n  Found oldest issue (sorted by issue number, ascending):")
+                        print(f"  #{issue['number']}: {issue['title']}")
+                        print(f"     URL: {issue['url']}")
+                        # Safely join labels, ensuring they are all strings
+                        labels = issue.get("labels", [])
+                        label_str = ", ".join(str(label) for label in labels)
+                        print(f"     Labels: {label_str}")
+                        print("\n  Attempting to assign to Copilot...")
 
-                    # Get repository-specific configuration
-                    temp_config = _resolve_assign_to_copilot_config(issue, config)
+                        # Get repository-specific configuration
+                        temp_config = _resolve_assign_to_copilot_config(issue, config)
 
-                    # Assign the issue to Copilot and check the result
-                    success = assign_issue_to_copilot(issue, temp_config)
-                    if not success:
-                        print("  Assignment failed - will retry on next iteration")
-                else:
-                    print("  No issues found in repositories without open PRs")
+                        # Assign the issue to Copilot and check the result
+                        success = assign_issue_to_copilot(issue, temp_config)
+                        if not success:
+                            print("  Assignment failed - will retry on next iteration")
+                    else:
+                        print("  No issues found in repositories without open PRs")
 
             # Get the issue display limit from config (default: 10)
             issue_limit = config.get("issue_display_limit", 10) if config else 10
@@ -559,7 +584,8 @@ def main():
             if not repos_with_prs:
                 print("  No repositories with open PRs found")
                 # Display issues when no repositories with open PRs are found
-                display_issues_from_repos_without_prs(config)
+                # No PRs means llm_working_count = 0
+                display_issues_from_repos_without_prs(config, llm_working_count=0)
             else:
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
@@ -583,13 +609,17 @@ def main():
                         pr_phases.append(phase)
                         process_pr(pr, config, phase)
 
+                    # Count how many PRs are in "LLM working" phase
+                    llm_working_count = sum(1 for phase in pr_phases if phase == PHASE_LLM_WORKING)
+
                     # Check if all PRs are in "LLM working" phase
                     if pr_phases and all(phase == PHASE_LLM_WORKING for phase in pr_phases):
                         print(f"\n{'=' * 50}")
                         print("All PRs are in 'LLM working' phase")
                         print(f"{'=' * 50}")
                         # Display issues when all PRs are in "LLM working" phase
-                        display_issues_from_repos_without_prs(config)
+                        # Pass the count of LLM working PRs
+                        display_issues_from_repos_without_prs(config, llm_working_count=llm_working_count)
 
             # Reset consecutive-failure counter on a successful iteration
             consecutive_failures = 0

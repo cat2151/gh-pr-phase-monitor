@@ -27,6 +27,10 @@ DEFAULT_ASSIGN_TO_COPILOT_CONFIG: Dict[str, Any] = {
     "headless": False,
 }
 
+# Default maximum number of parallel PRs in "LLM working" state
+# When this limit is reached, auto-assignment of new issues is paused to avoid rate limits
+DEFAULT_MAX_LLM_WORKING_PARALLEL = 3
+
 
 def parse_interval(interval_str: str) -> int:
     """Parse interval string like '1m', '30s', '2h' to seconds
@@ -176,6 +180,7 @@ def print_config(config: Dict[str, Any]) -> None:
     print(f"  issue_display_limit: {config.get('issue_display_limit', 10)}")
     print(f"  no_change_timeout: {config.get('no_change_timeout', '30m')}")
     print(f"  reduced_frequency_interval: {config.get('reduced_frequency_interval', '1h')}")
+    print(f"  max_llm_working_parallel: {config.get('max_llm_working_parallel', DEFAULT_MAX_LLM_WORKING_PARALLEL)}")
     print(f"  verbose: {config.get('verbose', False)}")
 
     # Print rulesets
