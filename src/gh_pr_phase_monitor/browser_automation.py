@@ -330,7 +330,9 @@ def assign_issue_to_copilot_automated(issue_url: str, config: Optional[Dict[str,
     _record_browser_open()
 
     # Mark this issue as having an assignment attempt
-    # (do this after successful browser open to prevent repeated attempts if automation fails)
+    # This is done immediately after browser opens to prevent repeated browser opens
+    # even if the automation fails later (e.g., button not found). The goal is to
+    # prevent opening 30+ tabs of the same URL, not to retry until successful.
     _issue_assign_attempted.add(issue_url)
 
     # Wait for the configured time

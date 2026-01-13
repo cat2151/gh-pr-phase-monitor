@@ -165,7 +165,9 @@ class TestAssignIssueToCopilotAutomated:
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
     @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
     @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
-    def test_different_issue_urls_are_tracked_separately(self, mock_click, mock_webbrowser):
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_different_issue_urls_are_tracked_separately(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
         """Test that different issue URLs can each be attempted once"""
         mock_click.return_value = True  # Simulate success
         mock_webbrowser.open.return_value = True
@@ -175,15 +177,13 @@ class TestAssignIssueToCopilotAutomated:
         issue_url_2 = "https://github.com/test/repo/issues/456"
 
         # First issue - should succeed
+        mock_time.return_value = 0.0
         result1 = assign_issue_to_copilot_automated(issue_url_1, config)
         assert result1 is True
 
         # Second issue - should also succeed (different URL)
-        # Need to advance time past cooldown
-        from src.gh_pr_phase_monitor import browser_automation as ba
-
-        ba._last_browser_open_time = None  # Reset cooldown for test
-
+        # Advance time past cooldown (61 seconds)
+        mock_time.return_value = 61.0
         result2 = assign_issue_to_copilot_automated(issue_url_2, config)
         assert result2 is True
 
