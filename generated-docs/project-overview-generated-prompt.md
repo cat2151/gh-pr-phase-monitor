@@ -1,4 +1,4 @@
-Last updated: 2026-01-13
+Last updated: 2026-01-14
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -452,6 +452,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
 📁 tests/
   📄 test_batteries_included_defaults.py
   📄 test_browser_automation.py
+  📄 test_check_process_before_autoraise.py
   📄 test_config_rulesets.py
   📄 test_config_rulesets_features.py
   📄 test_elapsed_time_display.py
@@ -459,6 +460,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_integration_issue_fetching.py
   📄 test_interval_parsing.py
   📄 test_issue_fetching.py
+  📄 test_max_llm_working_parallel.py
   📄 test_no_change_timeout.py
   📄 test_no_open_prs_issue_display.py
   📄 test_notification.py
@@ -504,4 +506,4 @@ docs/browser-automation-approaches.md
 
 
 ---
-Generated at: 2026-01-13 07:01:28 JST
+Generated at: 2026-01-14 07:01:38 JST
