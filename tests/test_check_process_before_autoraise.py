@@ -184,6 +184,7 @@ class TestBrowserAutomationIntegration:
     def setup_method(self):
         """Reset browser cooldown state before each test"""
         browser_automation._last_browser_open_time = None
+        browser_automation._issue_assign_attempted.clear()
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
     @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
@@ -264,6 +265,7 @@ class TestOpenBrowserIntegration:
     def setup_method(self):
         """Reset browser cooldown state before each test"""
         browser_automation._last_browser_open_time = None
+        browser_automation._issue_assign_attempted.clear()
 
     @patch("src.gh_pr_phase_monitor.pr_actions.webbrowser")
     @patch("src.gh_pr_phase_monitor.browser_automation.is_process_running")

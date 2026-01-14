@@ -28,6 +28,7 @@ class TestAssignIssueToCopilotAutomated:
         from src.gh_pr_phase_monitor import browser_automation as ba
 
         ba._last_browser_open_time = None
+        ba._issue_assign_attempted.clear()
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", False)
     def test_returns_false_when_pyautogui_unavailable(self):
@@ -139,6 +140,87 @@ class TestAssignIssueToCopilotAutomated:
         assert result is False
         assert mock_click.call_count == 1  # Only tried first button
 
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    def test_same_issue_url_not_attempted_twice(self, mock_click, mock_webbrowser):
+        """Test that assignment is only attempted once per issue URL"""
+        mock_click.return_value = False  # Simulate button not found
+        mock_webbrowser.open.return_value = True
+
+        config = {"assign_to_copilot": {"wait_seconds": 1}}
+        issue_url = "https://github.com/test/repo/issues/123"
+
+        # First attempt - should try to assign (and fail to find button)
+        result1 = assign_issue_to_copilot_automated(issue_url, config)
+        assert result1 is False
+        assert mock_webbrowser.open.call_count == 1
+
+        # Second attempt with same URL - should skip (already attempted)
+        result2 = assign_issue_to_copilot_automated(issue_url, config)
+        assert result2 is False
+        # Browser should NOT be opened a second time
+        assert mock_webbrowser.open.call_count == 1
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_issue_url_can_be_retried_after_24_hours(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
+        """Test that issue URL can be retried after 24 hours"""
+        mock_click.return_value = False  # Simulate button not found
+        mock_webbrowser.open.return_value = True
+
+        config = {"assign_to_copilot": {"wait_seconds": 1}}
+        issue_url = "https://github.com/test/repo/issues/123"
+
+        # First attempt at time 0
+        mock_time.return_value = 0.0
+        result1 = assign_issue_to_copilot_automated(issue_url, config)
+        assert result1 is False
+        assert mock_webbrowser.open.call_count == 1
+
+        # Second attempt after 12 hours - should skip (not enough time)
+        mock_time.return_value = 12 * 3600  # 12 hours
+        result2 = assign_issue_to_copilot_automated(issue_url, config)
+        assert result2 is False
+        assert mock_webbrowser.open.call_count == 1  # Still 1 (not opened again)
+
+        # Third attempt after 25 hours - should retry (more than 24 hours)
+        mock_time.return_value = 25 * 3600  # 25 hours
+        result3 = assign_issue_to_copilot_automated(issue_url, config)
+        assert result3 is False
+        assert mock_webbrowser.open.call_count == 2  # Now 2 (opened again)
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
+    @patch("src.gh_pr_phase_monitor.browser_automation._click_button_with_image")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.sleep")
+    @patch("src.gh_pr_phase_monitor.browser_automation.time.time")
+    def test_different_issue_urls_are_tracked_separately(self, mock_time, mock_sleep, mock_click, mock_webbrowser):
+        """Test that different issue URLs can each be attempted once"""
+        mock_click.return_value = True  # Simulate success
+        mock_webbrowser.open.return_value = True
+
+        config = {"assign_to_copilot": {"wait_seconds": 1}}
+        issue_url_1 = "https://github.com/test/repo/issues/123"
+        issue_url_2 = "https://github.com/test/repo/issues/456"
+
+        # First issue - should succeed
+        mock_time.return_value = 0.0
+        result1 = assign_issue_to_copilot_automated(issue_url_1, config)
+        assert result1 is True
+
+        # Second issue - should also succeed (different URL)
+        # Advance time past cooldown (61 seconds)
+        mock_time.return_value = 61.0
+        result2 = assign_issue_to_copilot_automated(issue_url_2, config)
+        assert result2 is True
+
+        # Browser should be opened twice (once for each URL)
+        assert mock_webbrowser.open.call_count == 2
+
 
 class TestMergePrAutomated:
     """Tests for merge_pr_automated function"""
@@ -148,6 +230,7 @@ class TestMergePrAutomated:
         from src.gh_pr_phase_monitor import browser_automation as ba
 
         ba._last_browser_open_time = None
+        ba._issue_assign_attempted.clear()
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", False)
     def test_returns_false_when_pyautogui_unavailable(self):
@@ -305,6 +388,7 @@ class TestBrowserCooldown:
         from src.gh_pr_phase_monitor import browser_automation as ba
 
         ba._last_browser_open_time = None
+        ba._issue_assign_attempted.clear()
 
     @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
     @patch("src.gh_pr_phase_monitor.browser_automation.webbrowser")
