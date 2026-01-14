@@ -150,10 +150,7 @@ all_phase3_message = "All PRs are now in phase3 (ready for review)"  # Message w
 [phase3_merge]
 comment = "All checks passed. Merging PR."  # Comment to post before merging
 automated = false  # Set to true to use browser automation to click the merge button
-automation_backend = "playwright"  # Backend to use: "selenium" or "playwright" (automated mode only)
 wait_seconds = 10  # How long to wait after opening the browser before clicking (automated mode only)
-browser = "chromium"  # Browser to use: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
-headless = false  # Run browser in headless mode (no visible window, automated mode only)
 # Note: Feature branch is automatically deleted after successful merge
 
 # Auto-assign issues to Copilot (optional - this entire section is optional!)
@@ -167,25 +164,13 @@ headless = false  # Run browser in headless mode (no visible window, automated m
 # When both are true, prioritize "good first issue"
 # 
 # Default behavior (when this section is not defined):
-# - Uses browser automation (Selenium or Playwright) to automatically click buttons
-# - Uses Playwright with Chromium browser
+# - Uses PyAutoGUI to automatically click buttons
 # - wait_seconds = 10
-# - headless = false
 # 
-# Required: Install either Selenium or Playwright:
-# 
-# Selenium backend:
-#   Install: pip install selenium webdriver-manager
-#   Browsers: "edge", "chrome", or "firefox"
-# 
-# Playwright backend (default):
-#   Install: pip install playwright && playwright install
-#   Browsers: "chromium", "firefox", or "webkit"
+# Required: Install PyAutoGUI:
+#   Install: pip install pyautogui pillow
 # 
 # IMPORTANT: Feature is DISABLED by default for safety.
 # Must be explicitly enabled per repository using assign_good_first_old or assign_old in rulesets.
 [assign_to_copilot]
-automation_backend = "playwright"  # Backend to use: "selenium" or "playwright"
 wait_seconds = 10  # How long to wait after opening the browser before clicking
-browser = "chromium"  # Browser to use: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
-headless = false  # Run browser in headless mode (no visible window)

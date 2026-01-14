@@ -34,10 +34,7 @@ enable_execution_phase3_to_merge = true
 [phase3_merge]
 comment = "🎉 All checks passed! Merging automatically."
 automated = true  # Use browser automation
-automation_backend = "selenium"
 wait_seconds = 10
-browser = "edge"
-headless = false  # Show browser window (useful for debugging)
 ```
 
 **Result**: When a PR reaches phase3, the tool will:
@@ -113,10 +110,7 @@ enable_execution_phase3_to_merge = true
 [phase3_merge]
 comment = "CI passed. Merging automatically."
 automated = true
-automation_backend = "playwright"  # Playwright has better headless support
-browser = "chromium"
-headless = true  # No browser window
-wait_seconds = 15  # Longer wait for headless mode
+wait_seconds = 15
 ```
 
 ## Example 6: Dry-run Testing
@@ -197,8 +191,8 @@ Check:
 ### Browser Automation Fails
 Try:
 1. Increase `wait_seconds` (e.g., 15 or 20)
-2. Set `headless = false` to see what's happening
-3. Try different browser (`edge`, `chrome`, `firefox`)
+2. Check if button screenshots are up to date
+3. Ensure GitHub is logged in your default browser
 4. Switch to CLI merge (`automated = false`)
 
 ### Comment Not Posted

@@ -16,11 +16,8 @@ enable_execution_phase3_to_merge = false   # Set to true to enable phase3 PR mer
 [phase3_merge]
 enabled = false  # Must be true along with enable_execution_phase3_to_merge
 comment = "All checks passed. Merging PR."  # Comment to post before merging
-automated = false  # Use browser automation to click merge button (requires Selenium/Playwright)
-automation_backend = "selenium"  # Backend: "selenium" or "playwright"
+automated = false  # Use browser automation to click merge button (requires PyAutoGUI)
 wait_seconds = 10  # Wait time before clicking buttons (automated mode)
-browser = "edge"  # Browser to use
-headless = false  # Run browser in headless mode
 ```
 
 The configuration also works with rulesets for per-repository control:
@@ -109,10 +106,7 @@ enable_execution_phase3_to_merge = true
 enabled = true
 comment = "🎉 All checks passed! Merging automatically."
 automated = true  # Use browser automation
-automation_backend = "selenium"
 wait_seconds = 10
-browser = "edge"
-headless = false
 ```
 
 ### Per-repository Control

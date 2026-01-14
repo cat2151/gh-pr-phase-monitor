@@ -164,10 +164,7 @@ cat-github-watcher/
    [phase3_merge]
    comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント
    automated = false  # trueにするとブラウザ自動操縦でマージボタンをクリック
-   automation_backend = "selenium"  # 自動操縦バックエンド: "selenium" または "playwright"
    wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
-   browser = "edge"  # 使用するブラウザ: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
-   headless = false  # ヘッドレスモードで実行（ウィンドウを表示しない）
    debug_dir = "debug_screenshots"  # 画像認識失敗時のデバッグ情報保存先（デフォルト: "debug_screenshots"）
    
    # issueをCopilotに自動割り当て（完全にオプション！このセクション全体がオプションです）
@@ -182,19 +179,15 @@ cat-github-watcher/
    # 
    # デフォルト動作（このセクションが定義されていない場合）:
    # - ブラウザ自動操縦で自動的にボタンをクリック
-   # - Playwright + Chromiumを使用
+   # - PyAutoGUIを使用
    # - wait_seconds = 10
-   # - headless = false
    # 
-   # 必須: SeleniumまたはPlaywrightのインストールが必要
+   # 必須: PyAutoGUIのインストールが必要（pip install pyautogui pillow）
    # 
    # 重要: 安全のため、この機能はデフォルトで無効です
    # リポジトリごとにrulesetsで assign_good_first_old または assign_old を指定して明示的に有効化する必要があります
    [assign_to_copilot]
-   automation_backend = "playwright"  # 自動操縦バックエンド: "selenium" または "playwright"
    wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
-   browser = "chromium"  # 使用するブラウザ: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
-   headless = false  # ヘッドレスモードで実行（ウィンドウを表示しない）
    debug_dir = "debug_screenshots"  # 画像認識失敗時のデバッグ情報保存先（デフォルト: "debug_screenshots"）
    ```
 
