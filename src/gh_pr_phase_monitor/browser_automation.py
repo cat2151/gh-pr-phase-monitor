@@ -8,8 +8,10 @@ Important: Users must provide screenshots of the buttons they want to click.
 See README.ja.md for instructions on how to capture button screenshots.
 """
 
+import json
 import time
 import webbrowser
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -193,6 +195,68 @@ def _get_screenshot_path(button_name: str, config: Dict[str, Any]) -> Optional[P
     return None
 
 
+def _save_debug_info(button_name: str, confidence: float, config: Dict[str, Any]) -> None:
+    """Save debug information when image recognition fails
+
+    Args:
+        button_name: Name of the button that failed to be found
+        confidence: Confidence threshold that was used
+        config: Configuration dict with debug_dir setting
+    """
+    if not PYAUTOGUI_AVAILABLE or pyautogui is None:
+        return
+
+    # Get debug directory from config, default to ./debug_screenshots
+    debug_dir_str = config.get("debug_dir", "debug_screenshots")
+    debug_dir = Path(debug_dir_str).expanduser().resolve()
+
+    # Create debug directory if it doesn't exist
+    try:
+        debug_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        print(f"  ⚠ Could not create debug directory '{debug_dir}': {e}")
+        return
+
+    # Generate timestamp once for consistency between filename and JSON
+    now = datetime.now()
+    timestamp = now.strftime("%Y%m%d_%H%M%S_%f")  # Include microseconds for uniqueness
+
+    # Take screenshot of current screen
+    screenshot_filename = f"{button_name}_fail_{timestamp}.png"
+    screenshot_path = debug_dir / screenshot_filename
+
+    try:
+        screenshot = pyautogui.screenshot()
+        screenshot.save(str(screenshot_path))
+        print(f"  ℹ Debug screenshot saved: {screenshot_path}")
+    except Exception as e:
+        print(f"  ⚠ Could not save debug screenshot: {e}")
+        return
+
+    # Save failure information to JSON
+    json_filename = f"{button_name}_fail_{timestamp}.json"
+    json_path = debug_dir / json_filename
+
+    # Get template screenshot path and handle None case
+    template_path = _get_screenshot_path(button_name, config)
+    template_screenshot = str(template_path) if template_path else None
+
+    failure_info = {
+        "button_name": button_name,
+        "timestamp": now.isoformat(),  # Use the same datetime object for consistency
+        "confidence": confidence,
+        "screenshot_path": str(screenshot_path),
+        "template_screenshot": template_screenshot,
+    }
+
+    try:
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(failure_info, f, indent=2, ensure_ascii=False)
+        print(f"  ℹ Debug info saved: {json_path}")
+    except Exception as e:
+        print(f"  ⚠ Could not save debug info JSON: {e}")
+
+
 def _click_button_with_image(button_name: str, config: Dict[str, Any]) -> bool:
     """Find and click a button using image recognition
 
@@ -207,6 +271,9 @@ def _click_button_with_image(button_name: str, config: Dict[str, Any]) -> bool:
         Uses image recognition to find and click buttons on screen. The first matching
         button found on the entire screen will be clicked. Ensure the correct GitHub
         browser window/tab is focused and visible before running this function.
+
+        When image recognition fails, debug information (screenshot and failure details)
+        will be saved to the debug_dir directory (default: ./debug_screenshots).
     """
     if not PYAUTOGUI_AVAILABLE or pyautogui is None:
         print("  ✗ PyAutoGUI is not available")
@@ -233,6 +300,8 @@ def _click_button_with_image(button_name: str, config: Dict[str, Any]) -> bool:
         if location is None:
             print(f"  ✗ Could not find button '{button_name}' on screen")
             print("     Ensure the button is visible and the screenshot matches the current display")
+            # Save debug information for troubleshooting
+            _save_debug_info(button_name, confidence, config)
             return False
 
         # Click in the center of the found button
@@ -246,6 +315,11 @@ def _click_button_with_image(button_name: str, config: Dict[str, Any]) -> bool:
         print(f"  ✗ Error clicking button '{button_name}': {e}")
         print("     This may occur if running in a headless environment, SSH session without display,")
         print("     or if the screen is locked. PyAutoGUI requires an active display.")
+        # Save debug information even on exception
+        try:
+            _save_debug_info(button_name, confidence, config)
+        except Exception:
+            pass  # Silently ignore errors in debug info saving
         return False
 
 

@@ -209,5 +209,8 @@ __marimo__/
 # User-specific config file
 config.toml
 
+# Debug screenshots for image recognition failures
+debug_screenshots/
+
 #
 *.bat

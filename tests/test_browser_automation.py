@@ -1,5 +1,6 @@
 """Tests for browser automation module"""
 
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -378,6 +379,167 @@ class TestGetScreenshotPath:
         result = _get_screenshot_path("test_button", config)
 
         assert result == screenshot_file
+
+
+class TestSaveDebugInfo:
+    """Tests for _save_debug_info helper function"""
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_saves_debug_screenshot_on_failure(self, mock_get_path, tmp_path):
+        """Test that debug screenshot is saved when button is not found"""
+        from src.gh_pr_phase_monitor.browser_automation import _save_debug_info
+
+        # Mock pyautogui module
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+
+            config = {"debug_dir": str(tmp_path)}
+            _save_debug_info("test_button", 0.8, config)
+
+            # Verify screenshot was taken and saved
+            mock_pyautogui.screenshot.assert_called_once()
+            mock_screenshot.save.assert_called_once()
+
+            # Check that saved path is in the debug directory
+            save_call_args = mock_screenshot.save.call_args[0][0]
+            assert str(tmp_path) in save_call_args
+            assert "test_button_fail" in save_call_args
+            assert save_call_args.endswith(".png")
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_saves_debug_json_on_failure(self, mock_get_path, tmp_path):
+        """Test that debug JSON is saved when button is not found"""
+        from src.gh_pr_phase_monitor.browser_automation import _save_debug_info
+
+        # Mock pyautogui module
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+
+            config = {"debug_dir": str(tmp_path)}
+            _save_debug_info("test_button", 0.8, config)
+
+            # Check that JSON file was created
+            json_files = list(tmp_path.glob("test_button_fail_*.json"))
+            assert len(json_files) == 1
+
+            # Verify JSON content
+            with open(json_files[0], "r") as f:
+                debug_info = json.load(f)
+
+            assert debug_info["button_name"] == "test_button"
+            assert debug_info["confidence"] == 0.8
+            assert "timestamp" in debug_info
+            assert "screenshot_path" in debug_info
+            assert "template_screenshot" in debug_info
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_creates_debug_dir_if_not_exists(self, mock_get_path, tmp_path):
+        """Test that debug directory is created if it doesn't exist"""
+        from src.gh_pr_phase_monitor.browser_automation import _save_debug_info
+
+        # Mock pyautogui module
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+
+            # Use a non-existent subdirectory
+            debug_dir = tmp_path / "new_debug_dir"
+            assert not debug_dir.exists()
+
+            config = {"debug_dir": str(debug_dir)}
+            _save_debug_info("test_button", 0.8, config)
+
+            # Verify directory was created
+            assert debug_dir.exists()
+            assert debug_dir.is_dir()
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", False)
+    def test_does_nothing_when_pyautogui_unavailable(self, tmp_path):
+        """Test that function does nothing when PyAutoGUI is not available"""
+        from src.gh_pr_phase_monitor.browser_automation import _save_debug_info
+
+        config = {"debug_dir": str(tmp_path)}
+        _save_debug_info("test_button", 0.8, config)
+
+        # No files should be created
+        assert len(list(tmp_path.glob("*"))) == 0
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_uses_default_debug_dir(self, mock_get_path, tmp_path, monkeypatch):
+        """Test that function uses default debug_screenshots directory"""
+        from src.gh_pr_phase_monitor.browser_automation import _save_debug_info
+
+        # Change to temp directory
+        monkeypatch.chdir(tmp_path)
+
+        # Mock pyautogui module
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+
+            config = {}  # No debug_dir specified, should use default "debug_screenshots"
+            _save_debug_info("test_button", 0.8, config)
+
+            # Verify default directory was created
+            default_debug_dir = tmp_path / "debug_screenshots"
+            assert default_debug_dir.exists()
+            assert default_debug_dir.is_dir()
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_click_button_calls_save_debug_info_on_failure(self, mock_get_path, tmp_path):
+        """Test that _click_button_with_image calls _save_debug_info when button not found"""
+        from src.gh_pr_phase_monitor.browser_automation import _click_button_with_image
+
+        # Mock pyautogui module
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+            mock_pyautogui.locateOnScreen.return_value = None  # Button not found
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+
+            config = {"debug_dir": str(tmp_path)}
+            result = _click_button_with_image("test_button", config)
+
+            # Should return False
+            assert result is False
+
+            # Verify debug info was saved
+            json_files = list(tmp_path.glob("test_button_fail_*.json"))
+            assert len(json_files) == 1
+
+    @patch("src.gh_pr_phase_monitor.browser_automation.PYAUTOGUI_AVAILABLE", True)
+    @patch("src.gh_pr_phase_monitor.browser_automation._get_screenshot_path")
+    def test_click_button_saves_debug_info_on_exception(self, mock_get_path, tmp_path):
+        """Test that _click_button_with_image saves debug info when exception occurs"""
+        from src.gh_pr_phase_monitor.browser_automation import _click_button_with_image
+
+        # Mock pyautogui module to raise exception
+        with patch("src.gh_pr_phase_monitor.browser_automation.pyautogui") as mock_pyautogui:
+            mock_get_path.return_value = Path("/tmp/test_button.png")
+            mock_pyautogui.locateOnScreen.side_effect = Exception("Test exception")
+            mock_screenshot = MagicMock()
+            mock_pyautogui.screenshot.return_value = mock_screenshot
+
+            config = {"debug_dir": str(tmp_path)}
+            result = _click_button_with_image("test_button", config)
+
+            # Should return False
+            assert result is False
+
+            # Verify that debug info is saved when exception occurs in locateOnScreen
+            json_files = list(tmp_path.glob("test_button_fail_*.json"))
+            assert len(json_files) == 1
 
 
 class TestBrowserCooldown:

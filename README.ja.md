@@ -168,6 +168,7 @@ cat-github-watcher/
    wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
    browser = "edge"  # 使用するブラウザ: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
    headless = false  # ヘッドレスモードで実行（ウィンドウを表示しない）
+   debug_dir = "debug_screenshots"  # 画像認識失敗時のデバッグ情報保存先（デフォルト: "debug_screenshots"）
    
    # issueをCopilotに自動割り当て（完全にオプション！このセクション全体がオプションです）
    # 
@@ -194,6 +195,7 @@ cat-github-watcher/
    wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
    browser = "chromium"  # 使用するブラウザ: Selenium: "edge", "chrome", "firefox" / Playwright: "chromium", "firefox", "webkit"
    headless = false  # ヘッドレスモードで実行（ウィンドウを表示しない）
+   debug_dir = "debug_screenshots"  # 画像認識失敗時のデバッグ情報保存先（デフォルト: "debug_screenshots"）
    ```
 
 4. **ボタンスクリーンショットの準備（自動化を使用する場合のみ）**:
@@ -226,6 +228,15 @@ cat-github-watcher/
    - ボタンがはっきり見え、隠れていないことを確認
    - ボタンの見た目が変わる場合（テーマ変更など）、スクリーンショットを更新する必要があります
    - 画像認識の信頼度を調整する場合は `confidence` 設定を使用（DPI scalingやテーマによる）
+   
+   **デバッグ情報の自動保存:**
+   - 画像認識が失敗した場合、自動的にデバッグ情報が保存されます
+   - 保存先：`debug_screenshots/` ディレクトリ（デフォルト）
+   - 保存内容：
+     - スクリーンショット（失敗時の画面全体）: `{button_name}_fail_{timestamp}.png`
+     - 失敗情報JSON: `{button_name}_fail_{timestamp}.json`
+       - ボタン名、タイムスタンプ、信頼度閾値、スクリーンショットパス、テンプレート画像パス
+   - デバッグディレクトリは設定で変更可能：`debug_dir` オプション（`assign_to_copilot` または `phase3_merge` セクション内）
    
    **重要な要件:**
    - デフォルトブラウザで**GitHubに既にログイン済み**である必要があります
