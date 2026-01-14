@@ -2,6 +2,8 @@
 
 **GitHub Copilotによる自動実装フェーズのPR監視ツール**
 
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-blue?logo=github)](https://deepwiki.com/cat2151/cat-github-watcher)
+
 <p align="left">
   <a href="README.ja.md"><img src="https://img.shields.io/badge/🇯🇵-Japanese-red.svg" alt="Japanese"></a>
   <a href="README.md"><img src="https://img.shields.io/badge/🇺🇸-English-blue.svg" alt="English"></a>
