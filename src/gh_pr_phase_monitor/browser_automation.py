@@ -217,8 +217,9 @@ def _save_debug_info(button_name: str, confidence: float, config: Dict[str, Any]
         print(f"  ⚠ Could not create debug directory '{debug_dir}': {e}")
         return
 
-    # Generate timestamp for unique filenames
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Generate timestamp once for consistency between filename and JSON
+    now = datetime.now()
+    timestamp = now.strftime("%Y%m%d_%H%M%S_%f")  # Include microseconds for uniqueness
 
     # Take screenshot of current screen
     screenshot_filename = f"{button_name}_fail_{timestamp}.png"
@@ -238,7 +239,7 @@ def _save_debug_info(button_name: str, confidence: float, config: Dict[str, Any]
 
     failure_info = {
         "button_name": button_name,
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": now.isoformat(),  # Use the same datetime object for consistency
         "confidence": confidence,
         "screenshot_path": str(screenshot_path),
         "template_screenshot": str(_get_screenshot_path(button_name, config)),
