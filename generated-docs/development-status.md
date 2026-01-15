@@ -1,50 +1,59 @@
-Last updated: 2026-01-15
+Last updated: 2026-01-16
 
 # Development Status
 
 ## 現在のIssues
-- 自動assign機能が期待通りに動作しない場合に備え、再有効化と失敗時のスクリーンショットを活用した原因調査を計画しています [Issue #143](../issue-notes/143.md)。
-- 大幅な仕様変更が導入されたため、システム全体の安定性と機能性を検証するためのドッグフーディングが必要とされています [Issue #87](../issue-notes/87.md)。
-- 現在の開発状況報告を生成するプロンプトとガイドラインに基づき、効果的な開発状況の可視化と次のアクションの明確化を目指しています。
+- [Issue #143](../issue-notes/143.md) では、自動assign機能の再有効化と、失敗時のスクリーンショットを活用した原因調査が進行中。
+- [Issue #87](../issue-notes/87.md) では、大幅な仕様変更後のシステム全体をドッグフーディングし、機能の検証と改善点の洗い出しが求められている。
+- 自動マージ関連のドキュメントと最新のコード変更との整合性確認も重要なタスクとなっている。
 
 ## 次の一手候補
-1. 自動assign機能のデバッグと再有効化 [Issue #143](../issue-notes/143.md)
-   - 最初の小さな一歩: 自動assignのON/OFFを制御している箇所と、失敗時にスクリーンショットを生成するロジックを特定し、その現在の状態を確認する。
+1. [Issue #143](../issue-notes/143.md) 自動assign失敗時の調査と修正
+   - 最初の小さな一歩: 自動assign機能を有効にする設定（`config.toml`等）を確認し、現状とコードの差異を特定する。
    - Agent実行プロンプ:
      ```
-     対象ファイル: `src/gh_pr_phase_monitor/pr_actions.py`, `src/gh_pr_phase_monitor/config.py`, `src/gh_pr_phase_monitor/browser_automation.py`
+     対象ファイル: `src/gh_pr_phase_monitor/config.py`, `src/gh_pr_phase_monitor/pr_actions.py`, `src/gh_pr_phase_monitor/main.py`, `config.toml.example`
 
-     実行内容: 自動assignを制御する設定やコード、および失敗時にスクリーンショットを生成するロジックを特定し、その現在の状態（有効/無効、スクリーンショットの保存パスなど）を分析してください。
+     実行内容:
+     1. 自動assign機能を有効化するために必要な `config.toml` の設定項目と、それがコード(`src/gh_pr_phase_monitor/config.py`や`src/gh_pr_phase_monitor/pr_actions.py`)でどのように読み込まれ、利用されているかを分析してください。
+     2. 現在自動assignがオフになっている場合、それをオンに戻すための具体的な設定変更手順を提案してください。
+     3. 失敗時のスクリーンショットが生成されるパスや、そのファイル命名規則、およびスクリーンショットから問題の原因を特定するための着眼点を記述してください。
 
-     確認事項: 自動assignが意図せず無効化されている可能性、またはスクリーンショットが正しく生成・保存されていない可能性を考慮し、関連する設定項目や環境変数がないか確認してください。
+     確認事項: 自動assignの有効化が既存の他のPR監視機能やコメント処理に悪影響を与えないこと。スクリーンショットの保存先ディレクトリが存在し、書き込み権限があること。
 
-     期待する出力: 自動assign機能のON/OFF制御箇所、スクリーンショット生成・保存ロジック、およびそれらの現在の状態と想定される動作について、Markdown形式で詳細な分析結果を出力してください。
+     期待する出力: 自動assignを有効化するための設定変更ガイドと、失敗時に生成されるスクリーンショットを分析してデバッグするための手順書をmarkdown形式で出力してください。
      ```
 
-2. 大幅な仕様変更に伴うドッグフーディング計画の策定 [Issue #87](../issue-notes/87.md)
-   - 最初の小さな一歩: ドッグフーディングの対象となる主要な新機能や変更点を洗い出し、簡単なテストケースや検証シナリオをリストアップする。
+2. [Issue #87](../issue-notes/87.md) ドッグフーディングのための主要機能検証シナリオ策定
+   - 最初の小さな一歩: プロジェクトの主要機能（PRフェーズ検出、コメント処理、自動マージ、通知など）をリストアップする。
    - Agent実行プロンプ:
      ```
-     対象ファイル: `docs/IMPLEMENTATION_SUMMARY.md`, `docs/PR67_IMPLEMENTATION.md`, `MERGE_CONFIGURATION_EXAMPLES.md`, `PHASE3_MERGE_IMPLEMENTATION.md`, `config.toml.example`
+     対象ファイル: `src/gh_pr_phase_monitor/main.py`, `src/gh_pr_phase_monitor/phase_detector.py`, `src/gh_pr_phase_monitor/comment_manager.py`, `src/gh_pr_phase_monitor/pr_actions.py`, `docs/IMPLEMENTATION_SUMMARY.md`
 
-     実行内容: 最近のコミット履歴とドキュメントを参照し、プロジェクトの大幅な仕様変更によって導入された主要な機能や変更点を特定してください。これらの変更が既存のワークフローやユーザー体験にどのような影響を与えるかを分析し、ドッグフーディングで検証すべき主要なユースケースをリストアップしてください。
+     実行内容:
+     1. `src/gh_pr_phase_monitor` ディレクトリ以下の主要なPythonファイルと `docs/IMPLEMENTATION_SUMMARY.md` を参照し、本プロジェクトが提供する主要機能を洗い出してください。
+     2. 洗い出した各機能について、ドッグフーディング時に検証すべき具体的なテストシナリオ（例: 「新規PR作成時の初期フェーズ検出」「特定のコメントに対する自動返信」「Phase3マージ条件が満たされた際の挙動」）を3つ以上提案してください。
+     3. ドッグフーディングの結果を記録するためのシンプルなチェックリスト形式のテンプレート案を記述してください。
 
-     確認事項: `config.toml.example`や`README.md`で言及されている削除されたオプション（headless, automation_backend, browser）が、どの機能と関連していたのか、そしてその代替手段が導入されているのかを確認してください。
+     確認事項: プロジェクトの現在の実装が提供する範囲内で現実的なシナリオであること。特に、大幅な仕様変更後の主要な変更点がカバーされていること。
 
-     期待する出力: 大幅な仕様変更の概要、影響を受ける主要機能、およびドッグフーディングで検証すべき具体的なユースケース（例: 新しいPRの状態遷移、コメントの自動投稿、自動マージ機能など）をMarkdown形式でまとめてください。
+     期待する出力: ドッグフーディングで検証すべき主要機能とその具体的なテストシナリオ、および結果記録用のテンプレートを含むmarkdown形式の計画書を生成してください。
      ```
 
-3. Issueノートの管理と整理の改善
-   - 最初の小さな一歩: `issue-notes` ディレクトリ内の既存のIssueノートをレビューし、各ノートが最新の情報と同期されているか、また完了したIssueのノートが適切に扱われているかを確認する。
-   - Agent実行プロンプト:
+3. [Issue #87](../issue-notes/87.md) 自動マージ関連ドキュメントの現状整合性確認
+   - 最初の小さな一歩: `PHASE3_MERGE_IMPLEMENTATION.md`と`MERGE_CONFIGURATION_EXAMPLES.md`の内容を読み込み、コミット履歴 `47d4d6a` (自動merge時に文言設定を必須化・デフォルト文言を修正・ドキュメントを更新) の変更点と照合する。
+   - Agent実行プロンプ:
      ```
-     対象ファイル: `issue-notes/` ディレクトリ内の全Markdownファイル（特に `issue-notes/3.md`, `issue-notes/7.md`）
+     対象ファイル: `PHASE3_MERGE_IMPLEMENTATION.md`, `MERGE_CONFIGURATION_EXAMPLES.md`, `src/gh_pr_phase_monitor/config.py`, `src/gh_pr_phase_monitor/pr_actions.py`
 
-     実行内容: `issue-notes/` ディレクトリ内のMarkdownファイルをスキャンし、各ファイルの内容が対応するGitHub Issueの現在の状態（オープン/クローズ、最新のコメントなど）と乖離していないか、またノート自体が簡潔かつ最新の情報を提供しているか分析してください。特に、既にクローズされているIssueのノートが残っていることの妥当性を評価してください。
+     実行内容:
+     1. コミット `47d4d6a` の内容と、`src/gh_pr_phase_monitor/config.py` および `src/gh_pr_phase_monitor/pr_actions.py` における自動マージの文言設定と関連ロジックの最新の実装を詳細に分析してください。
+     2. 上記の分析結果に基づき、`PHASE3_MERGE_IMPLEMENTATION.md` と `MERGE_CONFIGURATION_EXAMPLES.md` の記述が、現在の実装（特に文言設定の必須化とデフォルト文言の修正）と完全に整合しているかを確認してください。
+     3. 整合していない箇所や、読者が誤解する可能性のある記述が存在する場合、具体的な箇所とその修正提案をリストアップしてください。
 
-     確認事項: GitHub APIへのアクセスは想定せず、提供されたファイル情報のみを基に分析してください。既存のIssueノートの管理方針について、どのような改善策が考えられるかを考慮してください。
+     確認事項: ドキュメントの意図する目的が、最新のコード変更後も達成されているか。ドキュメントが最新の機能を正確に反映しているか。
 
-     期待する出力: `issue-notes` ディレクトリの現状（最新性、整合性、冗長性など）に関する分析結果をMarkdown形式で出力し、必要に応じて、より効率的なIssueノート管理のための改善提案（例: クローズされたIssueのノートのアーカイブ化、定期的なレビュープロセスなど）を記述してください。
+     期待する出力: `PHASE3_MERGE_IMPLEMENTATION.md` および `MERGE_CONFIGURATION_EXAMPLES.md` の現状のコードとの整合性評価レポートをmarkdown形式で出力してください。乖離がある場合は、具体的な修正提案も記述してください。
 
 ---
-Generated at: 2026-01-15 07:01:44 JST
+Generated at: 2026-01-16 07:01:48 JST

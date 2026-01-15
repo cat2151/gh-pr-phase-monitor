@@ -1,4 +1,4 @@
-Last updated: 2026-01-15
+Last updated: 2026-01-16
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -264,6 +264,7 @@ Last updated: 2026-01-15
 - tests/test_pr_actions_rulesets_features.py
 - tests/test_pr_actions_with_rulesets.py
 - tests/test_status_summary.py
+- tests/test_validate_phase3_merge_config.py
 - tests/test_verbose_config.py
 
 ## 現在のオープンIssues
@@ -381,19 +382,18 @@ env: で値を渡し、process.env で参照するのが正しい
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
+35501cd Auto-translate README.ja.md to README.md [auto]
+59c7958 Merge pull request #145 from cat2151/copilot/require-toml-settings-fail-fast
+5fa06a4 PRレビュー指摘対応: repo_owner復元・定数使用・コメント改善
+0c80747 コードレビュー指摘対応: 未使用変数を削除
+47d4d6a 自動merge時に文言設定を必須化・デフォルト文言を修正・ドキュメントを更新
+add53e5 Initial plan
+0695f25 今後デザイン変更やレスポンシブデザイン等でボタンの大きさが変化する可能性を想定し、ボタンとして最低限認識できる最小限の情報に絞った
+612ce5b Update project summaries (overview & development status) [auto]
 11a9558 Auto-translate README.ja.md to README.md [auto]
 2f412ab Merge pull request #142 from cat2151/copilot/update-readme-ja-md-implementation
-5c95b78 ドキュメント更新: MERGE_CONFIGURATION_EXAMPLES.md と PHASE3_MERGE_IMPLEMENTATION.md から未使用オプションを削除
-a573c6f config.toml.example: 使用されていない設定オプション（headless, automation_backend, browser）を削除
-5307d1c README.ja.md: 使用されていない設定オプション（headless, automation_backend, browser）を削除
-35d7ef7 Auto-translate README.ja.md to README.md [auto]
-6691fc6 Initial plan
-70c9f89 Merge pull request #140 from cat2151/copilot/save-debug-data-on-failure
-00e8457 テストコメントを修正：locateOnScreenの例外発生時の動作を明確化
-d0e952f コードレビューフィードバックに対応：None処理とimport順序を改善
 
 ### 変更されたファイル:
-.gitignore
 MERGE_CONFIGURATION_EXAMPLES.md
 PHASE3_MERGE_IMPLEMENTATION.md
 README.ja.md
@@ -403,10 +403,15 @@ generated-docs/development-status-generated-prompt.md
 generated-docs/development-status.md
 generated-docs/project-overview-generated-prompt.md
 generated-docs/project-overview.md
-src/gh_pr_phase_monitor/browser_automation.py
-tests/test_browser_automation.py
-tests/test_check_process_before_autoraise.py
+screenshots/assign_to_copilot.png
+src/gh_pr_phase_monitor/config.py
+src/gh_pr_phase_monitor/main.py
+src/gh_pr_phase_monitor/pr_actions.py
+tests/test_batteries_included_defaults.py
+tests/test_post_phase3_comment.py
+tests/test_pr_actions_rulesets_features.py
+tests/test_validate_phase3_merge_config.py
 
 
 ---
-Generated at: 2026-01-15 07:01:31 JST
+Generated at: 2026-01-16 07:01:30 JST
