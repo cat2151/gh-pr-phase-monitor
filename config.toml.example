@@ -147,8 +147,9 @@ all_phase3_message = "All PRs are now in phase3 (ready for review)"  # Message w
 # Before merging, a comment defined below will be posted to the PR
 # IMPORTANT: Feature is DISABLED by default for safety.
 # Must be explicitly enabled per repository using enable_execution_phase3_to_merge in rulesets.
+# IMPORTANT: When auto-merge is enabled, you MUST explicitly configure the comment field.
 [phase3_merge]
-comment = "All checks passed. Merging PR."  # Comment to post before merging
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"  # Comment to post before merging (REQUIRED when auto-merge is enabled)
 automated = false  # Set to true to use browser automation to click the merge button
 wait_seconds = 10  # How long to wait after opening the browser before clicking (automated mode only)
 # Note: Feature branch is automatically deleted after successful merge

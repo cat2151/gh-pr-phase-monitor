@@ -14,7 +14,7 @@ class TestPostPhase3Comment:
     def test_post_comment_success(self):
         """Should post comment successfully"""
         pr = {"url": "https://github.com/owner/repo/pull/1"}
-        comment_text = "All checks passed. Merging PR."
+        comment_text = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
@@ -29,7 +29,7 @@ class TestPostPhase3Comment:
                 "comment",
                 "https://github.com/owner/repo/pull/1",
                 "--body",
-                "All checks passed. Merging PR.",
+                "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。",
             ]
 
     def test_post_comment_failure(self):

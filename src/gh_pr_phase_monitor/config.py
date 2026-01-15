@@ -11,7 +11,7 @@ import tomli
 
 # Default configuration for phase3_merge feature (batteries included)
 DEFAULT_PHASE3_MERGE_CONFIG: Dict[str, Any] = {
-    "comment": "All checks passed. Merging PR.",
+    "comment": "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。",
     "automated": False,
     "automation_backend": "playwright",
     "wait_seconds": 10,
@@ -169,6 +169,63 @@ def get_phase3_merge_config(config: Dict[str, Any]) -> Dict[str, Any]:
     result = DEFAULT_PHASE3_MERGE_CONFIG.copy()
     result.update(user_config)
     return result
+
+
+def validate_phase3_merge_config_required(config: Dict[str, Any], repo_owner: str, repo_name: str) -> None:
+    """Validate that phase3_merge comment is explicitly configured when auto-merge is enabled
+
+    When enable_execution_phase3_to_merge is true for a repository, the user MUST explicitly
+    configure the comment in the [phase3_merge] section of config.toml.
+    This is a safety measure to ensure users consciously set the merge comment.
+
+    Args:
+        config: Global configuration dictionary
+        repo_owner: Repository owner
+        repo_name: Repository name
+
+    Raises:
+        SystemExit: If auto-merge is enabled but comment is not explicitly configured
+    """
+    # Check if auto-merge is enabled for this repository
+    exec_config = resolve_execution_config_for_repo(config, repo_owner, repo_name)
+    if not exec_config.get("enable_execution_phase3_to_merge", False):
+        # Auto-merge is not enabled, validation not required
+        return
+
+    # Auto-merge is enabled - check if comment is explicitly configured
+    phase3_merge_section = config.get("phase3_merge")
+
+    # Fail fast if [phase3_merge] section is missing
+    if phase3_merge_section is None:
+        print("\n" + "=" * 80)
+        print("ERROR: Auto-merge configuration is missing")
+        print("=" * 80)
+        print(f"\nRepository: {repo_owner}/{repo_name}")
+        print("enable_execution_phase3_to_merge = true")
+        print("\nWhen auto-merge is enabled, you MUST explicitly configure the merge comment")
+        print("in the [phase3_merge] section of config.toml.")
+        print("\nPlease add the following to your config.toml:")
+        print("\n[phase3_merge]")
+        print('comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"')
+        print("\nOr customize the comment to match your workflow.")
+        print("=" * 80)
+        raise SystemExit(1)
+
+    # Fail fast if comment field is missing in [phase3_merge] section
+    if not isinstance(phase3_merge_section, dict) or "comment" not in phase3_merge_section:
+        print("\n" + "=" * 80)
+        print("ERROR: Merge comment is not configured")
+        print("=" * 80)
+        print(f"\nRepository: {repo_owner}/{repo_name}")
+        print("enable_execution_phase3_to_merge = true")
+        print("\nWhen auto-merge is enabled, you MUST explicitly set the 'comment' field")
+        print("in the [phase3_merge] section of config.toml.")
+        print("\nPlease add the comment field to your [phase3_merge] section:")
+        print("\n[phase3_merge]")
+        print('comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"')
+        print("\nOr customize the comment to match your workflow.")
+        print("=" * 80)
+        raise SystemExit(1)
 
 
 def get_assign_to_copilot_config(config: Dict[str, Any]) -> Dict[str, Any]:

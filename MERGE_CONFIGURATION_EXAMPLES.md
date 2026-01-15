@@ -14,12 +14,12 @@ enable_execution_phase3_to_merge = true
 
 # Merge configuration
 [phase3_merge]
-comment = "All checks passed. Merging this PR automatically."
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 automated = false  # Use gh CLI (faster and more reliable)
 ```
 
 **Result**: When a PR reaches phase3, the tool will:
-1. Post comment: "All checks passed. Merging this PR automatically."
+1. Post comment: "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 2. Run: `gh pr merge --auto --squash [PR_URL]`
 
 ## Example 2: Browser Automation Merge
@@ -32,13 +32,13 @@ Use this if you need to interact with custom merge workflows or buttons.
 enable_execution_phase3_to_merge = true
 
 [phase3_merge]
-comment = "🎉 All checks passed! Merging automatically."
+comment = "🎉 レビュー指摘対応完了。自動マージします。"
 automated = true  # Use browser automation
 wait_seconds = 10
 ```
 
 **Result**: When a PR reaches phase3, the tool will:
-1. Post comment: "🎉 All checks passed! Merging automatically."
+1. Post comment: "🎉 レビュー指摘対応完了。自動マージします。"
 2. Open browser
 3. Click "Merge pull request" button
 4. Click "Confirm merge" button
@@ -54,7 +54,7 @@ Enable merge only for specific test repositories.
 enable_execution_phase3_to_merge = false
 
 [phase3_merge]
-comment = "Automated merge after all checks passed."
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 
 # Enable only for test repository
 [[rulesets]]
@@ -124,7 +124,7 @@ Test the feature without actually merging.
 enable_execution_phase3_to_merge = false
 
 [phase3_merge]
-comment = "Would merge here"
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 automated = false
 ```
 

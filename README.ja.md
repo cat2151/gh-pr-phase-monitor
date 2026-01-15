@@ -161,8 +161,9 @@ cat-github-watcher/
    # マージ成功後、自動的にfeature branchが削除されます
    # 重要: 安全のため、この機能はデフォルトで無効です
    # リポジトリごとにrulesetsで enable_execution_phase3_to_merge = true を指定して明示的に有効化する必要があります
+   # 重要：自動マージが有効な場合、commentフィールドを明示的に設定する必要があります
    [phase3_merge]
-   comment = "All checks passed. Merging PR."  # マージ前に投稿するコメント
+   comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"  # マージ前に投稿するコメント（自動マージ有効時は必須）
    automated = false  # trueにするとブラウザ自動操縦でマージボタンをクリック
    wait_seconds = 10  # ブラウザ起動後、ボタンクリック前の待機時間（秒）
    debug_dir = "debug_screenshots"  # 画像認識失敗時のデバッグ情報保存先（デフォルト: "debug_screenshots"）

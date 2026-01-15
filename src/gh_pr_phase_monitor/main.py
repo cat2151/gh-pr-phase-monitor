@@ -19,6 +19,7 @@ from .config import (
     parse_interval,
     print_config,
     resolve_execution_config_for_repo,
+    validate_phase3_merge_config_required,
 )
 from .github_client import (
     assign_issue_to_copilot,
@@ -213,7 +214,8 @@ def display_status_summary(
     for pr, phase in zip(all_prs, pr_phases):
         repo_info = pr.get("repository", {})
         repo_name = repo_info.get("name", "Unknown")
-        repo_owner = repo_info.get("owner", "Unknown")
+        # repo_owner is extracted but not used currently - kept for potential future use
+        _ = repo_info.get("owner", "Unknown")
         title = pr.get("title", "Unknown")
         url = pr.get("url", "")
 
@@ -584,6 +586,15 @@ def main():
                 print(f"  Found {len(repos_with_prs)} repositories with open PRs:")
                 for repo in repos_with_prs:
                     print(f"    - {repo['name']}: {repo['openPRCount']} open PR(s)")
+
+                # Validate phase3_merge configuration for all repositories
+                # This must be done before processing PRs to fail fast
+                print("\nValidating phase3_merge configuration...")
+                for repo in repos_with_prs:
+                    repo_owner = repo.get("owner", {}).get("login", "")
+                    repo_name = repo.get("name", "")
+                    if repo_owner and repo_name:
+                        validate_phase3_merge_config_required(config, repo_owner, repo_name)
 
                 # Phase 2: Get PR details for repositories with open PRs (detailed query)
                 print(f"\nPhase 2: Fetching PR details for {len(repos_with_prs)} repositories...")

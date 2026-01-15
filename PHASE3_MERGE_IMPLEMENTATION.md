@@ -15,7 +15,7 @@ enable_execution_phase3_to_merge = false   # Set to true to enable phase3 PR mer
 # Merge configuration section
 [phase3_merge]
 enabled = false  # Must be true along with enable_execution_phase3_to_merge
-comment = "All checks passed. Merging PR."  # Comment to post before merging
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"  # Comment to post before merging (REQUIRED when auto-merge is enabled)
 automated = false  # Use browser automation to click merge button (requires PyAutoGUI)
 wait_seconds = 10  # Wait time before clicking buttons (automated mode)
 ```
@@ -46,8 +46,9 @@ Two merge methods are available:
 ### 3. Pre-merge Comment
 Before merging, a configurable comment is posted to the PR:
 - Comment text is defined in `phase3_merge.comment` configuration
-- Default: "All checks passed. Merging PR."
+- Default: "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 - Can be customized to match your workflow
+- **IMPORTANT**: When auto-merge is enabled (`enable_execution_phase3_to_merge = true`), the comment field MUST be explicitly configured in config.toml
 
 ### 4. Branch Deletion
 After a successful merge, the feature branch is automatically deleted:
@@ -94,7 +95,7 @@ enable_execution_phase3_to_merge = true
 
 [phase3_merge]
 enabled = true
-comment = "All checks passed. Merging this PR automatically."
+comment = "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
 automated = false  # Use gh CLI
 ```
 
@@ -104,7 +105,7 @@ enable_execution_phase3_to_merge = true
 
 [phase3_merge]
 enabled = true
-comment = "🎉 All checks passed! Merging automatically."
+comment = "🎉 レビュー指摘対応完了。自動マージします。"
 automated = true  # Use browser automation
 wait_seconds = 10
 ```

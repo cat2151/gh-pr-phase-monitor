@@ -225,7 +225,8 @@ def process_pr(pr: Dict[str, Any], config: Dict[str, Any] = None, phase: str = N
         if merge_execution_enabled:
             if merge_key not in _merged_prs:
                 # Post comment before merging
-                merge_comment = phase3_merge_config.get("comment", "All checks passed. Merging PR.")
+                # Note: Comment is now validated to be explicitly configured when auto-merge is enabled
+                merge_comment = phase3_merge_config.get("comment")
                 print(f"    Posting pre-merge comment: '{merge_comment}'...")
                 comment_posted = post_phase3_comment(pr, merge_comment, None)
 

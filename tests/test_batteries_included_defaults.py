@@ -20,7 +20,7 @@ class TestPhase3MergeDefaults:
         result = get_phase3_merge_config(config)
 
         assert result == DEFAULT_PHASE3_MERGE_CONFIG
-        assert result["comment"] == "All checks passed. Merging PR."
+        assert result["comment"] == "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"
         assert result["automated"] is False
         assert result["automation_backend"] == "playwright"
         assert result["wait_seconds"] == 10

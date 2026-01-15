@@ -250,7 +250,7 @@ class TestProcessPRWithRulesetPhase3MergeFlag:
             mock_comment.assert_called_once()
             # Check that default comment is used
             call_args = mock_comment.call_args
-            assert call_args[0][1] == "All checks passed. Merging PR."  # Default comment
+            assert call_args[0][1] == "agentによって、レビュー指摘対応が完了したと判断します。userの責任のもと、userレビューは省略します。PRをMergeします。"  # Default comment
             mock_merge.assert_called_once()
 
     def test_merge_with_explicit_config(self):
