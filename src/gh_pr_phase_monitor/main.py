@@ -592,7 +592,7 @@ def main():
                 # This must be done before processing PRs to fail fast
                 print("\nValidating phase3_merge configuration...")
                 for repo in repos_with_prs:
-                    repo_owner = repo.get("owner", {}).get("login", "")
+                    repo_owner = repo.get("owner", "")
                     repo_name = repo.get("name", "")
                     if repo_owner and repo_name:
                         validate_phase3_merge_config_required(config, repo_owner, repo_name)
