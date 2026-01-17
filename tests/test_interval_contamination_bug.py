@@ -12,8 +12,8 @@ This test reproduces the bug where:
 import time
 from unittest.mock import patch
 
-from src.gh_pr_phase_monitor import main
-from src.gh_pr_phase_monitor.main import check_no_state_change_timeout
+from src.gh_pr_phase_monitor import state_tracker
+from src.gh_pr_phase_monitor.monitor import check_no_state_change_timeout
 from src.gh_pr_phase_monitor.phase_detector import PHASE_2, PHASE_3
 
 
@@ -22,8 +22,8 @@ class TestIntervalContaminationBug:
 
     def setup_method(self):
         """Reset global state before each test"""
-        main._last_state = None
-        main._reduced_frequency_mode = False
+        state_tracker.set_last_state(None)
+        state_tracker.set_reduced_frequency_mode(False)
 
     def test_interval_not_contaminated_after_returning_from_reduced_mode(self):
         """

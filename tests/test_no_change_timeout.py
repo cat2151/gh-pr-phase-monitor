@@ -5,8 +5,8 @@ Test to verify that the application exits when PR state does not change for too 
 import time
 from unittest.mock import patch
 
-from src.gh_pr_phase_monitor import main
-from src.gh_pr_phase_monitor.main import check_no_state_change_timeout
+from src.gh_pr_phase_monitor import state_tracker
+from src.gh_pr_phase_monitor.monitor import check_no_state_change_timeout
 from src.gh_pr_phase_monitor.phase_detector import PHASE_1, PHASE_2, PHASE_3, PHASE_LLM_WORKING
 
 
@@ -15,8 +15,8 @@ class TestNoChangeTimeout:
 
     def setup_method(self):
         """Reset global state before each test"""
-        main._last_state = None
-        main._reduced_frequency_mode = False
+        state_tracker.set_last_state(None)
+        state_tracker.set_reduced_frequency_mode(False)
 
     def test_default_timeout_when_config_not_set(self):
         """Test that default 30m timeout is used when no_change_timeout is not configured"""
@@ -40,7 +40,7 @@ class TestNoChangeTimeout:
         check_no_state_change_timeout(all_prs, pr_phases, config)
 
         # Verify state was initialized (not None)
-        assert main._last_state is not None
+        assert state_tracker.get_last_state() is not None
 
     def test_no_timeout_when_config_is_empty_string(self):
         """Test that no timeout occurs when no_change_timeout is empty string"""
@@ -63,7 +63,7 @@ class TestNoChangeTimeout:
         check_no_state_change_timeout(all_prs, pr_phases, config)
 
         # State should remain None when disabled
-        assert main._last_state is None
+        assert state_tracker.get_last_state() is None
 
     def test_timeout_when_state_unchanged(self):
         """Test that monitoring switches to reduced frequency mode when state does not change for timeout duration"""

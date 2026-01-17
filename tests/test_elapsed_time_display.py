@@ -9,13 +9,11 @@ to show something like '現在、検知してから3分20秒経過' (Currently, 
 import time
 from unittest.mock import patch
 
-from src.gh_pr_phase_monitor.main import (
-    _pr_state_times,
-    display_status_summary,
-    format_elapsed_time,
-    wait_with_countdown,
-)
+from src.gh_pr_phase_monitor.display import display_status_summary
 from src.gh_pr_phase_monitor.phase_detector import PHASE_1, PHASE_LLM_WORKING
+from src.gh_pr_phase_monitor.state_tracker import _pr_state_times
+from src.gh_pr_phase_monitor.time_utils import format_elapsed_time
+from src.gh_pr_phase_monitor.wait_handler import wait_with_countdown
 
 
 class TestElapsedTimeDisplay:

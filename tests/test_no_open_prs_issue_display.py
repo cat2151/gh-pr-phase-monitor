@@ -7,7 +7,7 @@ This test ensures the new behavior requested in the issue:
 
 from unittest.mock import patch
 
-from src.gh_pr_phase_monitor.main import display_issues_from_repos_without_prs
+from src.gh_pr_phase_monitor.display import display_issues_from_repos_without_prs
 
 
 def test_display_issues_when_no_repos_with_prs():
@@ -15,9 +15,9 @@ def test_display_issues_when_no_repos_with_prs():
     Test that display_issues_from_repos_without_prs correctly displays issues
     when there are no repositories with open PRs
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
-            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
                 mock_get_repos.return_value = [
                     {
@@ -103,7 +103,7 @@ def test_display_issues_when_no_repos_with_issues():
     Test that display_issues_from_repos_without_prs handles the case
     when there are no repositories with issues
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         # Mock response: no repos with issues
         mock_get_repos.return_value = []
 
@@ -118,7 +118,7 @@ def test_display_issues_handles_exceptions():
     """
     Test that display_issues_from_repos_without_prs handles exceptions gracefully
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         # Mock an exception
         mock_get_repos.side_effect = Exception("API Error")
 
@@ -134,9 +134,9 @@ def test_display_issues_with_assign_disabled():
     Test that display_issues_from_repos_without_prs does NOT attempt assignment
     when the feature is disabled
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
-            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
                 mock_get_repos.return_value = [
                     {
@@ -181,8 +181,8 @@ def test_display_issues_with_custom_limit():
     """
     Test that display_issues_from_repos_without_prs respects the issue_display_limit config
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             # Mock response: repos with no PRs but with issues
             mock_get_repos.return_value = [
                 {
@@ -228,8 +228,8 @@ def test_display_issues_with_none_config():
     """
     Test that display_issues_from_repos_without_prs handles None config gracefully
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             # Mock response: repos with no PRs but with issues
             mock_get_repos.return_value = [
                 {
@@ -273,9 +273,9 @@ def test_display_issues_with_assign_lowest_number():
     Test that display_issues_from_repos_without_prs correctly assigns the oldest issue
     when assign_old is enabled (replaces assign_lowest_number_issue)
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
-            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
                 mock_get_repos.return_value = [
                     {
@@ -363,9 +363,9 @@ def test_assign_only_fetches_from_enabled_repos():
     assign_good_first_old or assign_old is enabled.
     This prevents fetching issues from repos that don't have assignment enabled.
     """
-    with patch("src.gh_pr_phase_monitor.main.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
-        with patch("src.gh_pr_phase_monitor.main.get_issues_from_repositories") as mock_get_issues:
-            with patch("src.gh_pr_phase_monitor.main.assign_issue_to_copilot") as mock_assign:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+        with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
+            with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: two repos without PRs but with issues
                 mock_get_repos.return_value = [
                     {"name": "repo-with-assign", "owner": "testuser", "openIssueCount": 2},
