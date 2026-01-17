@@ -531,16 +531,18 @@ def main():
         print()
 
     # Get interval setting (default to 1 minute if not specified)
-    interval_str = config.get("interval", "1m")
+    # Keep the normal interval separate from the current interval to avoid
+    # contamination when switching between normal and reduced frequency modes
+    normal_interval_str = config.get("interval", "1m")
     try:
-        interval_seconds = parse_interval(interval_str)
+        normal_interval_seconds = parse_interval(normal_interval_str)
     except ValueError as e:
         print(f"Error: {e}")
         sys.exit(1)
 
     print("GitHub PR Phase Monitor")
     print("=" * 50)
-    print(f"Monitoring interval: {interval_str} ({interval_seconds} seconds)")
+    print(f"Monitoring interval: {normal_interval_str} ({normal_interval_seconds} seconds)")
     print("Monitoring all repositories for the current GitHub user")
     print("Press CTRL+C to stop monitoring")
     print("=" * 50)
@@ -670,9 +672,9 @@ def main():
                 print(f"Error: Invalid reduced_frequency_interval format: {e}")
                 sys.exit(1)
         else:
-            # Use normal interval
-            current_interval_seconds = interval_seconds
-            current_interval_str = interval_str
+            # Use normal interval (preserved separately to avoid contamination)
+            current_interval_seconds = normal_interval_seconds
+            current_interval_str = normal_interval_str
 
         # Wait with countdown display and check for config changes
         new_config, new_interval_seconds, new_interval_str, new_config_mtime = wait_with_countdown(
@@ -684,9 +686,11 @@ def main():
         config_reloaded = new_config_mtime != config_mtime
         if config_reloaded and new_config:
             config = new_config
-        # Always update interval and mtime as they may have changed during reload
-        interval_seconds = new_interval_seconds
-        interval_str = new_interval_str
+            # Update normal interval only on hot reload (config change)
+            # This preserves the normal interval when switching between modes
+            normal_interval_seconds = new_interval_seconds
+            normal_interval_str = new_interval_str
+        # Always update mtime
         config_mtime = new_config_mtime
 
 
