@@ -14,7 +14,7 @@ def test_assignment_paused_when_limit_reached():
     """
     Test that assignment is paused when LLM working count reaches the limit
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
@@ -68,7 +68,7 @@ def test_assignment_proceeds_when_below_limit():
     """
     Test that assignment proceeds when LLM working count is below the limit
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
@@ -136,7 +136,7 @@ def test_default_limit_when_not_configured():
     """
     Test that the default limit (3) is used when not configured
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
@@ -184,7 +184,7 @@ def test_custom_limit():
     """
     Test that custom max_llm_working_parallel values are respected
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
@@ -248,7 +248,7 @@ def test_invalid_limit_uses_default():
     """
     Test that invalid max_llm_working_parallel values fall back to default
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues
@@ -297,7 +297,7 @@ def test_zero_llm_working_count():
     """
     Test that assignment proceeds when llm_working_count is 0
     """
-    with patch("src.gh_pr_phase_monitor.display.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
+    with patch("src.gh_pr_phase_monitor.github_client.get_repositories_with_no_prs_and_open_issues") as mock_get_repos:
         with patch("src.gh_pr_phase_monitor.display.get_issues_from_repositories") as mock_get_issues:
             with patch("src.gh_pr_phase_monitor.display.assign_issue_to_copilot") as mock_assign:
                 # Mock response: repos with no PRs but with issues

@@ -40,7 +40,7 @@ class TestNoChangeTimeout:
         check_no_state_change_timeout(all_prs, pr_phases, config)
 
         # Verify state was initialized (not None)
-        assert main._last_state is not None
+        assert state_tracker.get_last_state() is not None
 
     def test_no_timeout_when_config_is_empty_string(self):
         """Test that no timeout occurs when no_change_timeout is empty string"""
@@ -63,7 +63,7 @@ class TestNoChangeTimeout:
         check_no_state_change_timeout(all_prs, pr_phases, config)
 
         # State should remain None when disabled
-        assert main._last_state is None
+        assert state_tracker.get_last_state() is None
 
     def test_timeout_when_state_unchanged(self):
         """Test that monitoring switches to reduced frequency mode when state does not change for timeout duration"""
