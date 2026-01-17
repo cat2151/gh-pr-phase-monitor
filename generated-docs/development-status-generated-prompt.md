@@ -1,4 +1,4 @@
-Last updated: 2026-01-16
+Last updated: 2026-01-18
 
 # 開発状況生成プロンプト（開発者向け）
 
@@ -232,16 +232,21 @@ Last updated: 2026-01-16
 - src/gh_pr_phase_monitor/comment_fetcher.py
 - src/gh_pr_phase_monitor/comment_manager.py
 - src/gh_pr_phase_monitor/config.py
+- src/gh_pr_phase_monitor/display.py
 - src/gh_pr_phase_monitor/github_auth.py
 - src/gh_pr_phase_monitor/github_client.py
 - src/gh_pr_phase_monitor/graphql_client.py
 - src/gh_pr_phase_monitor/issue_fetcher.py
 - src/gh_pr_phase_monitor/main.py
+- src/gh_pr_phase_monitor/monitor.py
 - src/gh_pr_phase_monitor/notifier.py
 - src/gh_pr_phase_monitor/phase_detector.py
 - src/gh_pr_phase_monitor/pr_actions.py
 - src/gh_pr_phase_monitor/pr_fetcher.py
 - src/gh_pr_phase_monitor/repository_fetcher.py
+- src/gh_pr_phase_monitor/state_tracker.py
+- src/gh_pr_phase_monitor/time_utils.py
+- src/gh_pr_phase_monitor/wait_handler.py
 - tests/test_batteries_included_defaults.py
 - tests/test_browser_automation.py
 - tests/test_check_process_before_autoraise.py
@@ -250,6 +255,7 @@ Last updated: 2026-01-16
 - tests/test_elapsed_time_display.py
 - tests/test_hot_reload.py
 - tests/test_integration_issue_fetching.py
+- tests/test_interval_contamination_bug.py
 - tests/test_interval_parsing.py
 - tests/test_issue_fetching.py
 - tests/test_max_llm_working_parallel.py
@@ -263,6 +269,7 @@ Last updated: 2026-01-16
 - tests/test_pr_actions.py
 - tests/test_pr_actions_rulesets_features.py
 - tests/test_pr_actions_with_rulesets.py
+- tests/test_repos_with_prs_structure.py
 - tests/test_status_summary.py
 - tests/test_validate_phase3_merge_config.py
 - tests/test_verbose_config.py
@@ -382,36 +389,50 @@ env: で値を渡し、process.env で参照するのが正しい
 
 ## 最近の変更（過去7日間）
 ### コミット履歴:
-35501cd Auto-translate README.ja.md to README.md [auto]
-59c7958 Merge pull request #145 from cat2151/copilot/require-toml-settings-fail-fast
-5fa06a4 PRレビュー指摘対応: repo_owner復元・定数使用・コメント改善
-0c80747 コードレビュー指摘対応: 未使用変数を削除
-47d4d6a 自動merge時に文言設定を必須化・デフォルト文言を修正・ドキュメントを更新
-add53e5 Initial plan
-0695f25 今後デザイン変更やレスポンシブデザイン等でボタンの大きさが変化する可能性を想定し、ボタンとして最低限認識できる最小限の情報に絞った
-612ce5b Update project summaries (overview & development status) [auto]
-11a9558 Auto-translate README.ja.md to README.md [auto]
-2f412ab Merge pull request #142 from cat2151/copilot/update-readme-ja-md-implementation
+daa04b9 Merge pull request #151 from cat2151/copilot/refactor-source-code-structure
+461b597 refactor: Address code review feedback
+648adaf docs: Update STRUCTURE.md to reflect new modular architecture
+3b1b749 test: Fix patch paths for display module functions
+34cb2d6 test: Update test imports to use new module structure
+506d125 refactor: Extract functions from main.py into specialized modules
+1ba0020 Initial plan
+21beeb0 Merge pull request #149 from cat2151/copilot/fix-phase3-merge-configuration
+255cf5a Fix AttributeError when validating phase3_merge configuration
+2a012dc Initial plan
 
 ### 変更されたファイル:
 MERGE_CONFIGURATION_EXAMPLES.md
 PHASE3_MERGE_IMPLEMENTATION.md
 README.ja.md
 README.md
+STRUCTURE.md
 config.toml.example
 generated-docs/development-status-generated-prompt.md
 generated-docs/development-status.md
 generated-docs/project-overview-generated-prompt.md
 generated-docs/project-overview.md
 screenshots/assign_to_copilot.png
+src/gh_pr_phase_monitor/__init__.py
 src/gh_pr_phase_monitor/config.py
+src/gh_pr_phase_monitor/display.py
 src/gh_pr_phase_monitor/main.py
+src/gh_pr_phase_monitor/monitor.py
 src/gh_pr_phase_monitor/pr_actions.py
+src/gh_pr_phase_monitor/state_tracker.py
+src/gh_pr_phase_monitor/time_utils.py
+src/gh_pr_phase_monitor/wait_handler.py
 tests/test_batteries_included_defaults.py
+tests/test_elapsed_time_display.py
+tests/test_interval_contamination_bug.py
+tests/test_max_llm_working_parallel.py
+tests/test_no_change_timeout.py
+tests/test_no_open_prs_issue_display.py
 tests/test_post_phase3_comment.py
 tests/test_pr_actions_rulesets_features.py
+tests/test_repos_with_prs_structure.py
+tests/test_status_summary.py
 tests/test_validate_phase3_merge_config.py
 
 
 ---
-Generated at: 2026-01-16 07:01:30 JST
+Generated at: 2026-01-18 07:01:16 JST

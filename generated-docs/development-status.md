@@ -1,59 +1,50 @@
-Last updated: 2026-01-16
+Last updated: 2026-01-18
 
 # Development Status
 
 ## 現在のIssues
-- [Issue #143](../issue-notes/143.md) では、自動assign機能の再有効化と、失敗時のスクリーンショットを活用した原因調査が進行中。
-- [Issue #87](../issue-notes/87.md) では、大幅な仕様変更後のシステム全体をドッグフーディングし、機能の検証と改善点の洗い出しが求められている。
-- 自動マージ関連のドキュメントと最新のコード変更との整合性確認も重要なタスクとなっている。
+- [Issue #143](../issue-notes/143.md) は、自動assign機能が失敗した場合に生成されるスクリーンショットを活用し、その原因を究明することに焦点を当てています。
+- [Issue #87](../issue-notes/87.md) は、最近の大規模なコードリファクタリングと仕様変更後のシステム全体が意図通りに動作するかを検証するドッグフーディングを求めています。
+- これらのオープンなIssueは、システムのデバッグと全体的な健全性確認が現在の主要な開発テーマであることを示しています。
 
 ## 次の一手候補
-1. [Issue #143](../issue-notes/143.md) 自動assign失敗時の調査と修正
-   - 最初の小さな一歩: 自動assign機能を有効にする設定（`config.toml`等）を確認し、現状とコードの差異を特定する。
+1. [Issue #143](../issue-notes/143.md): 自動assign失敗時のスクリーンショットを活用した原因調査
+   - 最初の小さな一歩: `config.toml.example` 内の自動assign関連設定とスクリーンショット生成設定をレビューし、不足があれば `src/gh_pr_phase_monitor/config.py` との整合性を確認して更新案を作成する。
    - Agent実行プロンプ:
      ```
-     対象ファイル: `src/gh_pr_phase_monitor/config.py`, `src/gh_pr_phase_monitor/pr_actions.py`, `src/gh_pr_phase_monitor/main.py`, `config.toml.example`
+     対象ファイル: `src/gh_pr_phase_monitor/config.py`, `config.toml.example`, `src/gh_pr_phase_monitor/pr_actions.py`, `src/gh_pr_phase_monitor/browser_automation.py`
 
-     実行内容:
-     1. 自動assign機能を有効化するために必要な `config.toml` の設定項目と、それがコード(`src/gh_pr_phase_monitor/config.py`や`src/gh_pr_phase_monitor/pr_actions.py`)でどのように読み込まれ、利用されているかを分析してください。
-     2. 現在自動assignがオフになっている場合、それをオンに戻すための具体的な設定変更手順を提案してください。
-     3. 失敗時のスクリーンショットが生成されるパスや、そのファイル命名規則、およびスクリーンショットから問題の原因を特定するための着眼点を記述してください。
+     実行内容: `src/gh_pr_phase_monitor/config.py` 内の自動assignに関連する設定項目と、失敗時にスクリーンショットを生成するロジックを詳細に分析してください。特に、`browser_automation.py` がどのようにスクリーンショットをキャプチャし、その設定が `config.toml.example` に適切に反映されているかを確認し、不足している情報や設定があれば洗い出してください。
 
-     確認事項: 自動assignの有効化が既存の他のPR監視機能やコメント処理に悪影響を与えないこと。スクリーンショットの保存先ディレクトリが存在し、書き込み権限があること。
+     確認事項: `pr_actions.py` におけるassign処理の呼び出し方と、`browser_automation.py` のスクリーンショット生成メソッドとの依存関係を確認してください。また、`MERGE_CONFIGURATION_EXAMPLES.md` や `PHASE3_MERGE_IMPLEMENTATION.md` などの関連ドキュメントに、スクリーンショット機能に関する説明が不足していないかも確認してください。
 
-     期待する出力: 自動assignを有効化するための設定変更ガイドと、失敗時に生成されるスクリーンショットを分析してデバッグするための手順書をmarkdown形式で出力してください。
+     期待する出力: 自動assign機能とスクリーンショット生成機能を有効化し、デバッグを行うための`config.toml.example` の具体的な更新案をMarkdown形式で生成してください。これには、スクリーンショットの保存先、ファイル名規則、そしてテストPRで意図的に失敗を再現し、スクリーンショットが正しく生成されることを確認する手順も含まれるように記述してください。
      ```
 
-2. [Issue #87](../issue-notes/87.md) ドッグフーディングのための主要機能検証シナリオ策定
-   - 最初の小さな一歩: プロジェクトの主要機能（PRフェーズ検出、コメント処理、自動マージ、通知など）をリストアップする。
+2. [Issue #87](../issue-notes/87.md): 大幅な仕様変更後の主要機能ドッグフーディング
+   - 最初の小さな一歩: 最新のコードベースで `src/gh_pr_phase_monitor/main.py` を実行し、最低限のPR監視、フェーズ検出、コメント投稿機能が期待通りに動作するかを手動で確認する。
    - Agent実行プロンプ:
      ```
-     対象ファイル: `src/gh_pr_phase_monitor/main.py`, `src/gh_pr_phase_monitor/phase_detector.py`, `src/gh_pr_phase_monitor/comment_manager.py`, `src/gh_pr_phase_monitor/pr_actions.py`, `docs/IMPLEMENTATION_SUMMARY.md`
+     対象ファイル: `src/gh_pr_phase_monitor/main.py`, `src/gh_pr_phase_monitor/monitor.py`, `src/gh_pr_phase_monitor/phase_detector.py`, `src/gh_pr_phase_monitor/pr_actions.py`, `config.toml.example`
 
-     実行内容:
-     1. `src/gh_pr_phase_monitor` ディレクトリ以下の主要なPythonファイルと `docs/IMPLEMENTATION_SUMMARY.md` を参照し、本プロジェクトが提供する主要機能を洗い出してください。
-     2. 洗い出した各機能について、ドッグフーディング時に検証すべき具体的なテストシナリオ（例: 「新規PR作成時の初期フェーズ検出」「特定のコメントに対する自動返信」「Phase3マージ条件が満たされた際の挙動」）を3つ以上提案してください。
-     3. ドッグフーディングの結果を記録するためのシンプルなチェックリスト形式のテンプレート案を記述してください。
+     実行内容: 最近のリファクタリング（`main.py` からの関数抽出など）後、主要な機能（PR監視、フェーズ検出、コメント投稿、マージアクション）の実行フローと各モジュールの連携を分析してください。ドッグフーディングを行う上で特に検証すべきユースケース（例: 特定のラベルが付与されたPR、レビュー待ちのPR、マージ可能なPRなど）を特定し、それらに対応する `config.toml` の設定項目とその期待動作をリストアップしてください。
 
-     確認事項: プロジェクトの現在の実装が提供する範囲内で現実的なシナリオであること。特に、大幅な仕様変更後の主要な変更点がカバーされていること。
+     確認事項: リファクタリングによって変更されたモジュール間の依存関係や、データがどのようにフローしているかを再確認してください。また、既存のテスト (`tests/` ディレクトリ) が、これらの主要な機能変更やユースケースを十分にカバーしているか、簡易的にレビューしてください。
 
-     期待する出力: ドッグフーディングで検証すべき主要機能とその具体的なテストシナリオ、および結果記録用のテンプレートを含むmarkdown形式の計画書を生成してください。
+     期待する出力: 大幅な仕様変更後のドッグフーディングを効果的に行うための、包括的なテストシナリオリストをMarkdown形式で生成してください。各シナリオについて、`config.toml` の設定例、テスト時に作成するPRの条件、そして確認すべき期待されるシステム動作を具体的に記述してください。
      ```
 
-3. [Issue #87](../issue-notes/87.md) 自動マージ関連ドキュメントの現状整合性確認
-   - 最初の小さな一歩: `PHASE3_MERGE_IMPLEMENTATION.md`と`MERGE_CONFIGURATION_EXAMPLES.md`の内容を読み込み、コミット履歴 `47d4d6a` (自動merge時に文言設定を必須化・デフォルト文言を修正・ドキュメントを更新) の変更点と照合する。
+3. リファクタリング後の`config.py`とドキュメントの整合性確認
+   - 最初の小さな一歩: `src/gh_pr_phase_monitor/config.py` で定義されている設定項目と、`config.toml.example` の内容を比較し、最新の状態に同期されているかを確認する。
    - Agent実行プロンプ:
      ```
-     対象ファイル: `PHASE3_MERGE_IMPLEMENTATION.md`, `MERGE_CONFIGURATION_EXAMPLES.md`, `src/gh_pr_phase_monitor/config.py`, `src/gh_pr_phase_monitor/pr_actions.py`
+     対象ファイル: `src/gh_pr_phase_monitor/config.py`, `config.toml.example`, `MERGE_CONFIGURATION_EXAMPLES.md`, `PHASE3_MERGE_IMPLEMENTATION.md`, `tests/test_validate_phase3_merge_config.py`
 
-     実行内容:
-     1. コミット `47d4d6a` の内容と、`src/gh_pr_phase_monitor/config.py` および `src/gh_pr_phase_monitor/pr_actions.py` における自動マージの文言設定と関連ロジックの最新の実装を詳細に分析してください。
-     2. 上記の分析結果に基づき、`PHASE3_MERGE_IMPLEMENTATION.md` と `MERGE_CONFIGURATION_EXAMPLES.md` の記述が、現在の実装（特に文言設定の必須化とデフォルト文言の修正）と完全に整合しているかを確認してください。
-     3. 整合していない箇所や、読者が誤解する可能性のある記述が存在する場合、具体的な箇所とその修正提案をリストアップしてください。
+     実行内容: `src/gh_pr_phase_monitor/config.py` 内で現在定義されているすべての設定項目が、`config.toml.example` の例示と `MERGE_CONFIGURATION_EXAMPLES.md`, `PHASE3_MERGE_IMPLEMENTATION.md` の説明ドキュメントに正確かつ網羅的に反映されているかを詳細に分析し、不整合や情報不足がないか特定してください。特に、最近の `255cf5a Fix AttributeError when validating phase3_merge configuration` コミットで修正された `phase3_merge` 関連の設定について、コード、例、ドキュメントの間の整合性を重点的に確認してください。
 
-     確認事項: ドキュメントの意図する目的が、最新のコード変更後も達成されているか。ドキュメントが最新の機能を正確に反映しているか。
+     確認事項: リファクタリングが `config.py` の設定読み込みや検証ロジックに影響を与えていないかを確認し、`tests/test_validate_phase3_merge_config.py` が現在の設定構造を適切に検証しているか、網羅性の観点からレビューしてください。また、`config.toml.example` に冗長なコメントや古い情報が含まれていないかも確認してください。
 
-     期待する出力: `PHASE3_MERGE_IMPLEMENTATION.md` および `MERGE_CONFIGURATION_EXAMPLES.md` の現状のコードとの整合性評価レポートをmarkdown形式で出力してください。乖離がある場合は、具体的な修正提案も記述してください。
+     期待する出力: `config.py` の実装、`config.toml.example`、および関連ドキュメント間で発見されたすべての不整合箇所を特定し、それぞれの修正案をMarkdown形式で提示してください。これには、`config.toml.example` の更新、ドキュメントの追記・修正、必要であればテストケースの追加・改善に関する具体的な提案も含むように記述してください。
 
 ---
-Generated at: 2026-01-16 07:01:48 JST
+Generated at: 2026-01-18 07:01:35 JST

@@ -1,4 +1,4 @@
-Last updated: 2026-01-16
+Last updated: 2026-01-18
 
 
 # プロジェクト概要生成プロンプト（来訪者向け）
@@ -445,16 +445,21 @@ MIT License - 詳細はLICENSEファイルを参照してください
     📄 comment_fetcher.py
     📄 comment_manager.py
     📄 config.py
+    📄 display.py
     📄 github_auth.py
     📄 github_client.py
     📄 graphql_client.py
     📄 issue_fetcher.py
     📄 main.py
+    📄 monitor.py
     📄 notifier.py
     📄 phase_detector.py
     📄 pr_actions.py
     📄 pr_fetcher.py
     📄 repository_fetcher.py
+    📄 state_tracker.py
+    📄 time_utils.py
+    📄 wait_handler.py
 📁 tests/
   📄 test_batteries_included_defaults.py
   📄 test_browser_automation.py
@@ -464,6 +469,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_elapsed_time_display.py
   📄 test_hot_reload.py
   📄 test_integration_issue_fetching.py
+  📄 test_interval_contamination_bug.py
   📄 test_interval_parsing.py
   📄 test_issue_fetching.py
   📄 test_max_llm_working_parallel.py
@@ -477,6 +483,7 @@ MIT License - 詳細はLICENSEファイルを参照してください
   📄 test_pr_actions.py
   📄 test_pr_actions_rulesets_features.py
   📄 test_pr_actions_with_rulesets.py
+  📄 test_repos_with_prs_structure.py
   📄 test_status_summary.py
   📄 test_validate_phase3_merge_config.py
   📄 test_verbose_config.py
@@ -513,4 +520,4 @@ docs/browser-automation-approaches.md
 
 
 ---
-Generated at: 2026-01-16 07:01:30 JST
+Generated at: 2026-01-18 07:01:15 JST
